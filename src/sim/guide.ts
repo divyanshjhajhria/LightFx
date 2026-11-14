@@ -130,8 +130,9 @@ export const GUIDE_BEATS: Beat[] = [
     enter: [],
     advance: { kind: 'trade-placed' },
     say: both(
-      'This is one bank with offices on Earth, the Moon and Mars. A message between Earth and Mars takes twenty ' +
-        'minutes each way. Go ahead: sell five Mars credits to the Mars desk.',
+      'This is one bank with desks on Earth, the Moon and Mars. They share one goal: serve every customer they safely ' +
+        'can, without the bank as a whole ever holding more than its limit. A message between Earth and Mars takes ' +
+        'twenty minutes each way. Go ahead: sell five Mars credits to the Mars desk.',
     ),
   },
   {
@@ -220,8 +221,8 @@ export const GUIDE_BEATS: Beat[] = [
       speed: 1,
       say: (c) =>
         both(
-          `${c.trade ? Name(c.trade.far) : 'Earth'} has finally heard about your trade. Through all of that, our bank ` +
-            'never crossed its limit and never needed head office. That is Lightspeed FX.',
+          `${c.trade ? Name(c.trade.far) : 'Earth'} has finally heard about your trade. Three desks, cut off from each ` +
+            'other, kept one promise between them: the bank never crossed its limit. That is Lightspeed FX.',
         ),
     },
   },

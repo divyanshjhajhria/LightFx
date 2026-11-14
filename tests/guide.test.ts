@@ -58,7 +58,7 @@ function runGuide(cfg: SimConfig = DEFAULT_CONFIG): Run {
 
 /** Every line a full run with the default trade says, in order, word for word as the script gives it. */
 const SCRIPT: Line[] = [
-  ['ready', 'This is one bank with offices on Earth, the Moon and Mars. A message between Earth and Mars takes twenty minutes each way. Go ahead: sell five Mars credits to the Mars desk.'],
+  ['ready', 'This is one bank with desks on Earth, the Moon and Mars. They share one goal: serve every customer they safely can, without the bank as a whole ever holding more than its limit. A message between Earth and Mars takes twenty minutes each way. Go ahead: sell five Mars credits to the Mars desk.'],
   ['trade', 'Mars took your five credits on its own, straight away. Now it is telling Earth what it holds. Watch the message go.'],
   ['storm', 'A solar storm. Every link between the planets is gone, and your message was destroyed on the way. Earth has no idea your trade happened.'],
   ['silence', 'Time passes.', 'An hour goes by.'],
@@ -67,7 +67,7 @@ const SCRIPT: Line[] = [
   ['panic-settle', 'The bank that trusts old news has just gone through its limit. Look at what each desk thinks the bank holds. None of them is right. Ours is holding inside the line.'],
   ['alone', 'Now Earth and the Moon lose each other too. Three desks, and no links at all. The bank that asks head office has not completed one trade on Mars since the storm began. Ours is still inside its limit, because no desk ever needed permission.'],
   ['recovery', 'The storm passes. The links come back, and the desks catch up.'],
-  ['recovery-settle', 'Earth has finally heard about your trade. Through all of that, our bank never crossed its limit and never needed head office. That is Lightspeed FX.'],
+  ['recovery-settle', 'Earth has finally heard about your trade. Three desks, cut off from each other, kept one promise between them: the bank never crossed its limit. That is Lightspeed FX.'],
 ].map(([id, caption, voice]) => ({ id, caption, voice: voice ?? caption }));
 
 describe('the guided demo', () => {
