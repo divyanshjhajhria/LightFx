@@ -682,6 +682,239 @@ input[type='range']::-moz-range-thumb {
   font-size: 12px;
 }
 
+/* ---- Trade ticket (top of the desk inspector) ------------------------------ */
+
+.ticket {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+}
+
+.ticket h3,
+.inspector .links h3 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-3);
+}
+
+.ticket .seg button {
+  flex: 1;
+  padding: 5px 6px;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stepper input {
+  width: 56px;
+  text-align: center;
+  background: var(--fill);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 5px 4px;
+  color: var(--text);
+  -moz-appearance: textfield;
+}
+
+.stepper input::-webkit-inner-spin-button,
+.stepper input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.stepper .quiet {
+  width: 30px;
+  padding: 5px 0;
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* The one primary action in the product: warm white, like the play button. */
+.primary {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--text);
+  color: var(--ink);
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+
+.primary:hover {
+  opacity: 0.9;
+}
+
+.ticket p {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+/* ---- Bottom panel: tabs ----------------------------------------------------- */
+
+.bottom {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-top: 1px solid var(--hair);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px 22px 0;
+}
+
+.tabs button {
+  padding: 6px 6px 7px;
+  font-size: 12.5px;
+  color: var(--text-3);
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s;
+}
+
+.tabs button:hover {
+  color: var(--text-2);
+}
+
+.tabs button[aria-selected='true'] {
+  color: var(--text);
+  border-bottom-color: rgba(var(--warm), 0.7);
+}
+
+.tabPanel {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---- Your trade: the story panel ----------------------------------------------- */
+
+.story {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.storyHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 28px 6px;
+  border-top: 1px solid var(--hair);
+}
+
+.storyHead p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.storyEmpty {
+  margin: 0;
+  padding: 18px 28px 22px;
+  border-top: 1px solid var(--hair);
+  color: var(--text-2);
+}
+
+.storyGrid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--hair);
+}
+
+.storyColumn {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: 12px;
+}
+
+.storyColumn .steps {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+
+.steps ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.steps li {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 10px;
+  padding: 5px 0;
+  border-top: 1px solid var(--hair);
+  color: var(--text-2);
+  animation: appear 0.15s ease-out;
+}
+
+.steps li:first-child {
+  border-top: 0;
+}
+
+.steps time {
+  color: var(--text-3);
+  font-size: 12px;
+  padding-top: 1px;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}
+
+.liveRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0 4px 50px;
+  border-top: 1px solid var(--hair);
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.liveRow .bar span {
+  background: rgba(var(--warm), 0.8);
+}
+
+.waitRow {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.waitRow .quiet {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.outcome {
+  margin: 0;
+  padding: 8px 0 0 50px;
+  border-top: 1px solid var(--hair);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.readouts.holds {
+  flex: none;
+}
+
 /* ---- Comparison panel ----------------------------------------------------- */
 
 .intel {
@@ -956,8 +1189,23 @@ input[type='range']::-moz-range-thumb {
     width: auto;
   }
 
-  .intel {
+  .intel,
+  .storyGrid {
     grid-template-columns: 1fr;
+  }
+
+  .bottom {
+    height: auto !important;
+  }
+
+  .storyHead,
+  .storyEmpty {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .tabs {
+    padding: 6px 10px 0;
   }
 
   .column {
@@ -978,5 +1226,6 @@ input[type='range']::-moz-range-thumb {
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
+    animation: none !important;
   }
 }

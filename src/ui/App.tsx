@@ -4,11 +4,13 @@ import { lightDelayMin, separationDeg } from '../sim/orbits';
 import { Director, runScenario, startScenario } from '../sim/scenario';
 import type { Scenario } from '../sim/scenario';
 import { SCENARIOS } from '../sim/scenarios';
-import { BODIES, STRATEGIES } from '../sim/types';
-import type { BodyId, StrategyId } from '../sim/types';
+import { BODIES, STRATEGIES, perBody } from '../sim/types';
+import type { BodyId, PerBody, StrategyId } from '../sim/types';
 import { Arena } from '../sim/world';
 import { Intel } from './Intel';
 import { SolarView } from './SolarView';
+import { Story } from './StoryPanel';
+import type { FollowedTrade } from './StoryPanel';
 import { BODY_LABEL, MODE_LABEL, STATE, STRATEGY, clock, signed } from './theme';
 
 /** Simulated minutes per real second, with their button labels. */
@@ -26,18 +28,68 @@ const PRESETS = [
   { label: 'Behind the Sun', deg: 180 },
 ];
 
+/** "Trade with this desk": buy or sell, a size, and one button that says exactly what will happen. */
+function Ticket({ body, onTrade }: { body: BodyId; onTrade: (side: 'buy' | 'sell', size: number) => void }) {
+  const [side, setSide] = useState<'buy' | 'sell'>('sell');
+  const [size, setSize] = useState(5);
+  const clampSize = (n: number) => Math.max(1, Math.min(20, Math.round(n) || 1));
+  const label = `${side === 'sell' ? 'Sell' : 'Buy'} ${size} ${side === 'sell' ? 'to' : 'from'} the ${BODY_LABEL[body]} desk`;
+  return (
+    <form
+      className="ticket"
+      aria-label="Trade with this desk"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onTrade(side, size);
+      }}
+    >
+      <h3>Trade with this desk</h3>
+      <div className="seg" role="group" aria-label="Buy or sell">
+        <button type="button" aria-pressed={side === 'buy'} onClick={() => setSide('buy')}>
+          Buy Mars credits
+        </button>
+        <button type="button" aria-pressed={side === 'sell'} onClick={() => setSide('sell')}>
+          Sell Mars credits
+        </button>
+      </div>
+      <div className="stepper">
+        <button type="button" className="quiet" aria-label="One fewer" onClick={() => setSize(clampSize(size - 1))}>
+          −
+        </button>
+        <input
+          type="number"
+          min={1}
+          max={20}
+          value={size}
+          aria-label="How many Mars credits"
+          onChange={(e) => setSize(clampSize(Number(e.target.value)))}
+        />
+        <button type="button" className="quiet" aria-label="One more" onClick={() => setSize(clampSize(size + 1))}>
+          +
+        </button>
+      </div>
+      <button type="submit" className="primary">
+        {label}
+      </button>
+      <p>Your order goes to all three banks at once.</p>
+    </form>
+  );
+}
+
 function Inspector({
   arena,
   view,
   body,
   onClose,
   onToggleLink,
+  onTrade,
 }: {
   arena: Arena;
   view: StrategyId;
   body: BodyId;
   onClose: () => void;
   onToggleLink: (a: BodyId, b: BodyId) => void;
+  onTrade: (side: 'buy' | 'sell', size: number) => void;
 }) {
   const w = arena.worlds[view];
   const d = w.deskViews().find((v) => v.id === body)!;
@@ -53,6 +105,7 @@ function Inspector({
           Close
         </button>
       </header>
+      <Ticket body={body} onTrade={onTrade} />
       <dl>
         <div>
           <dt>State</dt>
@@ -267,6 +320,14 @@ export function App() {
   const [view, setView] = useState<StrategyId>('leased');
   const [selected, setSelected] = useState<BodyId | null>(null);
   const [scenarioId, setScenarioId] = useState<string | null>(null);
+  const [followed, setFollowed] = useState<FollowedTrade | null>(null);
+  const [tab, setTab] = useState<'trade' | 'banks'>('banks');
+  /** The speed to go back to when following ends, if following slowed things down. */
+  const savedSpeed = useRef<number | null>(null);
+  const followingRef = useRef<number | null>(null);
+  followingRef.current = followed?.trade ?? null;
+  const bottom = useRef<HTMLDivElement>(null);
+  const banksHeight = useRef(0);
   const [, repaint] = useReducer((n: number) => n + 1, 0);
 
   const series = useRef<number[] | undefined>(undefined);
@@ -315,7 +376,16 @@ export function App() {
     return () => cancelAnimationFrame(id);
   }, []);
 
+  const endFollow = () => {
+    if (savedSpeed.current !== null) setSpeed(savedSpeed.current);
+    savedSpeed.current = null;
+    setFollowed(null);
+    setTab('banks');
+  };
+
+  /** Replacing the bank loses any visitor trades, so stop following. */
   const swapIn = (run: { arena: Arena; director: Director } | Arena) => {
+    if (followingRef.current !== null) endFollow();
     if (run instanceof Arena) {
       arena.current = run;
       director.current = null;
@@ -366,8 +436,17 @@ export function App() {
 
   const getWorld = useCallback(() => arena.current!.worlds[live.current.view], []);
   const getNow = useCallback(() => arena.current!.now + partial.current, []);
-  const getFollowing = useCallback(() => null, []);
-  const getBelieves = useCallback(() => null, []);
+  const getFollowing = useCallback(() => followingRef.current, []);
+  /** While following a trade, each planet says what its desk believes the bank holds. */
+  const getBelieves = useCallback((): PerBody<string | null> | null => {
+    if (followingRef.current === null) return null;
+    const w = arena.current!.worlds[live.current.view];
+    return perBody((b) => {
+      const v = w.desks[b].believedTotal();
+      if (!v) return null;
+      return v.low === v.high ? `believes ${signed(v.low)}` : `believes ${signed(v.low)} to ${signed(v.high)}`;
+    });
+  }, []);
   const pause = useCallback(() => {
     const was = live.current.running;
     live.current.running = false;
@@ -387,6 +466,26 @@ export function App() {
   const blackout = lead.blackout;
   const panic = lead.panic;
   const sep = Math.round(separationDeg(lead.orbit));
+
+  const placeTrade = (at: BodyId, side: 'buy' | 'sell', size: number) => {
+    // A finished scenario carries on as free play, so the trade can play out.
+    if (dir?.done) {
+      director.current = null;
+      setScenarioId(null);
+    }
+    const trade = a.placeTrade(at, side, size);
+    setFollowed({ trade, at, side, size });
+    if (banksHeight.current === 0 && bottom.current) banksHeight.current = bottom.current.offsetHeight;
+    setTab('trade');
+    if (speed > 1 && savedSpeed.current === null) {
+      savedSpeed.current = speed;
+      setSpeed(1);
+    }
+    if (!running) {
+      live.current.running = true;
+      setRunning(true);
+    }
+  };
 
   const toggleLink = (x: BodyId, y: BodyId) => {
     a.toggleCut(x, y);
@@ -462,6 +561,14 @@ export function App() {
             </b>
           </div>
         </div>
+        {followed && (
+          <div className="readouts holds">
+            <div>
+              <span>Bank really holds</span>
+              <b>{signed(a.worlds[view].totalPosition())}</b>
+            </div>
+          </div>
+        )}
         <ScenarioMenu current={scenario} onChoose={chooseScenario} />
         <div className="session">
           <label>
@@ -488,9 +595,16 @@ export function App() {
           onPause={pause}
           onResume={resume}
         />
-        <p className="hint">Scroll to zoom, drag to pan. Click a planet to open its desk, or a link to cut it.</p>
+        <p className="hint">Click a planet to trade with its desk. Hover a message to read it. Click a link to cut it.</p>
         {selected && (
-          <Inspector arena={a} view={view} body={selected} onClose={() => setSelected(null)} onToggleLink={toggleLink} />
+          <Inspector
+            arena={a}
+            view={view}
+            body={selected}
+            onClose={() => setSelected(null)}
+            onToggleLink={toggleLink}
+            onTrade={(side, size) => placeTrade(selected, side, size)}
+          />
         )}
 
         <div className="dock glass" role="toolbar" aria-label="Simulation controls">
@@ -558,16 +672,50 @@ export function App() {
         </div>
       </main>
 
-      <Intel
-        arena={a}
-        view={view}
-        selected={selected}
-        onView={setView}
-        onSelect={(s, b) => {
-          setView(s);
-          setSelected(b);
-        }}
-      />
+      <div
+        className="bottom"
+        ref={bottom}
+        style={tab === 'trade' && banksHeight.current > 0 ? { height: banksHeight.current } : undefined}
+      >
+        <div className="tabs" role="tablist" aria-label="Bottom panel">
+          {(
+            [
+              ['trade', 'Your trade'],
+              ['banks', 'The banks'],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              role="tab"
+              id={`tab-${id}`}
+              aria-selected={tab === id}
+              aria-controls="bottom-panel"
+              onClick={() => {
+                if (tab === 'banks' && bottom.current) banksHeight.current = bottom.current.offsetHeight;
+                setTab(id);
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div id="bottom-panel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="tabPanel">
+          {tab === 'banks' ? (
+            <Intel
+              arena={a}
+              view={view}
+              selected={selected}
+              onView={setView}
+              onSelect={(s, b) => {
+                setView(s);
+                setSelected(b);
+              }}
+            />
+          ) : (
+            <Story arena={a} followed={followed} view={view} onView={setView} onDone={endFollow} />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

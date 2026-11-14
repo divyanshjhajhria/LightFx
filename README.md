@@ -4,6 +4,17 @@ One bank, three currency desks (Earth, Moon, Mars), quoting dollars against Mars
 Messages between desks travel at light speed and stop in a solar storm, so no desk can wait for head office.
 The app runs three ways of managing the bank's risk limit side by side on identical events.
 
+## Try it: follow a trade
+
+1. Open the app (`npm run dev`) and click Mars.
+2. Under "Trade with this desk", choose "Sell Mars credits", leave the size at 5, and press "Sell 5 to the Mars desk".
+   Your order goes to all three banks at once.
+3. Watch "Your trade" at the bottom: one column per bank, in plain words. Ours says yes on the spot; the naive
+   bank says yes too; the central bank has to ask Earth and you wait about 40 minutes for the answer.
+4. Hover any bright dot on the canvas to read the message it carries. Click one to pause and pin it.
+5. Press "Solar storm" and place the same trade again. Ours still says yes and keeps trying to tell the others;
+   the central bank's request is lost; the naive bank's Earth desk works from a total that is now wrong.
+
 ## Run it
 
 ```
@@ -59,6 +70,22 @@ To add one, append a `Scenario` to `src/sim/scenarios.ts` (events sorted by time
 and run `npm test`: the scenario tests check every preset is well formed and never breaches the limit.
 Then `npm run sim -- <id>` prints the three banks each time a note fires and at the end.
 
+## Visitor trades, their stories and what desks believe
+
+- `Arena.placeTrade(at, side, size)` places one visitor trade at all three banks and returns its id.
+  `World.placeTrade` builds a customer who takes whatever price is quoted (with `cfg.visitorPatience` minutes of
+  patience) and sends it down exactly the same path as every other customer. It draws no random numbers, so the
+  background customers and prices stay identical. `Arena.cancelTrade(id)` means the visitor walked away; only a
+  central desk still waiting on Earth does anything with it.
+- `World.trace(id)` is the trade's story at that bank, oldest first, for the 10 most recent trades
+  (`src/sim/trace.ts`): placed, filled or refused (and why), asked Earth, Earth approved or declined, too late,
+  gave up, told a peer, could not tell a peer (recorded once per peer), and heard. World records most of it from its
+  god view; central desks report their own steps through an optional `DeskCtx.report`, which never feeds back into
+  a decision. Messages that carry a trade's news are tagged with its id so the canvas can pick them out.
+- `Desk.believedTotal()` is what a desk thinks the whole bank holds: the naive desk's own position plus the last
+  positions it heard (the figure it trades against); the same sum for our desks, which keep it but never rely on
+  it; head office's lower and upper bounds for the central bank. The planets show it while you follow a trade.
+
 ## Where things are
 
 ```
@@ -72,9 +99,13 @@ src/sim/desks.ts     the three strategies behind one Desk interface
 src/sim/world.ts     one bank's main loop; Arena runs all three on one seed
 src/sim/scenario.ts  scenario events, the Director that plays them, startScenario and runScenario
 src/sim/scenarios.ts the preset scenarios in the menu
+src/sim/trace.ts     the steps of a visitor trade's story
 src/ui/App.tsx       top bar, scenario menu, timeline, control dock, desk inspector, main loop
 src/ui/SolarView.tsx the solar system canvas: camera, messages, drops, planets
-src/ui/Intel.tsx     the three-strategy comparison panel
+src/ui/Intel.tsx     the three-strategy comparison panel ("The banks")
+src/ui/StoryPanel.tsx "Your trade": the visitor trade's story, one column per bank
+src/ui/story.ts      the plain-English sentence for each step of a story
+src/ui/describe.ts   the plain-English description of a message, for the hover tooltip
 src/ui/theme.ts      colours, labels and number formatting shared by the above
 scripts/             headless scenario runner; netting study; CSV to JSON converter for real prices
 tests/               orbits, network, market feed, safety property, demo scenario, netting, scenarios
@@ -83,17 +114,27 @@ tests/               orbits, network, market feed, safety property, demo scenari
 ## Using the view
 
 - Scroll to zoom, drag to pan, double-click or "Reset view" to return.
-- Click a planet, or a desk row in the bottom panel, to open that desk.
+- Click a planet, or a desk row in the bottom panel, to open that desk. Its panel starts with a trade ticket:
+  buy or sell, a size from 1 to 20, and one button. Placing a trade follows it: the speed drops to 1x (and goes
+  back when you press "Done"), other messages fade, the trade's own messages are drawn larger with a countdown,
+  each planet shows what its desk believes the bank holds, and the top bar shows what the bank really holds.
+- The bottom panel has two tabs. "Your trade" tells the followed trade's story at each bank, with a live row
+  for anything still on its way; the central column has "Give up waiting". "The banks" is the comparison.
+- Hover a message to read it in plain words; click it to pause with the description pinned, and press "Resume",
+  Escape, or click empty space to carry on. "Show market news" draws the price news too.
+- On the canvas a click picks, in order: a planet, a message, a link, or empty space (which closes the desk).
 - Click a link between two planets to cut it, and again to restore it. A hand-cut link is dashed with a
   cross at its middle. The desk panel has the same switches under "Links", for keyboard and touch.
 - The "Scenario" menu loads a preset. While one is loaded, a timeline under the top bar shows the
   presenter's caption, a tick for each event, a band where the storm is on, and the time. Click the
   track to jump there (arrow keys jump 10 minutes). A jump replays the script from the start, so changes
-  you made by hand are lost. When a scenario ends, the play button plays it again from the start.
+  you made by hand are lost, visitor trades included (following stops). When a scenario ends, the play button
+  plays it again from the start; placing a trade after the end carries on in free play.
 - The storm, panic and Mars controls always show the simulation's real state, including changes a
   scenario makes.
 - Click a strategy's name to watch its message traffic on the canvas.
-- Bright streaks are desks talking; faint specks are market news; a red cross is a message sent into a dead link.
+- Bright dots with trails are desks talking; a large labelled dot is position being handed from one desk to
+  another; a red cross is a message sent into a dead link.
 - Space bar plays and pauses.
 - Green, amber and red only ever mean a desk's state (normal, degraded, reduce-only or halted) or a breach.
 
