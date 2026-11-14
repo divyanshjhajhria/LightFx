@@ -120,6 +120,8 @@ export interface DeskView {
   halfSpreadBps: number | null;
   pnl: number;
   volFilled: number;
+  /** Customers this desk has traded with. */
+  served: number;
   /** Minutes until the desk goes reduce-only if it hears nothing more. Null for strategies without leases. */
   leaseLeft: number | null;
   /** Units this desk has netted with its peers, handed over plus taken in. Always 0 for strategies without netting. */

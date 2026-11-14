@@ -544,6 +544,7 @@ export class World {
         halfSpreadBps: q ? ((q.ask - q.bid) / (q.ask + q.bid)) * 1e4 : null,
         pnl: d.cash + d.pos * px,
         volFilled: d.volFilled,
+        served: d.served,
         netted: d.netting().outUnits + d.netting().inUnits,
         believed: d.believedTotal(),
       };

@@ -126,7 +126,8 @@ export function BanksChart({ arena, mode, view, onView, hover }: Props) {
           <text x={LEFT + 4} y={y(L) - 5} className="chartLabel limitLabel">
             Limit +{L}
           </text>
-          <text x={LEFT + 4} y={y(-L) + 14} className="chartLabel limitLabel">
+          {/* Above its line: below it there are only a few pixels before the time axis on the ±1.2 × limit scale. */}
+          <text x={LEFT + 4} y={y(-L) - 5} className="chartLabel limitLabel">
             Limit −{L}
           </text>
 

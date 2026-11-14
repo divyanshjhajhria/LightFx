@@ -1,40 +1,13 @@
 import { STRATEGIES } from '../sim/types';
 import type { BodyId, DeskView, StrategyId } from '../sim/types';
 import type { Arena, World } from '../sim/world';
+import { BanksChart } from './BanksChart';
+import type { TimeMode } from './chartMath';
 import { BODY_LABEL, MODE_LABEL, STATE, STRATEGY, signed } from './theme';
+import { verdict } from './verdict';
 
-/** Total position over time. The trace turns red wherever it is outside the limit. */
-function ExposureChart({ w }: { w: World }) {
-  const L = w.cfg.limit;
-  const pts = w.history;
-  const top = Math.max(L * 1.25, w.metrics.maxAbsTotal * 1.08);
-  const y = (v: number) => 32 - (v / top) * 30;
-  const t0 = pts.length ? pts[0].t : 0;
-  const span = Math.max(1, pts.length ? pts[pts.length - 1].t - t0 : 1);
-  const x = (t: number) => ((t - t0) / span) * 300;
-  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${y(p.total).toFixed(1)}`).join('');
-  const area = pts.length ? `${line}L${x(pts[pts.length - 1].t).toFixed(1)},${y(0)}L0,${y(0)}Z` : '';
-  const clip = `over-${w.strategy}`;
-  return (
-    <svg viewBox="0 0 300 64" className="chart" preserveAspectRatio="none" role="img" aria-label="Total position over time, with the limit marked">
-      <defs>
-        <clipPath id={clip}>
-          <rect x="0" y="0" width="300" height={Math.max(0, y(L))} />
-          <rect x="0" y={y(-L)} width="300" height={Math.max(0, 64 - y(-L))} />
-        </clipPath>
-      </defs>
-      <line x1="0" x2="300" y1={y(L)} y2={y(L)} className="limitLine" />
-      <line x1="0" x2="300" y1={y(-L)} y2={y(-L)} className="limitLine" />
-      <path d={area} className="area" />
-      <path d={line} className="trace" />
-      <path d={line} className="trace over" clipPath={`url(#${clip})`} />
-    </svg>
-  );
-}
-
-function DeskRow({ d, limit, active, onSelect }: { d: DeskView; limit: number; active: boolean; onSelect: () => void }) {
-  const cap = d.budget ?? limit;
-  const used = cap > 0 ? Math.min(1, Math.abs(d.pos) / cap) : 1;
+function DeskRow({ d, active, onSelect }: { d: DeskView; active: boolean; onSelect: () => void }) {
+  const used = d.budget ? Math.min(1, Math.abs(d.pos) / d.budget) : 0;
   return (
     <button className={`deskRow ${active ? 'active' : ''}`} onClick={onSelect}>
       <span className="who">
@@ -42,19 +15,20 @@ function DeskRow({ d, limit, active, onSelect }: { d: DeskView; limit: number; a
         {BODY_LABEL[d.id]}
       </span>
       <span className="mode" style={d.mode === 'normal' ? undefined : { color: STATE[d.mode] }}>
-        {MODE_LABEL[d.mode]}
+        {d.mode === 'reduce-only' ? 'Playing safe' : MODE_LABEL[d.mode]}
       </span>
-      <span className="posCell">
+      <span className="holds">
         <span className="num">
           {signed(d.pos)}
           {d.budget !== null && <em> of {d.budget}</em>}
         </span>
-        <span className="bar">
-          <span style={{ width: `${used * 100}%` }} />
-        </span>
+        {d.budget !== null && (
+          <span className="bar">
+            <span style={{ width: `${used * 100}%` }} />
+          </span>
+        )}
       </span>
-      <span className="num right">{d.halfSpreadBps === null ? '' : `±${d.halfSpreadBps.toFixed(1)} bp`}</span>
-      <span className="num right">{d.volFilled}</span>
+      <span className="num right">{d.served}</span>
     </button>
   );
 }
@@ -68,59 +42,41 @@ interface ColumnProps {
 }
 
 function StrategyColumn({ w, viewing, selected, onView, onSelect }: ColumnProps) {
-  const L = w.cfg.limit;
-  const m = w.metrics;
-  const total = w.totalPosition();
-  const over = Math.abs(total) > L;
-  const fill = Math.round((100 * m.volFilled) / Math.max(1, m.volRequested));
-  const overMin = m.breachTicks * w.cfg.dt;
+  const v = verdict(w);
+  const servedPct = Math.round((100 * w.metrics.served) / Math.max(1, w.metrics.arrived));
   return (
     <section className={`column ${viewing ? 'viewing' : ''}`}>
-      <button className="colHead" onClick={onView} aria-pressed={viewing}>
-        <span className="name">
-          {STRATEGY[w.strategy].name}
+      <div className="colTop">
+        <button className="colHead" onClick={onView} aria-pressed={viewing}>
+          <span className="name">{STRATEGY[w.strategy].name}</span>
+          <span className="blurb">{STRATEGY[w.strategy].blurb}</span>
           {viewing && <span className="tag">On canvas</span>}
-        </span>
-        <span className="blurb">{STRATEGY[w.strategy].blurb}</span>
-      </button>
-
-      <div className="headline">
-        <div className={`exposure ${over ? 'alert' : ''}`}>
-          {signed(total)}
-          <span>
-            of {'±'}
-            {L} limit
-          </span>
-        </div>
-        <dl>
-          <div className={overMin > 0 || over ? 'alert' : ''}>
-            <dt>Over limit</dt>
-            {/* Just crossed: say so, rather than "0 min" beside a total that is already red. */}
-            <dd>{over && overMin < 1 ? 'now' : `${overMin.toFixed(0)} min`}</dd>
-          </div>
-          <div>
-            <dt>Volume filled</dt>
-            <dd>{fill}%</dd>
-          </div>
-          <div>
-            <dt>Profit and loss</dt>
-            <dd>{signed(w.pnl(), 2)}</dd>
-          </div>
-        </dl>
+        </button>
+        <span className="profit">Profit {signed(w.pnl(), 2)}</span>
       </div>
 
-      <ExposureChart w={w} />
+      <p className={`verdict ${v.tone}`}>
+        <i className="dot" style={{ background: v.tone === 'ok' ? STATE.normal : STATE['reduce-only'] }} />
+        {v.text}
+      </p>
+
+      <div className="served">
+        <span className="label">Customers served</span>
+        <span className="bar" role="img" aria-label={`${servedPct}% of customers served`}>
+          <span style={{ width: `${servedPct}%` }} />
+        </span>
+        <b>{servedPct}%</b>
+      </div>
 
       <div className="desks">
         <div className="deskHead">
           <span>Desk</span>
           <span>State</span>
-          <span>Position</span>
-          <span className="right">Spread</span>
-          <span className="right">Filled</span>
+          <span>Holds</span>
+          <span className="right">Served</span>
         </div>
         {w.deskViews().map((d) => (
-          <DeskRow key={d.id} d={d} limit={L} active={viewing && selected === d.id} onSelect={() => onSelect(d.id)} />
+          <DeskRow key={d.id} d={d} active={viewing && selected === d.id} onSelect={() => onSelect(d.id)} />
         ))}
       </div>
     </section>
@@ -131,24 +87,30 @@ interface IntelProps {
   arena: Arena;
   view: StrategyId;
   selected: BodyId | null;
+  mode: TimeMode;
+  /** The chart's hover read-out (off in presenter mode). */
+  hover: boolean;
   onView: (s: StrategyId) => void;
   onSelect: (s: StrategyId, b: BodyId) => void;
 }
 
-/** The three strategies as one comparison: same events, same layout, different outcomes. */
-export function Intel({ arena, view, selected, onView, onSelect }: IntelProps) {
+/** "The banks": one shared chart of the three banks against the limit, then a column for each. */
+export function Intel({ arena, view, selected, mode, hover, onView, onSelect }: IntelProps) {
   return (
-    <div className="intel">
-      {STRATEGIES.map((s) => (
-        <StrategyColumn
-          key={s}
-          w={arena.worlds[s]}
-          viewing={s === view}
-          selected={selected}
-          onView={() => onView(s)}
-          onSelect={(b) => onSelect(s, b)}
-        />
-      ))}
+    <div className="banksPanel">
+      <BanksChart arena={arena} mode={mode} view={view} onView={onView} hover={hover} />
+      <div className="intel">
+        {STRATEGIES.map((s) => (
+          <StrategyColumn
+            key={s}
+            w={arena.worlds[s]}
+            viewing={s === view}
+            selected={selected}
+            onView={() => onView(s)}
+            onSelect={(b) => onSelect(s, b)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

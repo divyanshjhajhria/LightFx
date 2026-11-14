@@ -1000,11 +1000,11 @@ input[type='range']::-moz-range-thumb {
 .tabs {
   display: flex;
   gap: 4px;
-  padding: 6px 22px 0;
+  padding: 0 22px;
 }
 
 .tabs button {
-  padding: 6px 6px 7px;
+  padding: 4px 6px 4px;
   font-size: 12.5px;
   color: var(--text-3);
   border-bottom: 1px solid transparent;
@@ -1152,7 +1152,7 @@ input[type='range']::-moz-range-thumb {
 
 .banksChart {
   position: relative;
-  margin: 8px 16px 2px 16px;
+  margin: 4px 16px 0;
 }
 
 .banksChart svg {
@@ -1213,6 +1213,7 @@ input[type='range']::-moz-range-thumb {
 .chartReadout b {
   font-weight: 500;
 }
+
 
 .intel {
   display: grid;
@@ -1276,83 +1277,141 @@ input[type='range']::-moz-range-thumb {
   margin-top: 1px;
 }
 
-.headline {
+/* ---- The banks: columns under the chart ----------------------------------- */
+
+/* One fixed height for the whole bottom panel on desktop, both tabs, so the canvas above never changes size. */
+@media (min-width: 901px) {
+  .bottom {
+    height: 351px !important;
+  }
+
+  .tabPanel {
+    overflow: hidden;
+  }
+}
+
+.banksPanel {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  margin-top: 12px;
+  flex-direction: column;
+  height: 100%;
 }
 
-.exposure {
-  font-size: 34px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1;
+.banksPanel .intel {
+  flex: 1;
+  min-height: 0;
+  background: none;
+}
+
+.banksPanel .column {
+  padding: 4px 22px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.banksPanel .column.viewing::before {
+  left: 22px;
+  right: 22px;
+}
+
+.colTop {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.banksPanel .colHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
   white-space: nowrap;
+  overflow: hidden;
 }
 
-.exposure span {
-  margin-left: 8px;
+.banksPanel .colHead .name {
+  display: inline;
+  flex: none;
+}
+
+.banksPanel .colHead .blurb {
+  display: inline;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-2);
+}
+
+.banksPanel .colHead .tag {
+  flex: none;
+}
+
+.profit {
+  flex: none;
   font-size: 12px;
-  font-weight: 400;
-  letter-spacing: 0;
-  color: var(--text-3);
-}
-
-.headline dl {
-  display: flex;
-  gap: 22px;
-  margin: 0;
-}
-
-.headline dt {
-  font-size: 11px;
-  color: var(--text-3);
+  color: var(--text-2);
   white-space: nowrap;
 }
 
-.headline dd {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 500;
+.verdict {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 1px 0 0;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--text);
 }
 
-.chart {
+.verdict.alert {
+  color: var(--alert);
+}
+
+.verdict .dot {
+  width: 8px;
+  height: 8px;
+}
+
+.served {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+  height: 20px;
+}
+
+.served .label {
+  font-size: 12px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.served .bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--hair-strong);
+  overflow: hidden;
+}
+
+.served .bar span {
   display: block;
-  width: 100%;
-  height: 56px;
-  margin: 10px 0 8px;
-  overflow: visible;
+  height: 100%;
+  background: rgba(var(--warm), 0.7);
 }
 
-.chart .limitLine {
-  stroke: rgba(var(--warm), 0.2);
-  stroke-width: 1;
-  stroke-dasharray: 2 4;
-  vector-effect: non-scaling-stroke;
-}
-
-.chart .area {
-  fill: rgba(var(--warm), 0.05);
-}
-
-.chart .trace {
-  fill: none;
-  stroke: rgba(var(--warm), 0.9);
-  stroke-width: 1.4;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-}
-
-.chart .trace.over {
-  stroke: var(--alert);
+.served b {
+  font-size: 15px;
+  font-weight: 500;
+  min-width: 40px;
+  text-align: right;
 }
 
 .deskHead,
 .deskRow {
   display: grid;
-  grid-template-columns: 62px minmax(70px, 1fr) minmax(96px, 1.2fr) 64px 46px;
+  grid-template-columns: 72px minmax(80px, 1fr) minmax(110px, 1.3fr) 54px;
   align-items: center;
   gap: 10px;
   width: 100%;
@@ -1360,18 +1419,20 @@ input[type='range']::-moz-range-thumb {
 }
 
 .deskHead {
+  margin-top: 0;
   font-size: 11px;
-  color: var(--text-3);
-  padding-bottom: 4px;
+  line-height: 14px;
+  color: var(--text-2);
   border-bottom: 1px solid var(--hair);
 }
 
 .deskRow {
-  padding: 5px 6px;
+  height: 28px;
+  padding: 0 6px;
   margin: 0 -6px;
   width: calc(100% + 12px);
   border-radius: 8px;
-  font-size: 12.5px;
+  font-size: 13px;
   transition: background 0.15s;
 }
 
@@ -1387,14 +1448,14 @@ input[type='range']::-moz-range-thumb {
 }
 
 .mode {
-  color: var(--text-3);
+  color: var(--text-2);
   white-space: nowrap;
 }
 
-.posCell {
+.holds {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .bar {
@@ -1403,6 +1464,10 @@ input[type='range']::-moz-range-thumb {
   background: var(--hair);
   border-radius: 2px;
   overflow: hidden;
+}
+
+.holds .bar {
+  height: 4px;
 }
 
 .bar span {
@@ -1418,12 +1483,6 @@ input[type='range']::-moz-range-thumb {
 /* ---- Smaller screens ------------------------------------------------------ */
 
 @media (max-width: 1180px) {
-  .headline {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
   .dock {
     flex-wrap: wrap;
     justify-content: center;

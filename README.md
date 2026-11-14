@@ -175,7 +175,9 @@ src/sim/guide.ts     the guided demo: its seven steps and the state machine that
 src/sim/briefing.ts  what one desk knows, for its voice (deskEvents.ts: the events it keeps)
 src/ui/App.tsx       top bar, scenario menu, timeline, control dock, desk inspector, main loop
 src/ui/SolarView.tsx the solar system canvas: camera, messages, drops, planets
-src/ui/Intel.tsx     the three-strategy comparison panel ("The banks")
+src/ui/Intel.tsx     "The banks": the shared chart, then a column per bank (verdict, customers served, desks)
+src/ui/BanksChart.tsx the one chart of all three banks against the limit; chartMath.ts holds its pure maths
+src/ui/verdict.ts    the one-sentence verdict under each bank
 src/ui/StoryPanel.tsx "Your trade": the visitor trade's story, one column per bank
 src/ui/story.ts      the plain-English sentence for each step of a story
 src/ui/describe.ts   the plain-English description of a message, for the hover tooltip
@@ -197,8 +199,19 @@ tests/               orbits, network, market feed, safety property, demo scenari
   buy or sell, a size from 1 to 20, and one button. Placing a trade follows it: the speed drops to 1x (and goes
   back when you press "Done"), other messages fade, the trade's own messages are drawn larger with a countdown,
   each planet shows what its desk believes the bank holds, and the top bar shows what the bank really holds.
-- The bottom panel has two tabs. "Your trade" tells the followed trade's story at each bank, with a live row
-  for anything still on its way; the central column has "Give up waiting". "The banks" is the comparison.
+- The bottom panel has two tabs, always the same height so the canvas never jumps. "Your trade" tells the
+  followed trade's story at each bank, with a live row for anything still on its way; the column for the bank
+  that asks Earth has "Give up waiting".
+- "The banks" opens with one chart: what each bank really holds over time, all three on the same scale, against
+  the bank's limit (the labelled lines; the pale band between them is safe). A strip along the top marks the solar
+  storm and the panic, and a diamond marks each of your trades. Wherever a bank goes past its limit the line turns
+  red and the gap between it and the limit is filled red: the wider the shape, the longer the breach; the taller,
+  the further. Labels at the end of each line give each bank's total now; click one, or a line, to show that bank
+  on the canvas. Hover the chart for the figures at any minute (not in the guided demo). In a scenario or the
+  guided demo the chart runs left to right and never rescales; in free play it shows the last four hours.
+- Under the chart, a column per bank: its name, a one-line verdict ("Over its limit now. 71 min so far.",
+  "Inside its limit. Mars is playing safe."), the share of customers it has served, and its three desks with what
+  each holds (and, for our bank, out of what allowance) and how many customers it has served.
 - Hover a message to read it in plain words; click it to pause with the description pinned, and press "Resume",
   Escape, or click empty space to carry on. "Show market news" draws the price news too.
 - On the canvas a click picks, in order: a planet, a message, a link, or empty space (which closes the desk).

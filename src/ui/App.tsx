@@ -1062,6 +1062,14 @@ export function App() {
               arena={a}
               view={view}
               selected={selected}
+              mode={
+                presenting
+                  ? { kind: 'guided', startMin: GUIDE_WARMUP }
+                  : scenario
+                    ? { kind: 'scenario', durationMin: scenario.durationMin }
+                    : { kind: 'free' }
+              }
+              hover={!presenting}
               onView={setView}
               onSelect={(s, b) => {
                 setView(s);
