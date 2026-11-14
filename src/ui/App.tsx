@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { lightDelayMin, separationDeg } from '../sim/orbits';
 import { GUIDE_BEATS, GUIDE_SEED, GUIDE_SEPARATION, GUIDE_WARMUP, Guide } from '../sim/guide';
@@ -23,6 +23,8 @@ import { MorePanel } from './MorePanel';
 import { Overview } from './Overview';
 import { DockMenu, Tip } from './Tip';
 import { activity } from './activity';
+import { NO_INSETS } from './fit';
+import type { Insets } from './fit';
 import type { AgentOption } from './MorePanel';
 import type { Decider } from './AgentsPanel';
 import { ModelVoice, systemPrompt } from './modelVoice';
@@ -572,6 +574,38 @@ export function App() {
   const [allVoices, setAllVoices] = useState(false);
   const [showNews, setShowNews] = useState(false);
   const [resetSignal, setResetSignal] = useState(0);
+  // What covers the stage (the feed, the desk panel, the dock or the caption bar), measured after every render, so the
+  // solar system is fitted to the rest of it.
+  const stageRef = useRef<HTMLElement>(null);
+  const [insets, setInsets] = useState<Insets>(NO_INSETS);
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const s = stage.getBoundingClientRect();
+    const box = (sel: string) => {
+      const el = stage.querySelector<HTMLElement>(sel);
+      const r = el?.getBoundingClientRect();
+      return r && r.width > 0 && r.height > 0 ? r : null;
+    };
+    const feed = box('.feed');
+    const panel = box('.inspector');
+    let bottom = 0;
+    for (const sel of ['.dock', '.captionBar', '.presenterHint']) {
+      const r = box(sel);
+      if (r) bottom = Math.max(bottom, s.bottom - r.top + 8);
+    }
+    const next: Insets = {
+      top: 0,
+      // A desk panel that spans most of the stage (narrow screens) sits over the system whatever the fit: ignore it.
+      // A clear 32px beside the panel and the feed, so a planet's label (up to about 70px either side) stays clear too.
+      right: panel && panel.width < s.width * 0.6 ? Math.round(s.right - panel.left + 32) : 0,
+      bottom: Math.round(bottom),
+      left: feed ? Math.round(feed.right - s.left + 32) : 0,
+    };
+    if (next.top !== insets.top || next.right !== insets.right || next.bottom !== insets.bottom || next.left !== insets.left) {
+      setInsets(next);
+    }
+  });
   const modelVoice = useRef<ModelVoice | null>(null);
   if (!modelVoice.current) modelVoice.current = new ModelVoice(LLM, undefined, () => queueMicrotask(repaint));
   const demoStart = useRef(0);
@@ -1168,7 +1202,7 @@ export function App() {
         <>
           {dir && !presenting && <Timeline director={dir} onJump={jump} />}
 
-          <main className="stage">
+          <main className="stage" ref={stageRef}>
             <SolarView
               getWorld={getWorld}
               getNow={getNow}
@@ -1186,6 +1220,7 @@ export function App() {
               holdMs={holdMs}
               showNews={showNews}
               resetSignal={resetSignal}
+              insets={insets}
             />
             {!presenting &&
               (feed.length > 0 ? (

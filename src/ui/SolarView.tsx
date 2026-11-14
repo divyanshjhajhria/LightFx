@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { position } from '../sim/orbits';
 import type { Vec } from '../sim/orbits';
+import { BODIES } from '../sim/types';
 import type { BodyId, Envelope, PerBody } from '../sim/types';
 import type { World } from '../sim/world';
 import { describeEnvelope } from './describe';
+import { NO_INSETS, fitRect } from './fit';
+import type { Insets } from './fit';
 import { useSteadyText } from './steadyText';
 import { ALERT_RGB, BODY_LABEL, BODY_NAME, FONT, MODE_LABEL, STATE, WARM } from './theme';
 
 /** The view looks down on the orbital plane at an angle: vertical distances are squashed by this factor. */
 const TILT = 0.42;
-/** The Sun sits slightly above centre so the bottom of Mars's orbit clears the control dock. */
-const LIFT = 12;
 /** The real Moon would sit inside Earth's disc at this scale, so it is drawn further out. */
 const MOON_DISPLAY_AU = 0.085;
 const DRAW_ORDER: BodyId[] = ['earth', 'moon', 'mars'];
@@ -29,6 +30,11 @@ interface Camera {
   tcy: number;
   tzoom: number;
   fit: number;
+  /** The screen point the camera centre is drawn at: the middle of the uncovered stage. Eases like the zoom. */
+  ox: number;
+  oy: number;
+  tox: number;
+  toy: number;
   touched: boolean;
 }
 
@@ -130,8 +136,8 @@ function cross(g: CanvasRenderingContext2D, x: number, y: number, alpha: number)
 function draw(f: Frame): void {
   const { g, W, H, cam, w, now, tReal, selected, fx, stars, still, hoverLink, showNews, noteText, following, believes, shown } = f;
   const P = (v: Vec): [number, number] => [
-    W / 2 + (v.x - cam.cx) * cam.zoom,
-    H / 2 - LIFT - (v.y - cam.cy) * cam.zoom * TILT,
+    cam.ox + (v.x - cam.cx) * cam.zoom,
+    cam.oy - (v.y - cam.cy) * cam.zoom * TILT,
   ];
   g.clearRect(0, 0, W, H);
 
@@ -534,6 +540,8 @@ interface Props {
   showNews: boolean;
   /** Bumped to return the camera to its starting view. */
   resetSignal: number;
+  /** Parts of the stage covered by overlays; the system is fitted to the rest. */
+  insets?: Insets;
 }
 
 /**
@@ -557,11 +565,35 @@ export function SolarView({
   holdMs,
   showNews,
   resetSignal,
+  insets,
 }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const tip = useRef<HTMLDivElement>(null);
-  const cam = useRef<Camera>({ cx: 0, cy: 0, zoom: 200, tcx: 0, tcy: 0, tzoom: 200, fit: 200, touched: false });
+  const cam = useRef<Camera>({ cx: 0, cy: 0, zoom: 200, tcx: 0, tcy: 0, tzoom: 200, fit: 200, ox: 0, oy: 0, tox: 0, toy: 0, touched: false });
+  /** What covers the stage now, and the stage's size, for fitting. */
+  const cover = useRef<{ insets: Insets; W: number; H: number }>({ insets: insets ?? NO_INSETS, W: 0, H: 0 });
+  cover.current.insets = insets ?? NO_INSETS;
+  /**
+   * Fit the view to the uncovered stage. The camera eases there, as it does on resize; a view moved by hand is left
+   * alone until "Reset view". The first fit is immediate.
+   */
+  const refit = useCallback((force = false) => {
+    const c = cam.current;
+    const { W, H } = cover.current;
+    if (W <= 0 || H <= 0) return;
+    const f = fitRect(W, H, cover.current.insets, TILT);
+    c.fit = f.fit;
+    if (!c.touched || force) {
+      c.tzoom = f.fit;
+      c.tox = f.x;
+      c.toy = f.y;
+    }
+    if (c.ox === 0 && c.oy === 0) {
+      c.ox = f.x;
+      c.oy = f.y;
+    }
+  }, []);
   const live = useRef({ selected, onSelect, onToggleLink, onPause, onResume, showNews, canPin, noteText: !!allVoices?.on });
   live.current = { selected, onSelect, onToggleLink, onPause, onResume, showNews, canPin, noteText: !!allVoices?.on };
   /** The pinned message (by envelope id), and whether the simulation was running when it was pinned. */
@@ -571,9 +603,13 @@ export function SolarView({
     const c = cam.current;
     c.tcx = 0;
     c.tcy = 0;
-    c.tzoom = c.fit;
     c.touched = false;
-  }, []);
+    refit(true);
+  }, [refit]);
+  const insetKey = insets ? `${insets.top},${insets.right},${insets.bottom},${insets.left}` : '';
+  useEffect(() => {
+    refit();
+  }, [insetKey, refit]);
   const firstReset = useRef(resetSignal);
   useEffect(() => {
     if (resetSignal !== firstReset.current) resetView();
@@ -614,10 +650,13 @@ export function SolarView({
       el.width = Math.round(W * dpr);
       el.height = Math.round(H * dpr);
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
-      c.fit = Math.max(40, Math.min((W * 0.9) / 3.2, (H * 0.86) / (3.2 * TILT)));
-      if (!c.touched) c.tzoom = c.fit;
+      cover.current.W = W;
+      cover.current.H = H;
+      refit();
       if (first && W > 0) {
-        c.zoom = c.fit;
+        c.zoom = c.tzoom;
+        c.ox = c.tox;
+        c.oy = c.toy;
         first = false;
       }
       // Resizing the canvas clears it: draw straight away, so the stage never shows a blank frame while the bottom
@@ -634,7 +673,7 @@ export function SolarView({
     };
     const screen = (w: World, b: BodyId): [number, number] => {
       const v = bodyWorld(w, b);
-      return [W / 2 + (v.x - c.cx) * c.zoom, H / 2 - LIFT - (v.y - c.cy) * c.zoom * TILT];
+      return [c.ox + (v.x - c.cx) * c.zoom, c.oy - (v.y - c.cy) * c.zoom * TILT];
     };
     const hit = (mx: number, my: number): BodyId | null => {
       const w = getWorld();
@@ -748,11 +787,11 @@ export function SolarView({
     const wheel = (e: WheelEvent) => {
       e.preventDefault();
       const [mx, my] = local(e);
-      const wx = c.tcx + (mx - W / 2) / c.tzoom;
-      const wy = c.tcy - (my - H / 2 + LIFT) / (c.tzoom * TILT);
+      const wx = c.tcx + (mx - c.tox) / c.tzoom;
+      const wy = c.tcy - (my - c.toy) / (c.tzoom * TILT);
       c.tzoom = clamp(c.tzoom * Math.exp(-e.deltaY * 0.0015), c.fit * 0.6, c.fit * 14);
-      c.tcx = wx - (mx - W / 2) / c.tzoom;
-      c.tcy = wy + (my - H / 2 + LIFT) / (c.tzoom * TILT);
+      c.tcx = wx - (mx - c.tox) / c.tzoom;
+      c.tcy = wy + (my - c.toy) / (c.tzoom * TILT);
       c.touched = true;
     };
     const key = (e: KeyboardEvent) => {
@@ -778,7 +817,7 @@ export function SolarView({
         const r = bodyRadius(b, c.zoom);
         const bw = el.offsetWidth;
         const bh = el.offsetHeight;
-        const right = x < W / 2;
+        const right = x < c.ox;
         const left = clamp(right ? x + r + 10 : x - r - 10 - bw, 8, Math.max(8, W - bw - 8));
         const top = clamp(y - r - 10 - bh, 8, Math.max(8, H - 104 - bh));
         el.style.left = `${left}px`;
@@ -829,6 +868,8 @@ export function SolarView({
       const k = still ? 1 : 1 - Math.exp(-(t - last) / 110);
       last = t;
       c.zoom += (c.tzoom - c.zoom) * k;
+      c.ox += (c.tox - c.ox) * k;
+      c.oy += (c.toy - c.oy) * k;
       c.cx += (c.tcx - c.cx) * k;
       c.cy += (c.tcy - c.cy) * k;
 
@@ -872,6 +913,10 @@ export function SolarView({
         });
         updateTip(w, now);
         placeBubbles(w);
+        // Development builds only: where each planet is drawn, so layout checks can test what covers it.
+        if (import.meta.env.DEV) {
+          box.dataset.planets = JSON.stringify(BODIES.map((b) => [b, ...screen(w, b).map(Math.round), Math.round(bodyRadius(b, c.zoom))]));
+        }
       }
     };
     paintNow = () => paint(getWorld(), performance.now());
