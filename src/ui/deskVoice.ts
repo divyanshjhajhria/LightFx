@@ -25,7 +25,11 @@ function leased(b: DeskBriefing): string {
   if (b.mode === 'reduce-only') {
     return `I have heard nothing from the others for ${mins(word ?? 60)}. I am only taking trades that lower my risk until someone gets through.`;
   }
-  const hand = latest(b, ['took-on', 'handed-over'], 15);
+  // Only hand-overs worth mentioning: a unit or two is noise and falls through to the rules below.
+  const hand = [...b.recent].reverse().find(
+    (e): e is Extract<DeskEvent, { kind: 'took-on' | 'handed-over' }> =>
+      (e.kind === 'took-on' || e.kind === 'handed-over') && e.units >= 3 && b.now - e.t <= 15,
+  );
   if (hand?.kind === 'took-on') return `I have just taken ${hand.units} off ${BODY_NAME[hand.from]}'s hands. We were holding opposite positions.`;
   if (hand?.kind === 'handed-over') return `I have just handed ${hand.units} to ${BODY_NAME[hand.to]}. We were holding opposite positions.`;
   if (b.mode === 'degraded') {
@@ -44,7 +48,9 @@ function leased(b: DeskBriefing): string {
   if (b.allowanceSpare !== null && b.allowanceSpare <= a / 5) {
     return `I am close to my allowance: I hold ${signed(b.holds)} of ${a}. I have asked the others for more room.`;
   }
-  if (b.remoteNewsAgeMin > 30) {
+  // Just back in touch, the newest price is still on its way: do not complain about stale prices for five minutes.
+  const reconnected = b.recent.some((e) => e.kind === 'mode' && e.to === 'normal' && b.now - e.t < 5);
+  if (b.remoteNewsAgeMin > 30 && !reconnected) {
     const from = b.body === 'mars' ? 'earth' : 'mars';
     return `My latest price from ${BODY_NAME[from]} is ${mins(b.remoteNewsAgeMin)} old, so I am quoting wider to be safe.`;
   }

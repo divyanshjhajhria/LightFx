@@ -8,6 +8,9 @@ import type { Scenario } from './scenario';
  */
 export const GAP_HALVED = 186;
 
+/** Trade winds (seed 11): the first whole minute after the 17-unit labelled hand-over from Earth lands at Mars. */
+export const HANDOVER_LANDED = 198;
+
 export const SCENARIOS: Scenario[] = [
   {
     id: 'solar-storm',
@@ -47,7 +50,11 @@ export const SCENARIOS: Scenario[] = [
       { at: 150, kind: 'flow', body: 'earth', sellProb: 0.5 },
       { at: 150, kind: 'flow', body: 'mars', sellProb: 0.5 },
       { at: 150, kind: 'note', text: 'Links return. Watch Earth hand its surplus to Mars.' },
+      // Slow down so the hand-overs can be read as they cross, then speed up again.
+      { at: 150, kind: 'speed', value: 1 },
       { at: GAP_HALVED, kind: 'note', text: 'Earth and Mars have cancelled most of their opposite positions.' },
+      // Back to 4x once the big labelled hand-over (17 units, Earth to Mars, 186.25 to 197.4) has landed.
+      { at: HANDOVER_LANDED, kind: 'speed', value: 4 },
     ],
   },
   {

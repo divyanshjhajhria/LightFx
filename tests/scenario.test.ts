@@ -243,3 +243,33 @@ describe('flow', () => {
     expect(w.flow.moon).toBe(0);
   });
 });
+
+describe('speed events', () => {
+  it('Trade winds plays every labelled Earth to Mars hand-over after reconnection at 1x', () => {
+    const s = preset('reconnect');
+    const speedAt = (t: number) => {
+      let v: number | null = null;
+      for (const e of s.events) if (e.kind === 'speed' && e.at <= t) v = e.value;
+      return v;
+    };
+    const run = startScenario(s);
+    const w = run.arena.worlds.leased;
+    const flights: { from: number; to: number }[] = [];
+    const seen = new Set<number>();
+    while (run.arena.now < s.durationMin) {
+      for (const e of w.net.inFlight) {
+        if (e.payload.kind === 'gossip' && e.payload.handover && e.from === 'earth' && e.to === 'mars' && e.sentAt >= 150 && !seen.has(e.id)) {
+          seen.add(e.id);
+          flights.push({ from: e.sentAt, to: e.deliverAt });
+        }
+      }
+      run.arena.step();
+      run.director.advance();
+    }
+    expect(flights.length).toBeGreaterThan(0);
+    const big = flights.find((f) => f.from >= 186)!;
+    for (let t = big.from; t <= big.to; t += 0.25) expect(speedAt(t)).toBe(1);
+    // The simulation ignores speed events: the director only passes them on.
+    expect(run.director.speedRequest?.value).toBe(4);
+  });
+});

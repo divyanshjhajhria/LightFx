@@ -502,6 +502,7 @@ export function App() {
     startDemo: () => {},
     leaveDemo: () => {},
     hasResults: false,
+    speedRequest: null as Director['speedRequest'],
   });
   live.current = { ...live.current, running, speed, view, presenting };
 
@@ -530,6 +531,12 @@ export function App() {
           }
           a.step();
           d?.advance();
+          // A scenario may ask for a speed; manual buttons win until it asks again.
+          if (d?.speedRequest && d.speedRequest !== live.current.speedRequest) {
+            live.current.speedRequest = d.speedRequest;
+            live.current.speed = d.speedRequest.value;
+            setSpeed(d.speedRequest.value);
+          }
           if (g) live.current.onLines(g.tick(realSec));
           partial.current -= dt;
           n++;

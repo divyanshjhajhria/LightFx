@@ -65,6 +65,18 @@ describe('what a desk says (templated)', () => {
   ];
   for (const [name, b, want] of cases) it(name, () => expect(deskSays(b)).toBe(want));
 
+  it('ignores a hand-over of one or two units', () => {
+    expect(deskSays(brief({ recent: ev({ t: 195, kind: 'took-on', from: 'earth', units: 2 }) }))).toBe(
+      'All quiet. I hold +12 and have 23 of my allowance spare.',
+    );
+  });
+
+  it('does not complain about stale prices just after getting back in touch', () => {
+    const back = brief({ remoteNewsAgeMin: 222, recent: ev({ t: 197, kind: 'mode', from: 'reduce-only', to: 'normal' }) });
+    expect(deskSays(back)).toBe('All quiet. I hold +12 and have 23 of my allowance spare.');
+    expect(deskSays({ ...back, now: 203 })).toBe('My latest price from Earth is 222 minutes old, so I am quoting wider to be safe.');
+  });
+
   it('takes the first rule that matches: playing safe beats turning customers away', () => {
     const b = brief({ mode: 'reduce-only', minutesUntilPlayingSafe: 0, allowanceSpare: 0, recent: ev({ t: 199, kind: 'refused', reason: 'allowance' }) });
     expect(deskSays(b)).toMatch(/^I have heard nothing from the others/);
@@ -82,5 +94,15 @@ describe('what a desk says (templated)', () => {
       expect(s).not.toMatch(/undefined|NaN/);
       expect(s).not.toMatch(/\b(bp|gossip|lease|epoch|rfq)\b/i);
     }
+  });
+});
+
+describe('asking a desk that has just opened', () => {
+  it('says it is waiting for first word, not that it has never heard', async () => {
+    const { readyAnswer, READY_QUESTIONS, JUST_OPENED } = await import('../src/ui/askDesk');
+    const opening = brief({ now: 4, peers: [{ body: 'earth', heardMinAgo: null, lastKnownHolds: null }, { body: 'moon', heardMinAgo: 3.9, lastKnownHolds: 0 }] });
+    expect(readyAnswer(READY_QUESTIONS[1], opening)).toBe(JUST_OPENED);
+    expect(JUST_OPENED).toBe('Just opened. I am waiting for first word from the others.');
+    expect(readyAnswer(READY_QUESTIONS[1], { ...opening, now: 45 })).toMatch(/^I have never heard from Earth\./);
   });
 });

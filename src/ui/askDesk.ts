@@ -11,6 +11,10 @@ export const READY_QUESTIONS = [
   'What happens if you hear nothing for an hour?',
 ] as const;
 
+/** In the first half hour a desk that has not yet heard from a peer is just opening, not cut off. */
+export const JUST_OPENED = 'Just opened. I am waiting for first word from the others.';
+const justOpened = (b: DeskBriefing) => b.now < 30 && b.peers.some((p) => p.heardMinAgo === null);
+
 export const NO_MODEL_ANSWER = 'I can only answer the three questions above until my language model is connected.';
 
 const Name = (b: BodyId) => (b === 'moon' ? 'The Moon' : BODY_NAME[b]);
@@ -40,6 +44,7 @@ function aboutOthers(b: DeskBriefing): string {
     const range = r.low === r.high ? signed(r.low) : `between ${signed(r.low)} and ${signed(r.high)}`;
     return `I do not know what Mars and the Moon hold, only what the whole bank holds by my count: ${range}.`;
   }
+  if (justOpened(b)) return JUST_OPENED;
   return b.peers
     .map((p) =>
       p.heardMinAgo === null || p.lastKnownHolds === null

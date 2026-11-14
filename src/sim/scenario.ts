@@ -10,7 +10,9 @@ export type ScenarioEvent =
   | { at: number; kind: 'cut'; a: BodyId; b: BodyId; on: boolean }
   | { at: number; kind: 'flow'; body: BodyId; sellProb: number }
   /** The presenter's caption. Changes nothing in the simulation. */
-  | { at: number; kind: 'note'; text: string };
+  | { at: number; kind: 'note'; text: string }
+  /** How fast the app should play from here (simulated minutes per second). The simulation ignores it. */
+  | { at: number; kind: 'speed'; value: number };
 
 export interface Scenario {
   /** Lower-case, hyphenated, unique. */
@@ -35,6 +37,8 @@ export interface Scenario {
 export class Director {
   private next = 0;
   private note = '';
+  /** The latest speed the script asks for, and a counter that goes up each time it asks, so the app can follow. */
+  speedRequest: { value: number; version: number } | null = null;
 
   constructor(
     readonly arena: Arena,
@@ -65,6 +69,7 @@ export class Director {
 
   private apply(e: ScenarioEvent): void {
     if (e.kind === 'note') this.note = e.text;
+    else if (e.kind === 'speed') this.speedRequest = { value: e.value, version: (this.speedRequest?.version ?? 0) + 1 };
     else applyEvent(this.arena, e);
   }
 }
@@ -88,6 +93,7 @@ export function applyEvent(a: Arena, e: ScenarioEvent): void {
       a.setFlow(e.body, e.sellProb);
       break;
     case 'note':
+    case 'speed':
       break;
   }
 }
