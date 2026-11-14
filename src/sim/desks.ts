@@ -69,6 +69,9 @@ export interface NettingStats {
   inCash: number;
 }
 
+/** Visitors who walked away that a remote desk remembers, for their stories. */
+export const WALKED_AWAY_KEEP = 50;
+
 const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x));
 
 abstract class BaseDesk implements Desk {
@@ -629,6 +632,8 @@ export class CentralDesk extends BaseDesk {
       // Dropping the customer means a later approval is answered "not filled", which releases Earth's bound.
       this.waiting.delete(id);
       this.walkedAway.set(id, c);
+      // Only the story reads this, and stories keep their last ten trades: older entries can never be told.
+      while (this.walkedAway.size > WALKED_AWAY_KEEP) this.walkedAway.delete(this.walkedAway.keys().next().value!);
       ctx.report?.(trade, { kind: 'gave-up', waited: ctx.now - c.arrivedAt, ...(patienceRanOut ? { patience: true as const } : {}) });
     }
   }

@@ -23,6 +23,8 @@ export const MIN_REAL_SECONDS = 4;
 export const CALL_TIMEOUT_SECONDS = 6;
 /** Simulated minutes between decisions when nothing has happened. */
 export const THINK_EVERY_MIN = 15;
+/** The session log keeps this many entries, the newest; a very long run cannot grow it without limit. */
+export const LOG_KEEP = 10_000;
 
 export interface Checks {
   /** The answer parsed as JSON and survived sanitise(). */
@@ -329,6 +331,7 @@ export class AgentRunner {
 
   private record(body: BodyId, briefing: DeskBriefing, raw: string, directive: Directive | null, checks: Checks): void {
     this.entries.push({ body, simTime: this.arena.now, realSeconds: this.clock() - this.startReal, briefing, raw, directive, checks });
+    if (this.entries.length > LOG_KEEP) this.entries.splice(0, this.entries.length - LOG_KEEP);
   }
 
   /** "Decided N s ago" counts from the newest decision, not from the first of a run of them. */

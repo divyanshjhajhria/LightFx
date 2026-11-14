@@ -539,6 +539,10 @@ function Timeline({ director, onJump }: { director: Director; onJump: (min: numb
 }
 
 export function App() {
+  // Development builds only: ?crash throws, to see the error panel. Production builds leave this out.
+  if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('crash')) {
+    throw new Error('A test crash from ?crash');
+  }
   const [seed, setSeed] = useState(42);
   const [running, setRunning] = useState(true);
   const [speed, setSpeed] = useState(1);
@@ -628,6 +632,7 @@ export function App() {
     onGuideFrame: (_g: Guide) => {},
     startDemo: () => {},
     leaveDemo: () => {},
+    restart: () => {},
     hasResults: false,
     speedRequest: null as Director['speedRequest'],
     agentMode: 'off' as AgentMode,
@@ -1022,6 +1027,12 @@ export function App() {
       const g = guide.current;
       if (!g) {
         if (e.key === 'g' || e.key === 'G') live.current.startDemo();
+        // R restarts whatever is running, with no confirmation: the current scenario, or free play.
+        if (e.key === 'r' || e.key === 'R') {
+          live.current.restart();
+          live.current.running = true;
+          setRunning(true);
+        }
         return;
       }
       if (e.code === 'Space') {
@@ -1045,14 +1056,53 @@ export function App() {
         setMutedState(m);
       } else if (e.key === 'Escape') {
         live.current.leaveDemo();
+      } else if (e.key === 'r' || e.key === 'R') {
+        // The guided demo again from its first step, with nothing left over.
+        live.current.startDemo();
       }
     };
     window.addEventListener('keydown', key, { capture: true });
     return () => window.removeEventListener('keydown', key, { capture: true });
   }, []);
   live.current.startDemo = startDemo;
+  live.current.restart = restart;
   live.current.leaveDemo = leaveDemo;
   live.current.hasResults = results !== null;
+
+  // During the guided demo the page holds still: no scrolling, and browser zoom by ctrl-scroll, pinch or keys is
+  // ignored, so a stray gesture cannot spoil the screen. Text selection is off in CSS (.app.presenting).
+  useEffect(() => {
+    if (!presenting) return;
+    const html = document.documentElement;
+    const before = [html.style.overflow, document.body.style.overflow];
+    html.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    window.scrollTo(0, 0);
+    const wheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) e.preventDefault();
+    };
+    const keys = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && ['+', '-', '=', '_', '0'].includes(e.key)) e.preventDefault();
+    };
+    const stop = (e: Event) => e.preventDefault();
+    const touch = (e: TouchEvent) => {
+      if (e.touches.length > 1) e.preventDefault();
+    };
+    const opts = { passive: false } as const;
+    window.addEventListener('wheel', wheel, opts);
+    window.addEventListener('keydown', keys);
+    window.addEventListener('gesturestart', stop, opts);
+    window.addEventListener('gesturechange', stop, opts);
+    window.addEventListener('touchmove', touch, opts);
+    return () => {
+      [html.style.overflow, document.body.style.overflow] = before;
+      window.removeEventListener('wheel', wheel);
+      window.removeEventListener('keydown', keys);
+      window.removeEventListener('gesturestart', stop);
+      window.removeEventListener('gesturechange', stop);
+      window.removeEventListener('touchmove', touch);
+    };
+  }, [presenting]);
 
   // ?demo in the address starts the guided demo straight away.
   useEffect(() => {

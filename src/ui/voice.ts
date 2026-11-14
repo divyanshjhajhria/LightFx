@@ -26,16 +26,21 @@ function synth(): SpeechSynthesis | null {
   }
 }
 
-/** Prefer a British English voice, then any English voice, then the browser's default. */
+/**
+ * Prefer a British English voice, then any English voice, then the browser's default; and among those, one on this
+ * machine over an online one, so the demo still speaks with no network.
+ */
 function chooseVoice(): void {
   const s = synth();
   if (!s) return;
   try {
-    const voices = s.getVoices();
-    chosen =
+    const all = s.getVoices();
+    const local = all.filter((v) => v.localService);
+    const pick = (voices: SpeechSynthesisVoice[]) =>
       voices.find((v) => v.lang.replace('_', '-').toLowerCase() === 'en-gb') ??
       voices.find((v) => v.lang.toLowerCase().startsWith('en')) ??
       null;
+    chosen = pick(local) ?? pick(all);
   } catch {
     chosen = null;
   }

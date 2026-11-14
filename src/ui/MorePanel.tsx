@@ -190,6 +190,12 @@ export function MorePanel(p: Props) {
               </div>
               <div>
                 <dt>
+                  <kbd>R</kbd>
+                </dt>
+                <dd>Restart what is running, at once</dd>
+              </div>
+              <div>
+                <dt>
                   <kbd>Escape</kbd>
                 </dt>
                 <dd>Leave the demo, or close a panel</dd>
