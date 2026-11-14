@@ -468,8 +468,8 @@ function draw(f: Frame): void {
 }
 
 /** A desk's words beside its planet. Positioned over the canvas every frame by SolarView. */
-function Bubble({ body, words }: { body: BodyId; words: { text: string; ai: boolean } }) {
-  const steady = useSteadyText(words.text);
+function Bubble({ body, words, holdMs }: { body: BodyId; words: { text: string; ai: boolean }; holdMs: number }) {
+  const steady = useSteadyText(words.text, holdMs);
   return (
     <div className="deskBubble glass" data-body={body} role="note" aria-label={`${BODY_LABEL[body]} desk says`}>
       <span key={steady.version} className="voiceText">
@@ -502,6 +502,8 @@ interface Props {
   bubbleBodies: BodyId[];
   /** The "Show all desk voices" switch, or null to hide it (presenter mode). */
   allVoices: { on: boolean; toggle: () => void } | null;
+  /** How long a bubble keeps its words before changing, in real milliseconds. */
+  holdMs: number;
 }
 
 /**
@@ -522,6 +524,7 @@ export function SolarView({
   voices,
   bubbleBodies,
   allVoices,
+  holdMs,
 }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -846,7 +849,7 @@ export function SolarView({
   return (
     <div className="solar" ref={wrap}>
       <canvas ref={canvas} role="img" aria-label="Earth, the Moon and Mars around the Sun, with messages travelling between their desks" />
-      {voices && bubbleBodies.map((b) => <Bubble key={b} body={b} words={voices[b]} />)}
+      {voices && bubbleBodies.map((b) => <Bubble key={b} body={b} words={voices[b]} holdMs={holdMs} />)}
       <div className="msgTip glass" ref={tip} hidden role="status">
         <b />
         <ul />

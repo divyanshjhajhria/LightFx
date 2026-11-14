@@ -1170,6 +1170,11 @@ input[type='range']::-moz-range-thumb {
   font-size: 12px;
 }
 
+.chartLabel.stripLabel {
+  font-size: 13px;
+  font-weight: 500;
+}
+
 .traceHit {
   cursor: pointer;
   pointer-events: stroke;
@@ -1346,8 +1351,6 @@ input[type='range']::-moz-range-thumb {
 .banksPanel .colHead .blurb {
   display: inline;
   margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   color: var(--text-2);
 }
 

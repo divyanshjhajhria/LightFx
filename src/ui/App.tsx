@@ -106,8 +106,8 @@ export interface Words {
 }
 
 /** "In its own words": the desk's sentence about itself, steady for at least four seconds at a time. */
-function OwnWords({ words }: { words: Words }) {
-  const steady = useSteadyText(words.text);
+function OwnWords({ words, holdMs }: { words: Words; holdMs: number }) {
+  const steady = useSteadyText(words.text, holdMs);
   return (
     <section className="ownWords" aria-label="In its own words">
       <h3>In its own words</h3>
@@ -198,6 +198,7 @@ function Inspector({
   view,
   body,
   voice,
+  holdMs,
   onClose,
   onToggleLink,
   onTrade,
@@ -206,6 +207,7 @@ function Inspector({
   view: StrategyId;
   body: BodyId;
   voice: Words;
+  holdMs: number;
   onClose: () => void;
   onToggleLink: (a: BodyId, b: BodyId) => void;
   onTrade: (side: 'buy' | 'sell', size: number) => void;
@@ -225,7 +227,7 @@ function Inspector({
         </button>
       </header>
       <Ticket body={body} onTrade={onTrade} />
-      <OwnWords words={voice} />
+      <OwnWords words={voice} holdMs={holdMs} />
       <AskDesk body={body} brief={() => deskBriefing(arena.worlds[view], body)} />
       <dl>
         <div>
@@ -855,6 +857,8 @@ export function App() {
   // Each desk's words about itself, for the bank on the canvas, from what that desk alone knows. Templated first; a
   // configured model may reword the desks on show, never in the guided demo unless the page was opened with ?demo&ai.
   const modelAllowed = !presenting || new URLSearchParams(window.location.search).has('ai');
+  // Desk words hold for 4 real seconds, or 30 simulated minutes at the current speed if that is shorter.
+  const holdMs = Math.min(4000, (30 / (g ? g.speed : speed)) * 1000);
   const shown = new Set<BodyId>([...bubbleBodies, ...(selected ? [selected] : [])]);
   const voices = perBody((b): Words => {
     const brief = deskBriefing(a.worlds[view], b);
@@ -938,6 +942,7 @@ export function App() {
           voices={voices}
           bubbleBodies={bubbleBodies}
           allVoices={presenting ? null : { on: allVoices, toggle: () => setAllVoices(!allVoices) }}
+          holdMs={holdMs}
         />
         {!presenting && (
           <p className="hint">Click a planet to trade with its desk. Hover a message to read it. Click a link to cut it.</p>
@@ -949,6 +954,7 @@ export function App() {
             view={view}
             body={selected}
             voice={voices[selected]}
+            holdMs={holdMs}
             onClose={() => setSelected(null)}
             onToggleLink={toggleLink}
             onTrade={(side, size) => placeTrade(selected, side, size)}

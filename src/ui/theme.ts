@@ -25,9 +25,9 @@ export const BODY_NAME: Record<BodyId, string> = { earth: 'Earth', moon: 'the Mo
 
 /** What a visitor calls each bank. The identifiers in code (leased, naive, central) never reach the screen. */
 export const STRATEGY: Record<StrategyId, { name: string; short: string; blurb: string }> = {
-  leased: { name: 'Our bank', short: 'Ours', blurb: 'Each desk has its own allowance.' },
-  naive: { name: 'The bank that trusts old news', short: 'Trusts old news', blurb: 'Each desk goes by the last totals it heard.' },
-  central: { name: 'The bank that asks Earth', short: 'Asks Earth', blurb: 'Head office approves every trade.' },
+  leased: { name: 'Our bank', short: 'Ours', blurb: 'Every desk has its own allowance.' },
+  naive: { name: 'The bank that trusts old news', short: 'Trusts old news', blurb: 'Desks go by old totals.' },
+  central: { name: 'The bank that asks Earth', short: 'Asks Earth', blurb: 'Earth approves every trade.' },
 };
 
 export const FONT =

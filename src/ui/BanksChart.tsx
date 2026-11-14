@@ -53,7 +53,8 @@ export function BanksChart({ arena, mode, view, onView, hover }: Props) {
   // Room on the right for the end labels. The longest, "Trusts old news +150 On canvas", needs about 200px.
   const RIGHT = narrow ? 110 : 210;
   const LEFT = 12;
-  const TOP = narrow ? 28 : 34;
+  // Room above the plot for the storm and panic strips (6px each) and their 13px labels, clear of "Limit +100".
+  const TOP = narrow ? 36 : 42;
   const BOTTOM = H - 18;
   const L = arena.worlds.leased.cfg.limit;
   const now = arena.now;
@@ -84,8 +85,16 @@ export function BanksChart({ arena, mode, view, onView, hover }: Props) {
   const lowLabelX = Math.max(LEFT + 4, ...marks.filter((m) => m.x < LEFT + 110).map((m) => m.x + 36));
 
   const spans = arena.worlds.leased.spans
-    .map((sp) => ({ ...sp, a: Math.max(sp.from, t0), b: Math.min(sp.to ?? now, t1) }))
+    .map((sp) => ({ ...sp, a: Math.max(sp.from, t0), b: Math.min(sp.to ?? now, t1), labelX: 0 }))
     .filter((sp) => sp.b > sp.a);
+  // Both labels sit on one line under the strips. A panic that starts near a storm puts its label after the storm's.
+  const STORM_LABEL_W = 84;
+  for (const sp of spans) {
+    sp.labelX = x(sp.a);
+    if (sp.kind !== 'panic') continue;
+    const storm = spans.find((o) => o.kind === 'storm' && Math.abs(x(o.a) - x(sp.a)) < STORM_LABEL_W + 8);
+    if (storm) sp.labelX = Math.max(sp.labelX, x(storm.a) + STORM_LABEL_W + 8);
+  }
 
   const sentence = latest
     .map(({ s, v }) => `${STRATEGY[s].name} holds ${signed(v)}, ${Math.abs(v) > L ? 'over' : 'inside'} its limit.`)
@@ -151,16 +160,16 @@ export function BanksChart({ arena, mode, view, onView, hover }: Props) {
             <g key={`${sp.kind}-${sp.from}-${i}`}>
               <rect
                 x={x(sp.a)}
-                y={sp.kind === 'storm' ? 2 : 8}
+                y={sp.kind === 'storm' ? 1 : 9}
                 width={x(sp.b) - x(sp.a)}
-                height={4}
+                height={6}
                 fill={sp.kind === 'storm' ? `rgba(${ALERT_RGB},0.6)` : `rgba(${WARM},0.45)`}
               />
               <text
-                x={x(sp.a)}
-                y={sp.kind === 'storm' ? 19 : 30}
-                className="chartLabel"
-                fill={sp.kind === 'storm' ? `rgba(${ALERT_RGB},0.9)` : `rgba(${WARM},0.6)`}
+                x={sp.labelX}
+                y={28}
+                className="chartLabel stripLabel"
+                fill={sp.kind === 'storm' ? `rgba(${ALERT_RGB},0.95)` : `rgba(${WARM},0.75)`}
               >
                 {sp.kind === 'storm' ? 'Solar storm' : 'Panic'}
               </text>
