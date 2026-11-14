@@ -321,6 +321,16 @@ export class World {
       }
     }
 
+    // A visitor still waiting on head office walks away once their patience runs out.
+    if (this.strategy === 'central') {
+      for (const [trade, tr] of this.traces) {
+        const placed = tr[0];
+        if (!placed || this.now - placed.t < this.cfg.visitorPatience) continue;
+        if (tr.some((e) => e.kind === 'filled' || e.kind === 'refused' || e.kind === 'too-late' || e.kind === 'gave-up')) continue;
+        this.cancelTrade(trade);
+      }
+    }
+
     // 5. Desks do their own housekeeping (gossip, budget grants).
     for (const b of BODIES) this.desks[b].tick(this.ctx(b));
 

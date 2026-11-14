@@ -118,9 +118,15 @@ describe('visitor trades', () => {
     runFor(w, 5);
     w.blackout = true;
     w.placeTrade('mars', 'sell', 5, 1);
-    runFor(w, 120);
+    runFor(w, 55);
     expect(kinds(w.trace(1))).toEqual(['placed', 'asked-earth', 'not-delivered']);
     expect(w.trace(1)[2]).toMatchObject({ body: 'mars', to: 'earth' });
+    expect(w.totalPosition()).toBe(0);
+    // Once the visitor's patience runs out they walk away, and the story ends there.
+    runFor(w, 60);
+    const tr = w.trace(1);
+    expect(kinds(tr)).toEqual(['placed', 'asked-earth', 'not-delivered', 'gave-up']);
+    expect(tr[3].kind === 'gave-up' && near(tr[3].waited, w.cfg.visitorPatience, w.cfg.dt + 1e-9)).toBe(true);
     expect(w.totalPosition()).toBe(0);
   });
 
@@ -134,6 +140,8 @@ describe('visitor trades', () => {
     const gave = w.trace(1).find((e) => e.kind === 'gave-up');
     expect(gave && gave.kind === 'gave-up' && near(gave.waited, 10, w.cfg.dt + 1e-9)).toBe(true);
     runFor(w, 80);
+    // The late answer closes the story without changing anything.
+    expect(kinds(w.trace(1))).toEqual(['placed', 'asked-earth', 'gave-up', 'earth-approved', 'too-late']);
     expect(w.totalPosition()).toBe(0);
     expect(w.desks.mars.pos).toBe(0);
     expect(w.desks.earth.believedTotal()).toEqual({ low: 0, high: 0 });

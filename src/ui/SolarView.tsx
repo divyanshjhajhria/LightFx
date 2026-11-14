@@ -222,6 +222,8 @@ function draw(f: Frame): void {
 
   // Messages in flight. Each direction keeps to its own side of the line.
   shown.length = 0;
+  /** Where the followed trade's labels went, so two messages flying together get one label, not two on top. */
+  const labelled: [number, number][] = [];
   const lead = new Map<string, { x: number; y: number; nx: number; ny: number; left: number }>();
   for (const env of w.net.inFlight) {
     const a = pos[env.from];
@@ -297,6 +299,8 @@ function draw(f: Frame): void {
     g.fill();
     const left = env.deliverAt - now;
     if (tagged) {
+      if (labelled.some(([lx, ly]) => Math.hypot(lx - x, ly - y) < 18)) continue;
+      labelled.push([x, y]);
       g.font = `500 11.5px ${FONT}`;
       g.textAlign = 'center';
       g.fillStyle = `rgba(${WARM},0.95)`;

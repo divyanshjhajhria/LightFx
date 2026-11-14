@@ -407,6 +407,8 @@ export class CentralDesk extends BaseDesk {
   private readonly approved = new Map<string, { delta: number; trade?: number }>();
   // Remote desk: customers waiting on an approval.
   private readonly waiting = new Map<string, Customer>();
+  /** Visitors who walked away, by request id: when they arrived. Only so the story can close; never decides anything. */
+  private readonly walkedAway = new Map<string, Customer>();
   private lastRfqAt = 0;
   private lastApproveAt = 0;
 
@@ -462,6 +464,7 @@ export class CentralDesk extends BaseDesk {
       if (c.trade !== trade) continue;
       // Dropping the customer means a later approval is answered "not filled", which releases Earth's bound.
       this.waiting.delete(id);
+      this.walkedAway.set(id, c);
       ctx.report?.(trade, { kind: 'gave-up', waited: ctx.now - c.arrivedAt });
     }
   }
@@ -488,6 +491,11 @@ export class CentralDesk extends BaseDesk {
       const edge = c?.side === 'sell' ? (ctx.fair - price) / ctx.fair : (price - ctx.fair) / ctx.fair;
       const filled = !!c && ctx.now - c.arrivedAt <= c.patience && edge <= c.tol;
       if (c && filled) this.applyFill(c.side === 'sell' ? c.size : -c.size, price);
+      const gone = this.walkedAway.get(p.id);
+      if (gone?.trade !== undefined) {
+        this.walkedAway.delete(p.id);
+        ctx.report?.(gone.trade, { kind: 'too-late', waited: ctx.now - gone.arrivedAt });
+      }
       if (c?.trade !== undefined) {
         const waited = ctx.now - c.arrivedAt;
         ctx.report?.(

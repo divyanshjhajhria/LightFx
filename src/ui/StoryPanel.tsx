@@ -31,9 +31,15 @@ function inFlight(tr: readonly TraceEvent[], now: number, asker: BodyId): { to: 
 
 /** The line that says how the trade ended at this bank, or null while it is still under way. */
 function outcome(tr: readonly TraceEvent[], strategy: StrategyId): string | null {
+  // Giving up is the visitor's own ending, whatever arrives afterwards.
+  const gave = tr.find((e) => e.kind === 'gave-up');
+  if (gave?.kind === 'gave-up') return `You gave up after ${minutes(gave.waited)}`;
   for (let i = tr.length - 1; i >= 0; i--) {
     const e = tr[i];
-    if (e.kind === 'filled') return e.waited > 0 ? `Done after ${Math.round(e.waited)} minutes` : 'Done in 0 minutes';
+    if (e.kind === 'filled') {
+      if (e.waited === 0) return 'Done in 0 minutes';
+      return e.waited < 1 ? 'Done in moments' : `Done after ${minutes(e.waited)}`;
+    }
     if (e.kind === 'refused') return 'Refused';
     if (e.kind === 'gave-up') return `You gave up after ${minutes(e.waited)}`;
     if (e.kind === 'too-late') return 'Too late: you had already left';
