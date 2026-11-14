@@ -12,7 +12,8 @@
     "study": "tsx scripts/netting-study.ts",
     "sweep": "tsx scripts/sweep.ts",
     "package": "tsx scripts/package.ts",
-    "facts": "tsx scripts/facts.ts"
+    "facts": "tsx scripts/facts.ts",
+    "together": "tsx scripts/together.ts"
   },
   "dependencies": {
     "react": "^19.3.1",

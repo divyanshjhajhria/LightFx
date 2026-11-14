@@ -18,6 +18,12 @@ export interface SimConfig {
   /** Let a short desk absorb long position from a long peer, cancelling opposite positions to free budget. */
   netting: boolean;
   /**
+   * Let desks hand spare allowance to each other (our bank only): the automatic rebalance, and any allowance an agent
+   * gives. Off, each desk keeps to its own starting allowance. With netting also off, the desks never help each other:
+   * that is our bank "alone", used to measure what working together is worth.
+   */
+  sharing: boolean;
+  /**
    * An agent-run desk (our bank only) whose model has sent no directive for this many minutes goes back to its rules
    * in full until one arrives.
    */
@@ -71,6 +77,7 @@ export const DEFAULT_CONFIG: SimConfig = {
   grantThreshold: 10,
   grantCooldown: 10,
   netting: true,
+  sharing: true,
   agentStaleMinutes: 30,
   nettingMin: 3,
 

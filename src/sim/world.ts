@@ -261,6 +261,16 @@ export class World {
     return given;
   }
 
+  /** Allowance handed between desks so far, in units (our bank; 0 for the others). Read beside metrics.nettedUnits. */
+  allowanceShared(): number {
+    let n = 0;
+    for (const b of BODIES) {
+      const d = this.leasedDesk(b);
+      if (d) n += d.sharedOut();
+    }
+    return n;
+  }
+
   /** What is making desk `b`'s judgment calls now. */
   runBy(b: BodyId): RunBy {
     const d = this.leasedDesk(b);

@@ -277,6 +277,13 @@ export class LeasedDesk extends BaseDesk {
     return this.controller === 'agent' && this.directive !== null && now - this.directiveAt < this.cfg.agentStaleMinutes;
   }
 
+  /** Allowance this desk has handed to its peers so far, in units. */
+  sharedOut(): number {
+    let n = 0;
+    for (const p of this.peers) n += this.sent[p];
+    return n;
+  }
+
   /** Notes and asks received, oldest first (the last 5). */
   inbox(): readonly InboxItem[] {
     return this.inboxItems;
@@ -305,7 +312,7 @@ export class LeasedDesk extends BaseDesk {
     const given = perBody(() => 0);
     if (this.controller !== 'agent' || typeof d !== 'object' || d === null) return given;
     for (const p of BODIES) {
-      if (p === this.id) continue;
+      if (p === this.id || !this.cfg.sharing) continue;
       const want = d.give?.[p];
       if (typeof want !== 'number' || !Number.isFinite(want) || want < 1) continue;
       const spare = Math.max(0, Math.floor(this.free()));
@@ -464,6 +471,7 @@ export class LeasedDesk extends BaseDesk {
 
   /** Give spare budget to a peer that is running low. Only ever gives away budget that is not in use. */
   private rebalance(ctx: DeskCtx): void {
+    if (!this.cfg.sharing) return;
     const now = ctx.now;
     for (const p of this.peers) {
       const info = this.peerInfo[p];
