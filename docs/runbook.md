@@ -13,6 +13,16 @@
 - [ ] The backup video of the guided demo on the desktop. (Not made yet: someone must record it.)
 - [ ] The three screenshots below open in a viewer, as the last resort.
 
+## Which opener
+
+docs/pitch.md has an opener for each sponsor. When you do not know who is judging, or there is more than one, use them
+in this order of priority:
+
+1. Neptune North.
+2. Marshall Wace ("New Worlds").
+3. SGX FX, challenge 1 (protecting traders in a storm).
+4. SGX FX, challenge 2 (learning to trade).
+
 ## During
 
 | Key | What it does |

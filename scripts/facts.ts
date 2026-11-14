@@ -8,6 +8,7 @@ import { DEFAULT_CONFIG } from '../src/sim/config';
 import { GUIDE_SEED, GUIDE_SEPARATION, GUIDE_WARMUP, Guide } from '../src/sim/guide';
 import { lightDelayMin, makeOrbit } from '../src/sim/orbits';
 import { MARKETS, MARKET_NAME } from '../src/sim/sweep';
+import type { TogetherFile } from '../src/sim/together';
 import type { SweepFile } from '../src/sim/sweep';
 import { STRATEGIES } from '../src/sim/types';
 import type { StrategyId } from '../src/sim/types';
@@ -137,6 +138,26 @@ for (const [sep, row] of Object.entries(nettingStudy())) {
   fact(`${at}.over.minutes.on`, row['breach min on']);
   fact(`${at}.over.minutes.off`, row['breach min off']);
 }
+
+section('Together against alone (public/together.json: our bank with its desks sharing and cancelling, then each on its own)');
+const together = JSON.parse(readFileSync('public/together.json', 'utf8')) as TogetherFile;
+const two = (n: number) => n.toFixed(2);
+fact('together.squares', together.squares.length);
+fact('together.seeds', `${together.seeds[0]} to ${together.seeds[together.seeds.length - 1]}`);
+fact('together.runs', together.overall.runs);
+fact('together.overruns', together.squares.reduce((s, q) => s + q.together.runsOver + q.alone.runsOver, 0));
+const teamBlock = (prefix: string, f: TogetherFile['overall']) => {
+  fact(`${prefix}.served.together.percent`, `${two(f.together.servedPct)}%`);
+  fact(`${prefix}.served.alone.percent`, `${two(f.alone.servedPct)}%`);
+  fact(`${prefix}.gain.points`, two(f.gainPoints));
+  // One decimal, as on screen: a whole number would round a small gain up.
+  fact(`${prefix}.gain.relative`, `${f.gainRelativePct.toFixed(1)}%`);
+  fact(`${prefix}.wins`, `${f.togetherServedMore} of ${f.runs}`);
+  fact(`${prefix}.shared.perrun`, one(f.together.allowanceShared));
+  fact(`${prefix}.cancelled.perrun`, one(f.together.unitsCancelled));
+};
+teamBlock('together.all', together.overall);
+for (const m of MARKETS) teamBlock(`together.${m}`, together.byMarket[m]);
 
 section('Agents');
 const session = 'public/agents/session.json';

@@ -5,9 +5,9 @@ every figure in the write-ups is copied from a line here, exactly as written.
 
 ## Tests
 
-- `tests.total`: 287
-- `tests.passed`: 287
-- `tests.files`: 29
+- `tests.total`: 294
+- `tests.passed`: 294
+- `tests.files`: 31
 
 ## The bank
 
@@ -132,6 +132,41 @@ One-way customers:
 - `netting.150deg.netted.units`: 184.8
 - `netting.150deg.over.minutes.on`: 0
 - `netting.150deg.over.minutes.off`: 0
+
+## Together against alone (public/together.json: our bank with its desks sharing and cancelling, then each on its own)
+
+- `together.squares`: 18
+- `together.seeds`: 1 to 30
+- `together.runs`: 540
+- `together.overruns`: 0
+- `together.all.served.together.percent`: 58.70%
+- `together.all.served.alone.percent`: 57.76%
+- `together.all.gain.points`: 0.94
+- `together.all.gain.relative`: 1.6%
+- `together.all.wins`: 384 of 540
+- `together.all.shared.perrun`: 75.6
+- `together.all.cancelled.perrun`: 72.5
+- `together.calm.served.together.percent`: 60.17%
+- `together.calm.served.alone.percent`: 59.98%
+- `together.calm.gain.points`: 0.19
+- `together.calm.gain.relative`: 0.3%
+- `together.calm.wins`: 96 of 180
+- `together.calm.shared.perrun`: 70.5
+- `together.calm.cancelled.perrun`: 69.7
+- `together.panic.served.together.percent`: 56.57%
+- `together.panic.served.alone.percent`: 56.21%
+- `together.panic.gain.points`: 0.36
+- `together.panic.gain.relative`: 0.6%
+- `together.panic.wins`: 114 of 180
+- `together.panic.shared.perrun`: 73.0
+- `together.panic.cancelled.perrun`: 49.4
+- `together.imbalance.served.together.percent`: 59.36%
+- `together.imbalance.served.alone.percent`: 57.08%
+- `together.imbalance.gain.points`: 2.28
+- `together.imbalance.gain.relative`: 4.0%
+- `together.imbalance.wins`: 174 of 180
+- `together.imbalance.shared.perrun`: 83.4
+- `together.imbalance.cancelled.perrun`: 98.4
 
 ## Agents
 

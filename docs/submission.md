@@ -43,12 +43,7 @@ The desks can be run by language-model agents behind a guard; so far we have exe
 stand-in and with random and hostile inputs, not with a live model.
 [/IF]
 
-[IF REAL SGX FX PRICES ARE REPLAYED]
-Earth's market follows real SGX FX prices, replayed minute by minute.
-[/IF]
-[IF NOT]
 Prices are simulated.
-[/IF]
 
 ## What we measured
 
@@ -67,7 +62,7 @@ side, in 30/30 runs each, never over the limit.
 
 ## How we built it
 
-TypeScript, React and a canvas, on a seeded simulation so every bank faces the same customers, prices and storms. 287
+TypeScript, React and a canvas, on a seeded simulation so every bank faces the same customers, prices and storms. 294
 automated tests, including property tests that fail if any storm, failure or answer pushes our bank past its limit.
 The survival map is a headless sweep of the same simulation.
 
@@ -78,12 +73,17 @@ losses too.
 
 ## What we would do next
 
-Replay real SGX FX prices; record a session with a live model; let allowance follow the flow of customers.
+Record a session with a live model; let allowance follow the flow of customers, where working together pays most.
 
 ## The challenges
 
-**Neptune North: systems working together when communications are interrupted.** A common goal: three desks keep one
-bank inside one limit. Independent decisions: each desk trades on its own allowance, never waiting for permission.
+**Neptune North: systems working together when communications are interrupted.** A common goal: the three desks run
+one bank between them, and together serve as many customers as they can without the bank as a whole ever holding more
+than its limit, though no desk can see what the others hold now. They cooperate by sharing spare allowance, cancelling
+opposite positions and telling each other what they hold, and we measured what that is worth: on the same 540 runs,
+our bank served 58.70% of customers with its desks working together and 57.76% with each on its own, more in 384 of
+540. The gain is small overall (0.94 points) and clearest when customers all push one way (2.28 points, more in 174
+of 180). Independent decisions: each desk trades on its own allowance, never waiting for permission.
 Progress when communications fail: cut off by the storm, our Mars desk kept trading, 19.7 customers per storm on
 average, where head office's Mars office served 0.0. Something we are excited about: the agents, each deciding for its own desk at
 light speed, unable to break the bank because of the guard.
@@ -95,6 +95,3 @@ with the order.
 
 **Marshall Wace: "New Worlds".** Trading between planets, where the speed of light is the fastest anything can
 happen, and a storm can leave a desk alone for hours.
-
-**DurHack: "Composition".** The bank is composed of three independent desks whose allowances add up to exactly one
-limit. Safety is not a central check; it comes from how the parts are put together.
