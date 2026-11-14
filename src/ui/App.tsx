@@ -66,6 +66,12 @@ function Inspector({ arena, view, body, onClose }: { arena: Arena; view: Strateg
           <dt>Volume filled</dt>
           <dd>{d.volFilled}</dd>
         </div>
+        {d.leaseLeft !== null && (
+          <div>
+            <dt>Netted with peers</dt>
+            <dd>{d.netted}</dd>
+          </div>
+        )}
       </dl>
       <table>
         <caption>Same desk, each strategy</caption>

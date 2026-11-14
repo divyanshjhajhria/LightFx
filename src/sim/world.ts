@@ -48,6 +48,7 @@ export class World {
     served: 0,
     volFilled: 0,
     dropped: 0,
+    nettedUnits: 0,
   };
 
   now = 0;
@@ -214,9 +215,11 @@ export class World {
     if (Math.abs(total) > c.limit + 1e-9) m.breachTicks++;
     m.served = 0;
     m.volFilled = 0;
+    m.nettedUnits = 0;
     for (const b of BODIES) {
       m.served += this.desks[b].served;
       m.volFilled += this.desks[b].volFilled;
+      m.nettedUnits += this.desks[b].netting().inUnits;
     }
     m.dropped = this.net.dropped;
     if (this.tickCount % this.ticksPerMin === 0) {
@@ -244,17 +247,39 @@ export class World {
 
   // ---- Read-outs ----------------------------------------------------------
 
+  /**
+   * Position and cash handed over by a long desk but not yet applied by the short desk that asked for it.
+   * God view: no desk can know this.
+   */
+  inFlight(): { units: number; cash: number } {
+    let units = 0;
+    let cash = 0;
+    for (const b of BODIES) {
+      const n = this.desks[b].netting();
+      units += n.outUnits - n.inUnits;
+      cash += n.outCash - n.inCash;
+    }
+    return { units, cash };
+  }
+
+  /** The bank's true position: every desk's position plus units in flight between desks. */
   totalPosition(): number {
-    let t = 0;
+    let t = this.inFlight().units;
     for (const b of BODIES) t += this.desks[b].pos;
     return t;
   }
 
+  /** Mark-to-market value. Units in flight are still the bank's, and the cash for them is not yet paid. */
   pnl(): number {
     const px = this.fullPrice();
-    let v = 0;
-    for (const b of BODIES) v += this.desks[b].cash + this.desks[b].pos * px;
-    return v;
+    const fl = this.inFlight();
+    let cash = -fl.cash;
+    let pos = fl.units;
+    for (const b of BODIES) {
+      cash += this.desks[b].cash;
+      pos += this.desks[b].pos;
+    }
+    return cash + pos * px;
   }
 
   deskViews(): DeskView[] {
@@ -274,6 +299,7 @@ export class World {
         halfSpreadBps: q ? ((q.ask - q.bid) / (q.ask + q.bid)) * 1e4 : null,
         pnl: d.cash + d.pos * px,
         volFilled: d.volFilled,
+        netted: d.netting().outUnits + d.netting().inUnits,
       };
     });
   }

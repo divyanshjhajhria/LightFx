@@ -15,6 +15,10 @@ export interface SimConfig {
   /** Grant budget to a peer when my free budget exceeds theirs by more than this. */
   grantThreshold: number;
   grantCooldown: number;
+  /** Let a short desk absorb long position from a long peer, cancelling opposite positions to free budget. */
+  netting: boolean;
+  /** Smallest netting offer worth sending, in units. */
+  nettingMin: number;
 
   /** Half-spread with perfect information, as a fraction of price. */
   baseHalfSpread: number;
@@ -55,6 +59,8 @@ export const DEFAULT_CONFIG: SimConfig = {
   leaseDuration: 60,
   grantThreshold: 10,
   grantCooldown: 10,
+  netting: true,
+  nettingMin: 3,
 
   baseHalfSpread: 0.0003,
   gapK: 0.3,

@@ -27,6 +27,17 @@ A desk's view of what it has been granted can be behind the truth but never ahea
 never add up to more than the limit, whatever is delayed, repeated or lost. `tests/invariants.test.ts`
 checks this against random failures.
 
+Netting: after a blackout one desk is often long while another is short, so budget is tied up on both
+sides of a position the bank does not really have. A short desk offers to take long position off a long
+peer ("I will absorb up to N units; this is my offer number E to you"), and holds room for all N until
+the reply comes back. The long desk hands over what it can, once per offer number, and replies
+("for offer E I handed over G units at price P"). Both sides gossip their latest offer and reply in every
+message, so a lost message is repaired by the next one and a repeated one is ignored. A desk never lets
+its position plus the room it is holding exceed its budget, so units on their way between desks are
+always covered by the receiver's budget, and the limit holds even if a link dies half-way through.
+Only the short desk ever asks, so two desks can never swap a position back and forth.
+`tests/netting.test.ts` checks this, including links failing in the middle of an exchange.
+
 ## Where things are
 
 ```
@@ -73,15 +84,12 @@ feed whenever that file holds two or more prices. Pick a volatile stretch with `
 
 ## Not built yet
 
-1. **Netting positions on reconnect.** After a blackout one desk can be long while another is short.
-   Booking an internal trade between them would free budget. Do it receiver-first: the desk taking on
-   position must reserve room before the other desk lets go, or a delayed transfer can push it past its budget.
-2. **Game mode.** Player as the storm, with a score. The controls exist; the scoring does not.
-3. **Scenario presets and a timeline scrubber.**
-4. **Arbitrageurs.** Every desk currently quotes around its own local fair price, so there is nothing to pick off.
+1. **Game mode.** Player as the storm, with a score. The controls exist; the scoring does not.
+2. **Scenario presets and a timeline scrubber.**
+3. **Arbitrageurs.** Every desk currently quotes around its own local fair price, so there is nothing to pick off.
    They matter once a strategy quotes a stale price (for example, Earth setting Mars's quotes).
-5. **Clicking a link to cut it.** `Arena.setCut(a, b, true)` works; the canvas has no click handler yet.
-6. **Python analysis.** Volatility-regime detection on the SGX data to drive `panic` automatically; a parameter
+4. **Clicking a link to cut it.** `Arena.setCut(a, b, true)` works; the canvas has no click handler yet.
+5. **Python analysis.** Volatility-regime detection on the SGX data to drive `panic` automatically; a parameter
    sweep (lease length against blackout frequency) for the survival heatmap.
 
 ## Tuning

@@ -34,6 +34,16 @@ export interface Desk {
   budget(): number | null;
   /** Age in minutes of the newest word from any peer, or null if the strategy does not track it. */
   heardAgo(now: number): number | null;
+  /** Netting read-out: units held back for open offers, and cumulative units and cash handed out and taken in. */
+  netting(): NettingStats;
+}
+
+export interface NettingStats {
+  reserved: number;
+  outUnits: number;
+  outCash: number;
+  inUnits: number;
+  inCash: number;
 }
 
 const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x));
@@ -64,6 +74,10 @@ abstract class BaseDesk implements Desk {
     return null;
   }
 
+  netting(): NettingStats {
+    return { reserved: 0, outUnits: 0, outCash: 0, inUnits: 0, inCash: 0 };
+  }
+
   /** Two-way price around `fair`, shifted against inventory so the desk attracts trades that flatten it. */
   protected makeQuote(fair: number, halfSpread: number, skewScale: number): Quote {
     const skew = this.cfg.skewK * clamp(this.pos / Math.max(skewScale, 1), -1, 1) * halfSpread;
@@ -87,20 +101,38 @@ abstract class BaseDesk implements Desk {
  * has granted to every peer, and receivers merge with max(). A desk's view of what it has been
  * granted can lag the truth but never exceed it, so the sum of budgets never exceeds the limit,
  * whatever is delayed, repeated or lost.
+ *
+ * Netting: a short desk offers to absorb long position from a long peer (offer, epoch-numbered),
+ * and the long desk hands units over and replies once per epoch. The short desk reserves room for
+ * the whole offer until it applies the reply, so units in flight are always covered by the
+ * receiver's budget. Every desk keeps -B <= pos and pos + reserved <= B, where B = floor(budget).
  */
 export class LeasedDesk extends BaseDesk {
   private readonly base: number;
   private readonly sent: PerBody<number> = perBody(() => 0);
   private readonly recv: PerBody<number> = perBody(() => 0);
-  private readonly peerInfo: PerBody<{ seq: number; sentAt: number; free: number }>;
+  private readonly peerInfo: PerBody<{ seq: number; sentAt: number; free: number; pos: number }>;
   private readonly lastGrantAt: PerBody<number> = perBody(() => -Infinity);
   private seq = 0;
   private nextGossipAt = 0;
 
+  // Netting, per peer. An offer to a peer is open while myOffer[peer].epoch > applied[peer].
+  private readonly myOffer: PerBody<{ epoch: number; amount: number }> = perBody(() => ({ epoch: 0, amount: 0 }));
+  private readonly applied: PerBody<number> = perBody(() => 0);
+  private readonly myReply: PerBody<{ epoch: number; given: number; price: number }> = perBody(() => ({
+    epoch: 0,
+    given: 0,
+    price: 0,
+  }));
+  private nettedOutUnits = 0;
+  private nettedOutCash = 0;
+  private nettedInUnits = 0;
+  private nettedInCash = 0;
+
   constructor(id: BodyId, cfg: SimConfig) {
     super(id, cfg);
     this.base = cfg.alloc[id];
-    this.peerInfo = perBody((b) => ({ seq: 0, sentAt: 0, free: cfg.alloc[b] }));
+    this.peerInfo = perBody((b) => ({ seq: 0, sentAt: 0, free: cfg.alloc[b], pos: 0 }));
   }
 
   budget(): number {
@@ -109,8 +141,30 @@ export class LeasedDesk extends BaseDesk {
     return b;
   }
 
+  private isOpen(peer: BodyId): boolean {
+    return this.myOffer[peer].epoch > this.applied[peer];
+  }
+
+  /** Units I have promised to absorb through open offers: my position may rise by this much with no action of mine. */
+  private reserved(): number {
+    let r = 0;
+    for (const p of this.peers) if (this.isOpen(p)) r += this.myOffer[p].amount;
+    return r;
+  }
+
+  /** Budget not needed by my position or by open offers. This is what I report, and all I may give away. */
   private free(): number {
-    return this.budget() - Math.abs(this.pos);
+    return this.budget() - Math.max(this.pos + this.reserved(), -this.pos, 0);
+  }
+
+  netting(): NettingStats {
+    return {
+      reserved: this.reserved(),
+      outUnits: this.nettedOutUnits,
+      outCash: this.nettedOutCash,
+      inUnits: this.nettedInUnits,
+      inCash: this.nettedInCash,
+    };
   }
 
   heardAgo(now: number): number {
@@ -130,28 +184,73 @@ export class LeasedDesk extends BaseDesk {
   }
 
   maxFill(dir: 1 | -1, size: number, ctx: DeskCtx): number {
-    const b = this.mode(ctx.now) === 'reduce-only' ? 0 : Math.floor(this.budget());
-    const a = Math.abs(this.pos);
-    // Trading against the current position may pass through zero and out to the budget on the other side.
-    const room = this.pos * dir < 0 ? a + b : Math.max(0, b - a);
-    return Math.min(size, Math.floor(room));
+    const b = Math.floor(this.budget());
+    // Buying is limited by the worst case including open offers; selling only by the floor at -budget.
+    let room = dir > 0 ? b - (this.pos + this.reserved()) : b + this.pos;
+    // Reduce-only: the desk may only trade towards flat.
+    if (this.mode(ctx.now) === 'reduce-only') room = Math.min(room, Math.max(0, -dir * this.pos));
+    return Math.max(0, Math.min(size, Math.floor(room)));
   }
 
-  onMessage(p: Payload): void {
+  onMessage(p: Payload, ctx: DeskCtx): void {
     if (p.kind !== 'gossip') return;
     const info = this.peerInfo[p.from];
     if (p.seq > info.seq) {
       info.seq = p.seq;
       info.sentAt = p.sentAt;
       info.free = p.free;
+      info.pos = p.pos;
     }
     this.recv[p.from] = Math.max(this.recv[p.from], p.sentRow[this.id]);
+    // Netting is read from every message, not only newer ones: the epoch checks make old copies harmless.
+    if (p.netting) {
+      this.applyReply(p.from, p.netting.replies[this.id]);
+      this.answerOffer(p.from, p.netting.offers[this.id], ctx);
+    }
+  }
+
+  /** Long side: hand over up to `amount` units of long position, once per offer epoch. Allowed in every mode. */
+  private answerOffer(peer: BodyId, offer: { epoch: number; amount: number }, ctx: DeskCtx): void {
+    if (offer.epoch <= this.myReply[peer].epoch) return;
+    const given = Math.min(offer.amount, Math.max(0, Math.floor(this.pos)));
+    this.pos -= given;
+    this.cash += given * ctx.fair;
+    this.myReply[peer] = { epoch: offer.epoch, given, price: ctx.fair };
+    this.nettedOutUnits += given;
+    this.nettedOutCash += given * ctx.fair;
+  }
+
+  /** Short side: take in the units handed over for my open offer, and close it. */
+  private applyReply(peer: BodyId, reply: { epoch: number; given: number; price: number }): void {
+    if (reply.epoch !== this.myOffer[peer].epoch || reply.epoch <= this.applied[peer]) return;
+    this.pos += reply.given;
+    this.cash -= reply.given * reply.price;
+    this.applied[peer] = reply.epoch;
+    this.nettedInUnits += reply.given;
+    this.nettedInCash += reply.given * reply.price;
+  }
+
+  /** Short side: offer to absorb long position from peers that recently reported being long. */
+  private openOffers(now: number): void {
+    for (const p of this.peers) {
+      if (this.pos >= 0) return;
+      const info = this.peerInfo[p];
+      if (now - info.sentAt > this.cfg.leaseDuration) continue;
+      if (this.isOpen(p) || info.pos <= 0) continue;
+      // reserved() is recomputed per peer, so two offers never promise the same units. pos + reserved stays <= 0.
+      const amount = Math.floor(Math.min(-this.pos - this.reserved(), info.pos));
+      if (amount < this.cfg.nettingMin) continue;
+      this.myOffer[p] = { epoch: this.myOffer[p].epoch + 1, amount };
+    }
   }
 
   tick(ctx: DeskCtx): void {
     if (ctx.now < this.nextGossipAt) return;
     this.nextGossipAt = ctx.now + this.cfg.gossipEvery;
-    if (this.mode(ctx.now) !== 'reduce-only') this.rebalance(ctx.now);
+    if (this.mode(ctx.now) !== 'reduce-only') {
+      this.rebalance(ctx.now);
+      if (this.cfg.netting) this.openOffers(ctx.now);
+    }
     this.seq++;
     for (const p of this.peers) {
       ctx.send(p, {
@@ -162,6 +261,13 @@ export class LeasedDesk extends BaseDesk {
         pos: this.pos,
         free: this.free(),
         sentRow: { ...this.sent },
+        // Snapshots, not live references: the message must not change after it is sent.
+        netting: this.cfg.netting
+          ? {
+              offers: perBody((b) => ({ ...this.myOffer[b] })),
+              replies: perBody((b) => ({ ...this.myReply[b] })),
+            }
+          : undefined,
       });
     }
   }

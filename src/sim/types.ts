@@ -34,6 +34,16 @@ export interface GossipMsg {
   free: number;
   /** Cumulative budget this desk has granted to each peer. Merged with max(), so repeats and losses are harmless. */
   sentRow: PerBody<number>;
+  /**
+   * Netting state (leased strategy only). Full tables, sent every time, so a lost message is repaired by the next.
+   * A receiver reads only the entries keyed by its own id; epochs make stale and repeated copies harmless.
+   */
+  netting?: {
+    /** offers[peer]: "I will absorb up to `amount` units of long position from you; this is my offer `epoch` to you." */
+    offers: PerBody<{ epoch: number; amount: number }>;
+    /** replies[peer]: "For your offer `epoch` I handed over `given` units at `price`; that offer is now closed." */
+    replies: PerBody<{ epoch: number; given: number; price: number }>;
+  };
 }
 
 /** Central strategy: remote desk asks head office to approve a trade. */
@@ -98,6 +108,8 @@ export interface DeskView {
   volFilled: number;
   /** Minutes until the desk goes reduce-only if it hears nothing more. Null for strategies without leases. */
   leaseLeft: number | null;
+  /** Units this desk has netted with its peers, handed over plus taken in. Always 0 for strategies without netting. */
+  netted: number;
 }
 
 export interface LinkView {
@@ -115,4 +127,6 @@ export interface Metrics {
   served: number;
   volFilled: number;
   dropped: number;
+  /** Units of position netted between desks so far (counted when the receiving desk applies them). */
+  nettedUnits: number;
 }

@@ -36,6 +36,11 @@ describe('safety', () => {
               const budget = d.budget() ?? 0;
               budgets += budget;
               if (Math.abs(d.pos) > budget + 1e-9) return false;
+              // Netting: reserved room is never negative, and position plus reserved room stays within budget.
+              const { reserved } = d.netting();
+              if (reserved < 0) return false;
+              if (d.pos < -budget - 1e-9) return false;
+              if (d.pos + reserved > budget + 1e-9) return false;
             }
             if (budgets > limit + 1e-9) return false;
             if (Math.abs(leased.totalPosition()) > limit + 1e-9) return false;
