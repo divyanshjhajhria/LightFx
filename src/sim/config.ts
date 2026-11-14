@@ -17,6 +17,11 @@ export interface SimConfig {
   grantCooldown: number;
   /** Let a short desk absorb long position from a long peer, cancelling opposite positions to free budget. */
   netting: boolean;
+  /**
+   * An agent-run desk (our bank only) whose model has sent no directive for this many minutes goes back to its rules
+   * in full until one arrives.
+   */
+  agentStaleMinutes: number;
   /** Smallest netting offer worth sending, in units. */
   nettingMin: number;
 
@@ -66,6 +71,7 @@ export const DEFAULT_CONFIG: SimConfig = {
   grantThreshold: 10,
   grantCooldown: 10,
   netting: true,
+  agentStaleMinutes: 30,
   nettingMin: 3,
 
   baseHalfSpread: 0.0003,

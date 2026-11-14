@@ -1,6 +1,7 @@
 import { DEFAULT_CONFIG } from './config';
 import type { SimConfig } from './config';
-import { makeDesk } from './desks';
+import { LeasedDesk, makeDesk } from './desks';
+import type { Directive } from './directive';
 import type { Desk, DeskCtx } from './desks';
 import { SeriesFeed, SyntheticFeed } from './market';
 import type { EarthFeed } from './market';
@@ -11,7 +12,7 @@ import { Rng } from './rng';
 import type { DeskEvent, DeskEventDetail } from './deskEvents';
 import type { TraceDetail, TraceEvent } from './trace';
 import { BODIES, STRATEGIES, perBody } from './types';
-import type { BodyId, Customer, DeskView, Envelope, LinkView, Metrics, Mode, Payload, PerBody, StrategyId } from './types';
+import type { BodyId, Customer, DeskView, Envelope, LinkView, Metrics, Mode, Payload, PerBody, RunBy, StrategyId } from './types';
 
 export interface WorldOptions {
   strategy: StrategyId;
@@ -209,6 +210,42 @@ export class World {
       report: (trade, e) => this.report(b, trade, e),
       log: (e) => this.logDesk(b, e),
     };
+  }
+
+  // ---- Agents (our bank only) ----------------------------------------------
+
+  /** Our bank's desk at `b`, or null in the other banks, which are never agent-run. */
+  private leasedDesk(b: BodyId): LeasedDesk | null {
+    const d = this.desks[b];
+    return d instanceof LeasedDesk ? d : null;
+  }
+
+  controllerOf(b: BodyId): 'rules' | 'agent' {
+    return this.leasedDesk(b)?.controller ?? 'rules';
+  }
+
+  setController(b: BodyId, c: 'rules' | 'agent'): void {
+    const d = this.leasedDesk(b);
+    if (d) d.controller = c;
+  }
+
+  /** Hand a directive to the desk's guard. Returns the units it actually gave each peer (all zero if none). */
+  setDirective(b: BodyId, dir: Directive): PerBody<number> {
+    const d = this.leasedDesk(b);
+    if (!d) return perBody(() => 0);
+    const given = d.setDirective(dir, this.now);
+    for (const p of BODIES) if (given[p] > 0) this.logDesk(b, { kind: 'allowance-given', to: p, units: given[p] });
+    return given;
+  }
+
+  /** What is making desk `b`'s judgment calls now. */
+  runBy(b: BodyId): RunBy {
+    const d = this.leasedDesk(b);
+    if (!d || d.controller === 'rules') return 'rules';
+    if (!d.agentInControl(this.now)) return 'rules (agent silent)';
+    const source = d.lastDirective()!.directive.source;
+    // 'chaos' only ever comes from the property test; nothing on screen is labelled with it.
+    return source === 'model' || source === 'replay' ? source : 'stand-in';
   }
 
   // ---- Visitor trades and their stories (god view: desks never see any of this) ----
@@ -547,6 +584,8 @@ export class World {
         served: d.served,
         netted: d.netting().outUnits + d.netting().inUnits,
         believed: d.believedTotal(),
+        playingSafeBy: d instanceof LeasedDesk ? d.playingSafeBy(this.now) : null,
+        runBy: this.runBy(b),
       };
     });
   }
@@ -625,6 +664,19 @@ export class Arena {
     const trade = this.nextTrade++;
     for (const s of STRATEGIES) this.worlds[s].placeTrade(at, side, size, trade);
     return trade;
+  }
+
+  /** Our bank's desks only: the other two banks are never agent-run. */
+  setController(b: BodyId, c: 'rules' | 'agent'): void {
+    this.worlds.leased.setController(b, c);
+  }
+
+  controllerOf(b: BodyId): 'rules' | 'agent' {
+    return this.worlds.leased.controllerOf(b);
+  }
+
+  setDirective(b: BodyId, d: Directive): PerBody<number> {
+    return this.worlds.leased.setDirective(b, d);
   }
 
   /** The visitor has stopped waiting for this trade. */

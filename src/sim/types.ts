@@ -128,7 +128,14 @@ export interface DeskView {
   netted: number;
   /** What this desk believes the bank holds in total, as a range; null if it keeps no such figure. */
   believed: { low: number; high: number } | null;
+  /** Why it is playing safe: the rule (out of touch too long), its agent's choice, or not at all. */
+  playingSafeBy: 'rule' | 'choice' | null;
+  /** What is making this desk's judgment calls right now. Only our bank's desks are ever agent-run. */
+  runBy: RunBy;
 }
+
+/** 'rules (agent silent)': handed to an agent that has not spoken lately, so the desk is on its rules in full. */
+export type RunBy = 'rules' | 'model' | 'replay' | 'stand-in' | 'rules (agent silent)';
 
 export interface LinkView {
   a: BodyId;

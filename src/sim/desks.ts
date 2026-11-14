@@ -1,5 +1,7 @@
 import type { SimConfig } from './config';
 import type { DeskEventDetail, PeerView } from './deskEvents';
+import { PRICING_MULT, plain, units } from './directive';
+import type { Directive } from './directive';
 import type { RefusalReason, TraceDetail } from './trace';
 import { BODIES, perBody } from './types';
 import type { BodyId, Customer, Mode, Payload, PerBody, Quote, StrategyId } from './types';
@@ -170,6 +172,15 @@ export class LeasedDesk extends BaseDesk {
   private nettedInUnits = 0;
   private nettedInCash = 0;
 
+  // ---- Agent control (our bank only). The guard below is the only code that applies a directive. ----
+  /** Who makes this desk's judgment calls. 'rules' unless an agent runner takes over. */
+  controller: 'rules' | 'agent' = 'rules';
+  private directive: Directive | null = null;
+  private directiveAt = -Infinity;
+  /** A note and an ask for each peer, waiting for the next desk update to that peer. Sent once, never re-sent. */
+  private readonly outNote: Partial<PerBody<string>> = {};
+  private readonly outAsk: Partial<PerBody<number>> = {};
+
   constructor(id: BodyId, cfg: SimConfig) {
     super(id, cfg);
     this.base = cfg.alloc[id];
@@ -234,16 +245,88 @@ export class LeasedDesk extends BaseDesk {
     return { low: t, high: t };
   }
 
-  mode(now: number): Mode {
+  /** The mode the rules give: out of touch with every peer for a lease means playing safe, whatever any agent says. */
+  private ruleMode(now: number): Mode {
     const stale = this.peers.filter((p) => now - this.peerInfo[p].sentAt > this.cfg.leaseDuration);
     if (stale.length === this.peers.length) return 'reduce-only';
     return stale.length > 0 ? 'degraded' : 'normal';
   }
 
+  mode(now: number): Mode {
+    const m = this.ruleMode(now);
+    if (m !== 'reduce-only' && this.agentInControl(now) && this.directive!.caution === 'play-safe') return 'reduce-only';
+    return m;
+  }
+
+  /** Why this desk is playing safe: the rule (out of touch), its agent's choice, or not at all. */
+  playingSafeBy(now: number): 'rule' | 'choice' | null {
+    if (this.ruleMode(now) === 'reduce-only') return 'rule';
+    return this.mode(now) === 'reduce-only' ? 'choice' : null;
+  }
+
+  /**
+   * An agent decides for this desk only while it has heard from it recently. A desk handed to an agent that has not
+   * spoken yet, or has gone silent for agentStaleMinutes, runs on its rules in full.
+   */
+  agentInControl(now: number): boolean {
+    return this.controller === 'agent' && this.directive !== null && now - this.directiveAt < this.cfg.agentStaleMinutes;
+  }
+
+  /** The directive in force and when it arrived, or null. Read-only, for views and briefings. */
+  lastDirective(): { directive: Directive; at: number } | null {
+    return this.directive ? { directive: this.directive, at: this.directiveAt } : null;
+  }
+
+  /**
+   * THE GUARD. Apply an agent's directive, clamping every field. Gives come only out of spare allowance, peer by peer in
+   * a fixed order, each through the same cumulative counter rebalance() uses, so the sum of allowances can never pass
+   * the bank's limit and no desk is left holding more than its allowance. Returns the units actually given to each peer.
+   * A desk run by rules ignores directives.
+   */
+  setDirective(d: Directive, now: number): PerBody<number> {
+    const given = perBody(() => 0);
+    if (this.controller !== 'agent' || typeof d !== 'object' || d === null) return given;
+    for (const p of BODIES) {
+      if (p === this.id) continue;
+      const want = d.give?.[p];
+      if (typeof want !== 'number' || !Number.isFinite(want) || want < 1) continue;
+      const spare = Math.max(0, Math.floor(this.free()));
+      const n = Math.min(Math.floor(want), spare);
+      if (n < 1) continue;
+      this.sent[p] += n;
+      this.lastGrantAt[p] = now;
+      given[p] = n;
+    }
+    const ask: Partial<PerBody<number>> = {};
+    const noteTo: Partial<PerBody<string>> = {};
+    for (const p of BODIES) {
+      if (p === this.id) continue;
+      const n = units(d.ask?.[p]);
+      if (n > 0) this.outAsk[p] = ask[p] = n;
+      const note = plain(d.noteTo?.[p], 140);
+      if (note) this.outNote[p] = noteTo[p] = note;
+    }
+    this.directive = {
+      pricing: Object.hasOwn(PRICING_MULT, d.pricing) ? d.pricing : 'steady',
+      caution: d.caution === 'play-safe' ? 'play-safe' : 'normal',
+      give: Object.fromEntries(Object.entries(given).filter(([, n]) => n > 0)),
+      ask,
+      noteTo,
+      thought: plain(d.thought, 220),
+      source: d.source,
+    };
+    this.directiveAt = now;
+    return given;
+  }
+
   quote(ctx: DeskCtx): Quote {
     const cap = this.cfg.maxGapAge * (this.cfg.sigmaEarth ** 2 + this.cfg.sigmaMars ** 2);
     const gap = Math.sqrt(Math.min(ctx.gapVar, cap));
-    return this.makeQuote(ctx.fair, this.cfg.baseHalfSpread + this.cfg.gapK * gap, this.budget());
+    let half = this.cfg.baseHalfSpread + this.cfg.gapK * gap;
+    if (this.agentInControl(ctx.now)) {
+      half = Math.max(half * PRICING_MULT[this.directive!.pricing], this.cfg.baseHalfSpread / 2);
+    }
+    return this.makeQuote(ctx.fair, half, this.budget());
   }
 
   maxFill(dir: 1 | -1, size: number, ctx: DeskCtx): number {
@@ -318,8 +401,10 @@ export class LeasedDesk extends BaseDesk {
   tick(ctx: DeskCtx): void {
     if (ctx.now < this.nextGossipAt) return;
     this.nextGossipAt = ctx.now + this.cfg.gossipEvery;
-    if (this.mode(ctx.now) !== 'reduce-only') {
-      this.rebalance(ctx);
+    // Out of touch by the rule: no grants and no netting. Netting is bookkeeping and stays automatic under an agent;
+    // who gets allowance is the agent's call while it is in control.
+    if (this.ruleMode(ctx.now) !== 'reduce-only') {
+      if (!this.agentInControl(ctx.now)) this.rebalance(ctx);
       if (this.cfg.netting) this.openOffers(ctx.now);
     }
     this.seq++;
