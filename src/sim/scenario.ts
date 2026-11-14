@@ -9,10 +9,25 @@ export type ScenarioEvent =
   | { at: number; kind: 'panic'; on: boolean }
   | { at: number; kind: 'cut'; a: BodyId; b: BodyId; on: boolean }
   | { at: number; kind: 'flow'; body: BodyId; sellProb: number }
+  /** How many times the usual number of customers arrive at a desk. */
+  | { at: number; kind: 'demand'; body: BodyId; times: number }
   /** The presenter's caption. Changes nothing in the simulation. */
   | { at: number; kind: 'note'; text: string }
   /** How fast the app should play from here (simulated minutes per second). The simulation ignores it. */
   | { at: number; kind: 'speed'; value: number };
+
+/** A rush at a desk: from minute 120 to 300, three times the customers, 80% of them selling; otherwise normal. */
+export const RUSH = { from: 120, to: 300, times: 3, sellProb: 0.8 } as const;
+
+/** The events of a rush at `body`, on a calm market (whose usual sell probability is `calmSell`). */
+export function rushEvents(body: BodyId, calmSell = 0.5): ScenarioEvent[] {
+  return [
+    { at: RUSH.from, kind: 'demand', body, times: RUSH.times },
+    { at: RUSH.from, kind: 'flow', body, sellProb: RUSH.sellProb },
+    { at: RUSH.to, kind: 'demand', body, times: 1 },
+    { at: RUSH.to, kind: 'flow', body, sellProb: calmSell },
+  ];
+}
 
 export interface Scenario {
   /** Lower-case, hyphenated, unique. */
@@ -88,6 +103,9 @@ export function applyEvent(a: Arena, e: ScenarioEvent): void {
       break;
     case 'cut':
       a.setCut(e.a, e.b, e.on);
+      break;
+    case 'demand':
+      a.setDemand(e.body, e.times);
       break;
     case 'flow':
       a.setFlow(e.body, e.sellProb);

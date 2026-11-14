@@ -119,6 +119,8 @@ export class World {
   readonly cuts = new Set<string>();
   /** Probability that a customer at each body sells Mars credits, outside a panic. Starts as a copy of cfg.sellProb. */
   readonly flow: PerBody<number>;
+  /** Multiplier on customer arrivals at each body. Starts as a copy of cfg.demand. */
+  readonly demand: PerBody<number>;
 
   private tickCount = 0;
   private readonly ticksPerMin: number;
@@ -157,6 +159,7 @@ export class World {
     this.rngCust = Rng.stream(opts.seed, 2);
     this.info = perBody(() => ({ earth: { at: 0, value: 0 }, mars: { at: 0, value: 0 } }));
     this.flow = { ...this.cfg.sellProb };
+    this.demand = { ...this.cfg.demand };
     this.desks = perBody((b) => makeDesk(this.strategy, b, this.cfg));
     this.net = new DelayNetwork(
       (a, b) => this.linkOpen(a, b),
@@ -180,6 +183,11 @@ export class World {
   /** True when the link between a and b has been cut by hand (it may also be closed for other reasons). */
   isCut(a: BodyId, b: BodyId): boolean {
     return this.cuts.has(linkKey(a, b));
+  }
+
+  /** Set how many times the usual number of customers arrive at `b`. Clamped to [0, 10]. */
+  setDemand(b: BodyId, times: number): void {
+    this.demand[b] = Math.max(0, Math.min(10, times));
   }
 
   /** Set the calm-market probability that a customer at `b` sells Mars credits. Clamped to [0, 1]. */
@@ -509,7 +517,7 @@ export class World {
     // 4. Customers. Every customer is fully drawn before any desk sees it, so all strategies face the same stream.
     for (const b of BODIES) {
       const sellProb = this.panic ? c.panicSellProb : this.flow[b];
-      const n = this.rngCust.poisson(c.customerRate * c.dt);
+      const n = this.rngCust.poisson(c.customerRate * this.demand[b] * c.dt);
       for (let i = 0; i < n; i++) {
         this.handleCustomer({
           id: this.nextCustomerId++,
@@ -724,6 +732,10 @@ export class Arena {
 
   setFlow(b: BodyId, sellProb: number): void {
     for (const s of STRATEGIES) this.worlds[s].setFlow(b, sellProb);
+  }
+
+  setDemand(b: BodyId, times: number): void {
+    for (const s of STRATEGIES) this.worlds[s].setDemand(b, times);
   }
 
   /** The ids of the last 10 visitor trades, oldest first. */

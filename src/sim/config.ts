@@ -42,6 +42,8 @@ export interface SimConfig {
 
   /** Customer arrivals per minute at each desk. */
   customerRate: number;
+  /** Multiplier on customer arrivals at this desk. 1 everywhere is the ordinary day. */
+  demand: PerBody<number>;
   sizeMin: number;
   sizeMax: number;
   /** Mean of the customers' price tolerance (exponential). */
@@ -87,6 +89,7 @@ export const DEFAULT_CONFIG: SimConfig = {
   skewK: 0.5,
 
   customerRate: 0.6,
+  demand: { earth: 1, moon: 1, mars: 1 },
   sizeMin: 1,
   sizeMax: 5,
   tolMean: 0.0012,
