@@ -70,6 +70,24 @@ interface Spreading {
   failed: Set<BodyId>;
 }
 
+/** What became of a note or ask an agent sent. God view, for the viewer: no desk or agent is ever told. */
+export interface NoteRecord {
+  id: number;
+  from: BodyId;
+  to: BodyId;
+  text: string;
+  asks: number | null;
+  sentAt: number;
+  /** When it lands, or would have landed. */
+  landsAt: number;
+  status: 'travelling' | 'delivered' | 'lost' | 'destroyed';
+  /** The envelope carrying it, while it travels. */
+  envId: number | null;
+}
+
+/** How many notes the god-view log keeps. */
+const NOTES_KEEP = 40;
+
 /** One bank running one strategy. Run several with the same seed to compare strategies on identical events. */
 export class World {
   readonly cfg: SimConfig;
@@ -121,6 +139,9 @@ export class World {
   private readonly deskEvents: PerBody<DeskEvent[]> = perBody(() => []);
   private readonly lastMode: PerBody<Mode>;
   private readonly lastRefusal: PerBody<number> = perBody(() => -Infinity);
+  /** Every note an agent sent, newest last, and what became of it. God view: desks never read it. */
+  private readonly notes: NoteRecord[] = [];
+  private nextNoteId = 1;
   /** Whether each link was open at the end of the previous step, by linkKey. */
   private readonly wasOpen = new Map<string, boolean>();
 
@@ -264,6 +285,20 @@ export class World {
     }
     const landsAt = this.now + lightDelayMin(this.orbit, from, to);
     const ok = this.net.send(from, to, p, this.now, tag);
+    if (p.kind === 'gossip' && (p.note !== undefined || p.asks !== undefined)) {
+      this.notes.push({
+        id: this.nextNoteId++,
+        from,
+        to,
+        text: p.note ?? '',
+        asks: p.asks ?? null,
+        sentAt: this.now,
+        landsAt,
+        status: ok ? 'travelling' : 'lost',
+        envId: ok ? this.net.inFlight[this.net.inFlight.length - 1].id : null,
+      });
+      if (this.notes.length > NOTES_KEEP) this.notes.shift();
+    }
     for (const trade of carrying) {
       const s = this.spreading.get(trade)!;
       if (ok) {
@@ -294,6 +329,7 @@ export class World {
       if (!closing || !this.cfg.closedLinkDestroysInFlight) continue;
       const on = (e: Envelope) => (e.from === a && e.to === b) || (e.from === b && e.to === a);
       for (const e of this.net.purge(on, this.now)) {
+        this.noteFate(e.id, 'destroyed');
         if (e.trade === undefined) continue;
         const p = e.payload;
         if (p.kind === 'gossip') {
@@ -323,6 +359,21 @@ export class World {
 
   private record(trade: number, body: BodyId, e: TraceDetail): void {
     this.traces.get(trade)?.push({ t: this.now, body, ...e });
+  }
+
+  private noteFate(envId: number, status: 'delivered' | 'destroyed'): void {
+    for (let i = this.notes.length - 1; i >= 0; i--) {
+      const n = this.notes[i];
+      if (n.envId !== envId) continue;
+      n.status = status;
+      n.envId = null;
+      return;
+    }
+  }
+
+  /** Notes agents have sent, oldest first (the last 40), with what became of each. God view. */
+  noteLog(): readonly NoteRecord[] {
+    return this.notes;
   }
 
   private logDesk(b: BodyId, e: DeskEventDetail): void {
@@ -427,6 +478,7 @@ export class World {
           slot.value = p.value;
         }
       } else {
+        if (p.kind === 'gossip') this.noteFate(env.id, 'delivered');
         this.desks[env.to].onMessage(p, this.ctx(env.to));
         if (env.trade !== undefined && p.kind === 'gossip') this.record(env.trade, env.to, { kind: 'heard', from: env.from });
       }

@@ -11,8 +11,21 @@ const WORDS: Record<string, number> = {
   fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90, hundred: 100,
 };
 
+/** Words visitors never see: the strategies' internal names. Checked for agents' thoughts and notes. */
+const INTERNAL = /\b(leased|naive|central)\b/i;
+
+export interface CheckOptions {
+  /** More places a number may come from, such as the directive the text explains. */
+  extra?: unknown;
+  /** Thoughts must be in the first person (the default); notes need not be. */
+  firstPerson?: boolean;
+  maxLength?: number;
+  /** Also refuse the strategies' internal names. */
+  strict?: boolean;
+}
+
 /** Every number anywhere in the briefing, as absolute values. */
-function briefingNumbers(b: DeskBriefing): number[] {
+function briefingNumbers(b: unknown): number[] {
   const out: number[] = [];
   const walk = (v: unknown) => {
     if (typeof v === 'number' && Number.isFinite(v)) out.push(Math.abs(v));
@@ -35,12 +48,13 @@ export function sentences(text: string): number {
 }
 
 /** Whether a model-written line may be shown for this desk. */
-export function acceptable(text: string, b: DeskBriefing): boolean {
+export function acceptable(text: string, b: DeskBriefing, opts: CheckOptions = {}): boolean {
   const t = text.trim();
-  if (!t || t.length > 280 || sentences(t) > 3) return false;
+  if (!t || t.length > (opts.maxLength ?? 280) || sentences(t) > 3) return false;
   if (BANNED.test(t)) return false;
-  if (!/\bI\s|\bMy\s|\bI['’]m\b/.test(t)) return false;
-  const values = briefingNumbers(b);
+  if (opts.strict && INTERNAL.test(t)) return false;
+  if ((opts.firstPerson ?? true) && !/\bI\s|\bMy\s|\bI['’]m\b/.test(t)) return false;
+  const values = briefingNumbers(opts.extra === undefined ? b : [b, opts.extra]);
   for (const m of t.matchAll(/\d+(?:[.,]\d+)?/g)) {
     const raw = m[0].replace(',', '.');
     const decimals = raw.includes('.') ? raw.split('.')[1].length : 0;

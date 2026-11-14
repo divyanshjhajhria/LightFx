@@ -2,7 +2,7 @@
 // checker. The template is always shown first and stays whenever anything goes wrong.
 import type { DeskBriefing } from '../sim/briefing';
 import type { BodyId } from '../sim/types';
-import type { LlmClient } from './llm';
+import type { LlmClient } from '../agents/llm';
 import { acceptable } from './voiceCheck';
 
 /** At most one model call per desk in this many real milliseconds. */

@@ -51,6 +51,8 @@ export interface DeskBriefing {
     pricing: Pricing;
     caution: Caution;
     gave: Partial<Record<BodyId, number>>;
+    /** Whether it asked anyone for allowance. */
+    asked: boolean;
     thought: string;
     minAgo: number;
   } | null;
@@ -95,7 +97,14 @@ export function deskBriefing(world: World, body: BodyId): DeskBriefing {
       const last = d instanceof LeasedDesk ? d.lastDirective() : null;
       if (!last) return null;
       const x = last.directive;
-      return { pricing: x.pricing, caution: x.caution, gave: { ...x.give }, thought: x.thought, minAgo: now - last.at };
+      return {
+        pricing: x.pricing,
+        caution: x.caution,
+        gave: { ...x.give },
+        asked: Object.keys(x.ask).length > 0,
+        thought: x.thought,
+        minAgo: now - last.at,
+      };
     })(),
     spareByLastWord: d instanceof LeasedDesk ? d.peerSpare(now) : [],
   };
