@@ -11,7 +11,8 @@
     "sim": "tsx scripts/run-scenario.ts",
     "study": "tsx scripts/netting-study.ts",
     "sweep": "tsx scripts/sweep.ts",
-    "package": "tsx scripts/package.ts"
+    "package": "tsx scripts/package.ts",
+    "facts": "tsx scripts/facts.ts"
   },
   "dependencies": {
     "react": "^19.3.1",
