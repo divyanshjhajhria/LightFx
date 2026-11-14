@@ -4,6 +4,7 @@ import type { Vec } from '../sim/orbits';
 import type { BodyId, Envelope, PerBody } from '../sim/types';
 import type { World } from '../sim/world';
 import { describeEnvelope } from './describe';
+import { useSteadyText } from './steadyText';
 import { ALERT_RGB, BODY_LABEL, BODY_NAME, FONT, MODE_LABEL, STATE, WARM } from './theme';
 
 /** The view looks down on the orbital plane at an angle: vertical distances are squashed by this factor. */
@@ -466,6 +467,19 @@ function draw(f: Frame): void {
   }
 }
 
+/** A desk's words beside its planet. Positioned over the canvas every frame by SolarView. */
+function Bubble({ body, text }: { body: BodyId; text: string }) {
+  const steady = useSteadyText(text);
+  return (
+    <div className="deskBubble glass" data-body={body} role="note" aria-label={`${BODY_LABEL[body]} desk says`}>
+      <span key={steady.version} className="voiceText">
+        {steady.text}
+      </span>
+      <i className="pointer" />
+    </div>
+  );
+}
+
 interface Props {
   getWorld: () => World;
   getNow: () => number;
@@ -481,6 +495,12 @@ interface Props {
   onResume: () => void;
   /** Whether clicking a message may pin it (and pause). */
   canPin: () => boolean;
+  /** What each desk says, for the strategy on the canvas. */
+  voices: PerBody<string> | null;
+  /** Which desks show their words in a bubble beside the planet. */
+  bubbleBodies: BodyId[];
+  /** The "Show all desk voices" switch, or null to hide it (presenter mode). */
+  allVoices: { on: boolean; toggle: () => void } | null;
 }
 
 /**
@@ -498,6 +518,9 @@ export function SolarView({
   onPause,
   onResume,
   canPin,
+  voices,
+  bubbleBodies,
+  allVoices,
 }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -700,6 +723,27 @@ export function SolarView({
     el.addEventListener('dblclick', resetView);
     window.addEventListener('keydown', key);
 
+    /**
+     * Put each desk's bubble beside its planet: to the right of it on the left half of the screen and to the left on
+     * the right half (clear of the desk panel), always inside the stage and above the caption bar.
+     */
+    const placeBubbles = (w: World) => {
+      for (const el of box.querySelectorAll<HTMLElement>('.deskBubble')) {
+        const b = el.dataset.body as BodyId;
+        const [x, y] = screen(w, b);
+        const r = bodyRadius(b, c.zoom);
+        const bw = el.offsetWidth;
+        const bh = el.offsetHeight;
+        const right = x < W / 2;
+        const left = clamp(right ? x + r + 10 : x - r - 10 - bw, 8, Math.max(8, W - bw - 8));
+        const top = clamp(y - r - 10 - bh, 8, Math.max(8, H - 104 - bh));
+        el.style.left = `${left}px`;
+        el.style.top = `${top}px`;
+        const pointer = el.querySelector<HTMLElement>('.pointer');
+        if (pointer) pointer.style.left = `${clamp(x - left, 14, bw - 14)}px`;
+      }
+    };
+
     /** Show the pinned or hovered message's description beside it, or hide the tooltip. */
     const updateTip = (w: World, now: number) => {
       const id = pin.current?.id ?? hoverMsg;
@@ -778,6 +822,7 @@ export function SolarView({
           shown,
         });
         updateTip(w, now);
+        placeBubbles(w);
       }
       id = requestAnimationFrame(frame);
     };
@@ -800,6 +845,7 @@ export function SolarView({
   return (
     <div className="solar" ref={wrap}>
       <canvas ref={canvas} role="img" aria-label="Earth, the Moon and Mars around the Sun, with messages travelling between their desks" />
+      {voices && bubbleBodies.map((b) => <Bubble key={b} body={b} text={voices[b]} />)}
       <div className="msgTip glass" ref={tip} hidden role="status">
         <b />
         <ul />
@@ -814,6 +860,11 @@ export function SolarView({
         <button className="quiet" aria-pressed={showNews} onClick={() => setShowNews(!showNews)}>
           {showNews ? 'Hide market news' : 'Show market news'}
         </button>
+        {allVoices && (
+          <button className="quiet" aria-pressed={allVoices.on} onClick={allVoices.toggle}>
+            {allVoices.on ? 'Hide desk voices' : 'Show all desk voices'}
+          </button>
+        )}
       </div>
     </div>
   );

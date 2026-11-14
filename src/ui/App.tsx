@@ -9,7 +9,10 @@ import { SCENARIOS } from '../sim/scenarios';
 import { BODIES, STRATEGIES, perBody } from '../sim/types';
 import type { BodyId, PerBody, StrategyId } from '../sim/types';
 import { Arena } from '../sim/world';
+import { deskBriefing } from '../sim/briefing';
+import { deskSays } from './deskVoice';
 import { Intel } from './Intel';
+import { useSteadyText } from './steadyText';
 import { CaptionBar, PresenterHint, ResultsCard, readResults } from './Presenter';
 import type { Results } from './Presenter';
 import { isMuted, prepareVoice, setMuted, speak, speaking, stop as stopVoice } from './voice';
@@ -87,10 +90,24 @@ function Ticket({ body, onTrade }: { body: BodyId; onTrade: (side: 'buy' | 'sell
   );
 }
 
+/** "In its own words": the desk's sentence about itself, steady for at least four seconds at a time. */
+function OwnWords({ text }: { text: string }) {
+  const steady = useSteadyText(text);
+  return (
+    <section className="ownWords" aria-label="In its own words">
+      <h3>In its own words</h3>
+      <p key={steady.version} className="voiceText">
+        {steady.text}
+      </p>
+    </section>
+  );
+}
+
 function Inspector({
   arena,
   view,
   body,
+  voice,
   onClose,
   onToggleLink,
   onTrade,
@@ -98,6 +115,7 @@ function Inspector({
   arena: Arena;
   view: StrategyId;
   body: BodyId;
+  voice: string;
   onClose: () => void;
   onToggleLink: (a: BodyId, b: BodyId) => void;
   onTrade: (side: 'buy' | 'sell', size: number) => void;
@@ -117,6 +135,7 @@ function Inspector({
         </button>
       </header>
       <Ticket body={body} onTrade={onTrade} />
+      <OwnWords text={voice} />
       <dl>
         <div>
           <dt>State</dt>
@@ -368,6 +387,7 @@ export function App() {
   const [muted, setMutedState] = useState(isMuted());
   /** Bumped on each demo start, so the desk panel's ticket starts again at "sell 5". */
   const [demoRun, setDemoRun] = useState(0);
+  const [allVoices, setAllVoices] = useState(false);
   const demoStart = useRef(0);
   const demoBeat = useRef(-1);
   /** Central Mars desk's customers served when the storm started and when it passed. */
@@ -727,6 +747,13 @@ export function App() {
   }, []);
 
   const g = presenting ? guide.current : null;
+  // Each desk's words about itself, for the bank on the canvas: templated, from what that desk alone knows.
+  const voices = perBody((b) => deskSays(deskBriefing(a.worlds[view], b)));
+  let bubbleBodies: BodyId[];
+  if (g) {
+    const id = g.beat.id;
+    bubbleBodies = id === 'silence' || id === 'panic' || id === 'alone' ? ['mars'] : id === 'recovery' ? ['earth'] : [];
+  } else bubbleBodies = allVoices ? [...BODIES] : selected ? [selected] : [];
   const marsLink = lead.links().find((l) => l.a === 'earth' && l.b === 'mars')!;
 
   return (
@@ -799,6 +826,9 @@ export function App() {
           onPause={pause}
           onResume={resume}
           canPin={canPin}
+          voices={voices}
+          bubbleBodies={bubbleBodies}
+          allVoices={presenting ? null : { on: allVoices, toggle: () => setAllVoices(!allVoices) }}
         />
         {!presenting && (
           <p className="hint">Click a planet to trade with its desk. Hover a message to read it. Click a link to cut it.</p>
@@ -809,6 +839,7 @@ export function App() {
             arena={a}
             view={view}
             body={selected}
+            voice={voices[selected]}
             onClose={() => setSelected(null)}
             onToggleLink={toggleLink}
             onTrade={(side, size) => placeTrade(selected, side, size)}
