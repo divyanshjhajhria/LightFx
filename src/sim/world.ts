@@ -110,6 +110,9 @@ export class World {
     nettedUnits: 0,
   };
 
+  /** Customers that have arrived at each desk so far (beside metrics.arrived, the total). */
+  readonly arrivedAt: PerBody<number> = perBody(() => 0);
+
   now = 0;
   /** Solar storm: every interplanetary link is down. */
   blackout = false;
@@ -573,6 +576,7 @@ export class World {
 
   private handleCustomer(cust: Customer): void {
     this.metrics.arrived++;
+    this.arrivedAt[cust.at]++;
     this.metrics.volRequested += cust.size;
     const desk = this.desks[cust.at];
     const ctx = this.ctx(cust.at);
