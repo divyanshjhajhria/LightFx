@@ -19,7 +19,8 @@ export type TraceDetail =
   | { kind: 'earth-approved'; landsAt: number }
   | { kind: 'earth-declined' }
   | { kind: 'too-late'; waited: number }
-  | { kind: 'gave-up'; waited: number }
+  /** The visitor stopped waiting: by pressing "Give up waiting", or (`patience`) because their patience ran out. */
+  | { kind: 'gave-up'; waited: number; patience?: true }
   | { kind: 'told'; to: BodyId; landsAt: number }
   | { kind: 'not-delivered'; to: BodyId }
   /** A message carrying the trade's news was travelling when its link closed, and was lost in space. */

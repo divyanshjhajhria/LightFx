@@ -56,18 +56,29 @@ export async function prepareVoice(ids: string[]): Promise<void> {
       // Older browsers: the first choice stands.
     }
   }
+  recorded = await findRecorded(ids, (url, init) => fetch(url, init));
+}
+
+/**
+ * Which lines have a recorded file. A file counts only if the server answers OK with an audio content type: a dev
+ * server answers unknown paths with the app's own page, and any network error means "not there".
+ */
+export async function findRecorded(
+  ids: string[],
+  get: (url: string, init: RequestInit) => Promise<{ ok: boolean; headers: { get(name: string): string | null } }>,
+): Promise<Set<string>> {
   const found = new Set<string>();
   await Promise.all(
     ids.map(async (id) => {
       try {
-        const r = await fetch(`vo/${id}.mp3`, { method: 'HEAD' });
+        const r = await get(`vo/${id}.mp3`, { method: 'HEAD' });
         if (r.ok && (r.headers.get('content-type') ?? '').startsWith('audio')) found.add(id);
       } catch {
         // Not there.
       }
     }),
   );
-  recorded = found;
+  return found;
 }
 
 /** Say a line, cutting off anything still playing. */

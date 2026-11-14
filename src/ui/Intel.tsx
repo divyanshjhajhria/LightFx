@@ -93,9 +93,10 @@ function StrategyColumn({ w, viewing, selected, onView, onSelect }: ColumnProps)
           </span>
         </div>
         <dl>
-          <div className={overMin > 0 ? 'alert' : ''}>
+          <div className={overMin > 0 || over ? 'alert' : ''}>
             <dt>Over limit</dt>
-            <dd>{overMin.toFixed(0)} min</dd>
+            {/* Just crossed: say so, rather than "0 min" beside a total that is already red. */}
+            <dd>{over && overMin < 1 ? 'now' : `${overMin.toFixed(0)} min`}</dd>
           </div>
           <div>
             <dt>Volume filled</dt>

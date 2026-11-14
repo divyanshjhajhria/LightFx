@@ -18,6 +18,9 @@ export function minutes(m: number): string {
 export const inTime = (m: number) => (m < 1 ? 'in under a minute' : `in ${minutes(m)}`);
 /** "after 41 minutes" / "within a minute": how long something took. */
 export const afterTime = (m: number) => (m < 1 ? 'within a minute' : `after ${minutes(m)}`);
+/** "an hour" / "40 minutes": how long a visitor waited before leaving. */
+export const waitedFor = (m: number) => (Math.abs(m - 60) < 0.5 ? 'an hour' : m < 1 ? 'under a minute' : minutes(m));
+
 /** "20 minutes away" / "under a minute away". */
 export const away = (m: number) => (m < 1 ? 'under a minute away' : `${minutes(m)} away`);
 
@@ -95,6 +98,6 @@ export function tell(e: TraceEvent, strategy: StrategyId, _now: number, asker?: 
       return `The answer arrived ${afterTime(e.waited)}, but you had already left.`;
 
     case 'gave-up':
-      return `You gave up ${afterTime(e.waited)}.`;
+      return e.patience ? `After ${waitedFor(e.waited)} with no answer, you left.` : `You gave up ${afterTime(e.waited)}.`;
   }
 }

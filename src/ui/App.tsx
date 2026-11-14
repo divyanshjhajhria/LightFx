@@ -437,6 +437,12 @@ export function App() {
     return () => cancelAnimationFrame(id);
   }, []);
 
+  /** Switch to "Your trade" at the same height as "The banks", so the canvas above keeps its size. */
+  const showTrade = () => {
+    if (banksHeight.current === 0 && bottom.current) banksHeight.current = bottom.current.offsetHeight;
+    setTab('trade');
+  };
+
   const endFollow = () => {
     if (savedSpeed.current !== null) setSpeed(savedSpeed.current);
     savedSpeed.current = null;
@@ -540,8 +546,7 @@ export function App() {
     }
     const trade = a.placeTrade(at, side, size);
     setFollowed({ trade, at, side, size });
-    if (banksHeight.current === 0 && bottom.current) banksHeight.current = bottom.current.offsetHeight;
-    setTab('trade');
+    showTrade();
     const g = guide.current;
     if (g) {
       // In the demo the guide alone sets the speed, and only the first trade drives the script.
@@ -652,7 +657,7 @@ export function App() {
       const placed = w.leased.trace(g.trade)[0];
       if (placed?.kind === 'placed' && demoBeat.current <= 1) {
         setFollowed({ trade: g.trade, at: placed.body, side: placed.side, size: placed.size });
-        setTab('trade');
+        showTrade();
       }
     }
     if (g.index !== demoBeat.current) {
@@ -663,7 +668,7 @@ export function App() {
       if (b.id === 'panic') setTab('banks');
       if (b.id === 'recovery') {
         marsServed.current.recovery = w.central.desks.mars.served;
-        if (followingRef.current !== null) setTab('trade');
+        if (followingRef.current !== null) showTrade();
       }
     }
     if (g.finished && !results) {

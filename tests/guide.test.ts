@@ -173,4 +173,42 @@ describe('the guided demo', () => {
     expect(said['recovery-settle']).toMatch(/^Mars has finally heard about your trade\./);
     expect(lines.map((l) => l.id)).toEqual(SCRIPT.map((l) => l.id));
   });
+
+  it('starts the storm when the message is half-way, even if ticked only twice a simulated minute', () => {
+    const arena = new Arena(GUIDE_SEED, { separationDeg: GUIDE_SEPARATION });
+    arena.run(GUIDE_WARMUP);
+    const g = new Guide(arena);
+    g.space(); // sell 5 at Mars
+    const lead = arena.worlds.leased;
+    let steps = 0;
+    while (g.beat.id === 'trade' && steps < 400) {
+      arena.step();
+      steps++;
+      // No wall clock at all: real time stands still, so only simulated time can move the demo on.
+      if (steps % 2 === 0) g.tick(0);
+    }
+    expect(g.beat.id).toBe('storm');
+    const told = lead.trace(g.trade!).find((e) => e.kind === 'told' && e.to === 'earth')!;
+    expect(told.kind).toBe('told');
+    const half = told.t + ((told as Extract<TraceEvent, { kind: 'told' }>).landsAt - told.t) / 2;
+    expect(arena.now).toBeGreaterThanOrEqual(half);
+    expect(arena.now).toBeLessThan(half + 0.5 + 1e-9);
+  });
+
+  it('moves on after 3 simulated minutes if the trade sends no news (refused at a full desk)', () => {
+    const arena = new Arena(GUIDE_SEED, { separationDeg: GUIDE_SEPARATION });
+    arena.run(GUIDE_WARMUP);
+    const g = new Guide(arena);
+    const mars = arena.worlds.leased.desks.mars;
+    mars.pos = mars.budget()!;
+    g.tradePlaced(arena.placeTrade('mars', 'sell', 5));
+    const t0 = arena.now;
+    while (g.beat.id !== 'storm' && arena.now < t0 + 10) {
+      arena.step();
+      g.tick(0);
+    }
+    expect(g.beat.id).toBe('storm');
+    expect(arena.now - t0).toBeGreaterThanOrEqual(3);
+    expect(arena.now - t0).toBeLessThan(3.5);
+  });
 });

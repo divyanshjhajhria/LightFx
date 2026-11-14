@@ -2,7 +2,7 @@ import type { TraceEvent } from '../sim/trace';
 import { STRATEGIES } from '../sim/types';
 import type { BodyId, StrategyId } from '../sim/types';
 import type { Arena } from '../sim/world';
-import { afterTime, inTime, minutes, tell } from './story';
+import { afterTime, inTime, minutes, tell, waitedFor } from './story';
 import { BODY_LABEL, BODY_NAME, STRATEGY, clock } from './theme';
 
 export interface FollowedTrade {
@@ -33,7 +33,7 @@ function inFlight(tr: readonly TraceEvent[], now: number, asker: BodyId): { to: 
 function outcome(tr: readonly TraceEvent[], strategy: StrategyId): string | null {
   // Giving up is the visitor's own ending, whatever arrives afterwards.
   const gave = tr.find((e) => e.kind === 'gave-up');
-  if (gave?.kind === 'gave-up') return `You gave up ${afterTime(gave.waited)}`;
+  if (gave?.kind === 'gave-up') return gave.patience ? `You left after ${waitedFor(gave.waited)}` : `You gave up ${afterTime(gave.waited)}`;
   for (let i = tr.length - 1; i >= 0; i--) {
     const e = tr[i];
     if (e.kind === 'filled') {
@@ -41,7 +41,7 @@ function outcome(tr: readonly TraceEvent[], strategy: StrategyId): string | null
       return `Done ${afterTime(e.waited)}`;
     }
     if (e.kind === 'refused') return 'Refused';
-    if (e.kind === 'gave-up') return `You gave up ${afterTime(e.waited)}`;
+    if (e.kind === 'gave-up') return e.patience ? `You left after ${waitedFor(e.waited)}` : `You gave up ${afterTime(e.waited)}`;
     if (e.kind === 'too-late') return 'Too late: you had already left';
   }
   return strategy === 'central' && tr.length ? 'Still waiting' : null;

@@ -47,7 +47,7 @@ export interface Desk {
   /** What this desk believes the bank holds in total, or null if it keeps no such figure. */
   believedTotal(): { low: number; high: number } | null;
   /** A visitor has walked away. Only a desk still holding that customer does anything. */
-  cancelVisitor?(trade: number, ctx: DeskCtx): void;
+  cancelVisitor?(trade: number, ctx: DeskCtx, patienceRanOut?: boolean): void;
 }
 
 export interface NettingStats {
@@ -459,13 +459,13 @@ export class CentralDesk extends BaseDesk {
     return true;
   }
 
-  cancelVisitor(trade: number, ctx: DeskCtx): void {
+  cancelVisitor(trade: number, ctx: DeskCtx, patienceRanOut = false): void {
     for (const [id, c] of this.waiting) {
       if (c.trade !== trade) continue;
       // Dropping the customer means a later approval is answered "not filled", which releases Earth's bound.
       this.waiting.delete(id);
       this.walkedAway.set(id, c);
-      ctx.report?.(trade, { kind: 'gave-up', waited: ctx.now - c.arrivedAt });
+      ctx.report?.(trade, { kind: 'gave-up', waited: ctx.now - c.arrivedAt, ...(patienceRanOut ? { patience: true as const } : {}) });
     }
   }
 

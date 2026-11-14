@@ -127,6 +127,7 @@ describe('visitor trades', () => {
     const tr = w.trace(1);
     expect(kinds(tr)).toEqual(['placed', 'asked-earth', 'not-delivered', 'gave-up']);
     expect(tr[3].kind === 'gave-up' && near(tr[3].waited, w.cfg.visitorPatience, w.cfg.dt + 1e-9)).toBe(true);
+    expect(tr[3]).toMatchObject({ kind: 'gave-up', patience: true });
     expect(w.totalPosition()).toBe(0);
   });
 
@@ -139,6 +140,7 @@ describe('visitor trades', () => {
     w.cancelTrade(1);
     const gave = w.trace(1).find((e) => e.kind === 'gave-up');
     expect(gave && gave.kind === 'gave-up' && near(gave.waited, 10, w.cfg.dt + 1e-9)).toBe(true);
+    expect(gave && 'patience' in gave).toBe(false);
     runFor(w, 80);
     // The late answer closes the story without changing anything.
     expect(kinds(w.trace(1))).toEqual(['placed', 'asked-earth', 'gave-up', 'earth-approved', 'too-late']);

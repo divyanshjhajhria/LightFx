@@ -8,8 +8,11 @@ import type { Arena } from './world';
 
 export type Condition =
   | { kind: 'trade-placed' }
-  /** The visitor's news is half-way to a distant peer (see Guide.holds). */
-  | { kind: 'trade-message-halfway' }
+  /**
+   * The visitor's news is half-way to a distant peer. With `noNewsAfter`, also true once that many simulated minutes
+   * have passed since the trade with no news sent to a distant peer at all (so the demo never waits for ever).
+   */
+  | { kind: 'trade-message-halfway'; noNewsAfter?: number }
   | { kind: 'desk-mode'; strategy: StrategyId; body: BodyId; mode: Mode }
   /** |true total| > limit right now. */
   | { kind: 'breached'; strategy: StrategyId }
@@ -136,8 +139,8 @@ export const GUIDE_BEATS: Beat[] = [
     label: 'Your trade',
     speed: 1,
     enter: [],
-    advance: { kind: 'trade-message-halfway' },
-    fallbackSeconds: 14,
+    // Simulated time only: a slow machine slows the whole simulation, so the storm still lands mid-flight.
+    advance: { kind: 'trade-message-halfway', noNewsAfter: 3 },
     // For the default trade (sell 5 at Mars): "Mars took your five credits on its own, straight away. Now it is
     // telling Earth what it holds. Watch the message go."
     say: tradeLine,
@@ -357,14 +360,11 @@ export class Guide {
         return this.trade !== null;
       case 'trade-message-halfway': {
         if (this.trade === null) return false;
-        return lead
-          .trace(this.trade)
-          .some(
-            (e) =>
-              e.kind === 'told' &&
-              distanceAU(lead.orbit, e.body, e.to) > 0.1 &&
-              lead.now >= e.t + (e.landsAt - e.t) / 2,
-          );
+        const tr = lead.trace(this.trade);
+        const far = tr.filter((e) => e.kind === 'told' && distanceAU(lead.orbit, e.body, e.to) > 0.1);
+        if (far.some((e) => e.kind === 'told' && lead.now >= e.t + (e.landsAt - e.t) / 2)) return true;
+        const placed = tr[0];
+        return c.noNewsAfter !== undefined && far.length === 0 && !!placed && lead.now - placed.t >= c.noNewsAfter;
       }
       case 'desk-mode': {
         const w = a.worlds[c.strategy];

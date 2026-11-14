@@ -88,4 +88,11 @@ describe('tell', () => {
       'You asked to buy 10 Mars credits from the Moon.',
     );
   });
+
+  it('tells leaving apart from giving up', () => {
+    expect(tell({ t: 160, body: 'mars', kind: 'gave-up', waited: 60, patience: true }, 'central', 160)).toBe(
+      'After an hour with no answer, you left.',
+    );
+    expect(tell({ t: 160, body: 'mars', kind: 'gave-up', waited: 10 }, 'central', 160)).toBe('You gave up after 10 minutes.');
+  });
 });

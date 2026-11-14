@@ -3,39 +3,41 @@ import type { Guide } from '../sim/guide';
 import type { TraceEvent } from '../sim/trace';
 import type { BodyId } from '../sim/types';
 import type { Arena } from '../sim/world';
-import { afterTime } from './story';
+import { afterTime, waitedFor } from './story';
 
 /**
- * How the visitor's order ended at the bank that asks Earth, in a few words, from whatever its story actually holds.
- * Covers every way a central story can go: filled (at once or after a wait), refused, declined, lost on the way there
- * or back, too late, walked away, or still waiting.
+ * How the visitor's order ended at the bank that asks Earth, as one or two sentences, from whatever its story actually
+ * holds. Covers every way a central story can go: filled (at once or after a wait), refused, declined, lost on the way
+ * there or back, too late, gave up, left when patience ran out, or still waiting.
  */
 export function centralOutcome(tr: readonly TraceEvent[], asker: BodyId): string {
   const has = (k: TraceEvent['kind'], to?: BodyId) =>
     tr.some((e) => e.kind === k && (to === undefined || ('to' in e && e.to === to)));
   const filled = tr.find((e) => e.kind === 'filled');
   if (filled?.kind === 'filled') {
-    const part = filled.units < filled.of ? `${filled.units} of ${filled.of} ` : '';
-    return filled.waited === 0 ? `${part}filled straight away` : `${part}filled ${afterTime(filled.waited)}`;
+    const when = filled.waited === 0 ? 'straight away' : afterTime(filled.waited);
+    return filled.units < filled.of
+      ? `Your order was part-filled ${when}: ${filled.units} of ${filled.of}.`
+      : `Your order was filled ${when}.`;
   }
-  if (has('refused')) return 'refused, the bank was at its limit';
+  if (has('refused')) return 'Your order was refused: the bank was at its limit.';
 
   let how: string;
-  if (has('destroyed', 'earth') || has('not-delivered', 'earth')) how = 'never reached head office';
-  else if (has('earth-declined')) how = `declined by head office, and ${asker === 'moon' ? 'the Moon' : 'Mars'} never heard`;
+  if (has('destroyed', 'earth') || has('not-delivered', 'earth')) how = 'Your order never reached head office';
+  else if (has('earth-declined')) how = `Your order was declined by head office, and ${asker === 'moon' ? 'the Moon' : 'Mars'} never heard`;
   else if (has('earth-approved') && (has('destroyed', asker) || has('not-delivered', asker))) {
-    how = "approved, but head office's answer was lost on the way back";
-  } else if (has('earth-approved')) how = 'approved by head office';
-  else how = 'on its way to head office';
+    how = "Your order was approved, but head office's answer was lost on the way back";
+  } else if (has('earth-approved')) how = 'Your order was approved by head office';
+  else how = 'Your order is on its way to head office';
 
   const late = tr.find((e) => e.kind === 'too-late');
   const gave = tr.find((e) => e.kind === 'gave-up');
-  if (gave?.kind === 'gave-up' && late?.kind === 'too-late') {
-    return `${how}; you walked away ${afterTime(gave.waited)}, and the answer came after you had gone`;
-  }
-  if (late?.kind === 'too-late') return `${how}, but the answer came ${afterTime(late.waited)}, after you had left`;
-  if (gave?.kind === 'gave-up') return `${how}, and you walked away ${afterTime(gave.waited)}`;
-  return `${how}, still waiting`;
+  const left =
+    gave?.kind === 'gave-up' ? (gave.patience ? `you left after ${waitedFor(gave.waited)}` : `you gave up ${afterTime(gave.waited)}`) : '';
+  if (gave && late?.kind === 'too-late') return `${how}; ${left}, and the answer came after you had gone.`;
+  if (late?.kind === 'too-late') return `${how}, but the answer came ${afterTime(late.waited)}, after you had left.`;
+  if (gave) return `${how}, and ${left}.`;
+  return `${how}. You are still waiting.`;
 }
 
 export function CaptionBar({ text }: { text: string }) {
@@ -86,7 +88,7 @@ export function readResults(arena: Arena, trade: number | null, marsServedInStor
   return {
     ours: { overMin: leased.metrics.breachTicks * dt, served: leased.metrics.served },
     naive: { overMin: naive.metrics.breachTicks * dt },
-    central: { outcome: ct.length ? centralOutcome(ct, asker) : 'no order placed', marsServedInStorm },
+    central: { outcome: ct.length ? centralOutcome(ct, asker) : 'No order was placed.', marsServedInStorm },
   };
 }
 
@@ -112,7 +114,7 @@ export function ResultsCard({ r }: { r: Results }) {
         <div>
           <dt>The bank that asks Earth</dt>
           <dd>
-            Your order: {r.central.outcome}. Mars office served {r.central.marsServedInStorm}{' '}
+            {r.central.outcome} Mars office served {r.central.marsServedInStorm}{' '}
             {r.central.marsServedInStorm === 1 ? 'customer' : 'customers'} during the storm.
           </dd>
         </div>

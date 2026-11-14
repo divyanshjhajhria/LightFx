@@ -293,8 +293,8 @@ export class World {
   }
 
   /** The visitor has walked away. Only a desk still holding the customer (central, remote) does anything. */
-  cancelTrade(trade: number): void {
-    for (const b of BODIES) this.desks[b].cancelVisitor?.(trade, this.ctx(b));
+  cancelTrade(trade: number, patienceRanOut = false): void {
+    for (const b of BODIES) this.desks[b].cancelVisitor?.(trade, this.ctx(b), patienceRanOut);
   }
 
   // ---- Main loop ----------------------------------------------------------
@@ -366,7 +366,7 @@ export class World {
         const placed = tr[0];
         if (!placed || this.now - placed.t < this.cfg.visitorPatience) continue;
         if (tr.some((e) => e.kind === 'filled' || e.kind === 'refused' || e.kind === 'too-late' || e.kind === 'gave-up')) continue;
-        this.cancelTrade(trade);
+        this.cancelTrade(trade, true);
       }
     }
 
