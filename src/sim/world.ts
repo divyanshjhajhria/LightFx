@@ -8,9 +8,10 @@ import { DelayNetwork } from './network';
 import { advanceOrbit, distanceAU, lightDelayMin, makeOrbit, setSeparation, sunBlocked } from './orbits';
 import type { OrbitState } from './orbits';
 import { Rng } from './rng';
+import type { DeskEvent, DeskEventDetail } from './deskEvents';
 import type { TraceDetail, TraceEvent } from './trace';
 import { BODIES, STRATEGIES, perBody } from './types';
-import type { BodyId, Customer, DeskView, Envelope, LinkView, Metrics, Payload, PerBody, StrategyId } from './types';
+import type { BodyId, Customer, DeskView, Envelope, LinkView, Metrics, Mode, Payload, PerBody, StrategyId } from './types';
 
 export interface WorldOptions {
   strategy: StrategyId;
@@ -37,6 +38,11 @@ const LINKS: [BodyId, BodyId][] = [
   ['earth', 'mars'],
   ['moon', 'mars'],
 ];
+
+/** How many recent events each desk's briefing keeps. */
+const DESK_EVENTS_KEEP = 6;
+/** A full desk refuses over and over: note it at most once in this many minutes. */
+const REFUSAL_EVERY = 10;
 
 /** How many visitor trades keep their story. */
 const TRACE_KEEP = 10;
@@ -96,6 +102,10 @@ export class World {
   /** The story of each recent visitor trade, oldest trade first. */
   private readonly traces = new Map<number, TraceEvent[]>();
   private readonly spreading = new Map<number, Spreading>();
+  /** What each desk recently did or saw, newest last, for its briefing. */
+  private readonly deskEvents: PerBody<DeskEvent[]> = perBody(() => []);
+  private readonly lastMode: PerBody<Mode>;
+  private readonly lastRefusal: PerBody<number> = perBody(() => -Infinity);
   /** Whether each link was open at the end of the previous step, by linkKey. */
   private readonly wasOpen = new Map<string, boolean>();
 
@@ -115,6 +125,7 @@ export class World {
       (a, b) => lightDelayMin(this.orbit, a, b),
     );
     for (const [a, b] of LINKS) this.wasOpen.set(linkKey(a, b), this.linkOpen(a, b));
+    this.lastMode = perBody((b) => this.desks[b].mode(0));
   }
 
   // ---- Controls -----------------------------------------------------------
@@ -182,6 +193,7 @@ export class World {
       gapVar: this.gapVar(b),
       send: (to, p) => this.send(b, to, p),
       report: (trade, e) => this.report(b, trade, e),
+      log: (e) => this.logDesk(b, e),
     };
   }
 
@@ -260,6 +272,17 @@ export class World {
 
   private record(trade: number, body: BodyId, e: TraceDetail): void {
     this.traces.get(trade)?.push({ t: this.now, body, ...e });
+  }
+
+  private logDesk(b: BodyId, e: DeskEventDetail): void {
+    const list = this.deskEvents[b];
+    list.push({ t: this.now, ...e });
+    if (list.length > DESK_EVENTS_KEEP) list.shift();
+  }
+
+  /** What desk `b` recently did or saw, newest last (at most 6). Part of its briefing; nothing reads it to decide. */
+  events(b: BodyId): readonly DeskEvent[] {
+    return this.deskEvents[b];
   }
 
   /** The story of a visitor trade so far, oldest first; empty if the trade is unknown or too old. */
@@ -373,6 +396,13 @@ export class World {
     // 5. Desks do their own housekeeping (gossip, budget grants).
     for (const b of BODIES) this.desks[b].tick(this.ctx(b));
 
+    // Note each desk's change of state, for its briefing.
+    for (const b of BODIES) {
+      const mode = this.desks[b].mode(this.now);
+      if (mode !== this.lastMode[b]) this.logDesk(b, { kind: 'mode', from: this.lastMode[b], to: mode });
+      this.lastMode[b] = mode;
+    }
+
     // 6. Score.
     const total = this.totalPosition();
     const m = this.metrics;
@@ -398,7 +428,10 @@ export class World {
     this.metrics.volRequested += cust.size;
     const desk = this.desks[cust.at];
     const ctx = this.ctx(cust.at);
-    if (desk.onCustomer?.(cust, ctx)) return;
+    if (desk.onCustomer?.(cust, ctx)) {
+      if (cust.trade !== undefined) this.logDesk(cust.at, { kind: 'visitor-trade', side: cust.side, units: cust.size, filled: 0 });
+      return;
+    }
     const q = desk.quote(ctx);
     if (!q) return;
     const selling = cust.side === 'sell';
@@ -408,6 +441,11 @@ export class World {
     const dir = selling ? 1 : -1;
     const n = desk.maxFill(dir, cust.size, ctx);
     if (n > 0) desk.applyFill(dir * n, price);
+    if (n === 0 && this.now - this.lastRefusal[cust.at] >= REFUSAL_EVERY) {
+      this.lastRefusal[cust.at] = this.now;
+      this.logDesk(cust.at, { kind: 'refused', reason: desk.refusalReason(dir, ctx) });
+    }
+    if (cust.trade !== undefined) this.logDesk(cust.at, { kind: 'visitor-trade', side: cust.side, units: cust.size, filled: n });
     if (cust.trade === undefined) return;
     if (n === 0) {
       this.record(cust.trade, cust.at, { kind: 'refused', reason: desk.refusalReason(dir, ctx) });

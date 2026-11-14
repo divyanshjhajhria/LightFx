@@ -1,4 +1,5 @@
 import type { SimConfig } from './config';
+import type { DeskEventDetail, PeerView } from './deskEvents';
 import type { RefusalReason, TraceDetail } from './trace';
 import { BODIES, perBody } from './types';
 import type { BodyId, Customer, Mode, Payload, PerBody, Quote, StrategyId } from './types';
@@ -16,6 +17,8 @@ export interface DeskCtx {
    * Returns nothing, and a desk must never let what it reports change what it decides.
    */
   report?(trade: number, e: TraceDetail): void;
+  /** Note something this desk did, for its briefing. Returns nothing; a desk must never branch on it. */
+  log?(e: DeskEventDetail): void;
 }
 
 export interface Desk {
@@ -46,6 +49,12 @@ export interface Desk {
   refusalReason(dir: 1 | -1, ctx: DeskCtx): RefusalReason;
   /** What this desk believes the bank holds in total, or null if it keeps no such figure. */
   believedTotal(): { low: number; high: number } | null;
+  /** What this desk knows of each peer. Read-only, for its briefing. */
+  peerView(now: number): PeerView[];
+  /** Allowance not needed by what it holds or has promised, or null if it has no allowance. */
+  spare(): number | null;
+  /** Customers waiting on head office at this desk, or null if it never makes them wait. */
+  waitingCount(): number | null;
   /** A visitor has walked away. Only a desk still holding that customer does anything. */
   cancelVisitor?(trade: number, ctx: DeskCtx, patienceRanOut?: boolean): void;
 }
@@ -92,6 +101,18 @@ abstract class BaseDesk implements Desk {
 
   refusalReason(_dir: 1 | -1, _ctx: DeskCtx): RefusalReason {
     return 'limit';
+  }
+
+  peerView(_now: number): PeerView[] {
+    return this.peers.map((body) => ({ body, heardMinAgo: null, lastKnownHolds: null }));
+  }
+
+  spare(): number | null {
+    return null;
+  }
+
+  waitingCount(): number | null {
+    return null;
   }
 
   abstract believedTotal(): { low: number; high: number } | null;
@@ -195,6 +216,17 @@ export class LeasedDesk extends BaseDesk {
     return this.mode(ctx.now) === 'reduce-only' ? 'playing-safe' : 'allowance';
   }
 
+  peerView(now: number): PeerView[] {
+    return this.peers.map((body) => {
+      const i = this.peerInfo[body];
+      return { body, heardMinAgo: i.seq > 0 ? now - i.sentAt : null, lastKnownHolds: i.seq > 0 ? i.pos : null };
+    });
+  }
+
+  spare(): number {
+    return this.free();
+  }
+
   /** My position plus the last positions my peers reported. Kept for display: this desk never relies on it. */
   believedTotal(): { low: number; high: number } {
     let t = this.pos;
@@ -232,10 +264,12 @@ export class LeasedDesk extends BaseDesk {
       info.free = p.free;
       info.pos = p.pos;
     }
+    const before = this.recv[p.from];
     this.recv[p.from] = Math.max(this.recv[p.from], p.sentRow[this.id]);
+    if (this.recv[p.from] > before) ctx.log?.({ kind: 'allowance-received', from: p.from, units: this.recv[p.from] - before });
     // Netting is read from every message, not only newer ones: the epoch checks make old copies harmless.
     if (p.netting) {
-      this.applyReply(p.from, p.netting.replies[this.id]);
+      this.applyReply(p.from, p.netting.replies[this.id], ctx);
       this.answerOffer(p.from, p.netting.offers[this.id], ctx);
     }
   }
@@ -248,13 +282,15 @@ export class LeasedDesk extends BaseDesk {
     this.cash += given * ctx.fair;
     this.myReply[peer] = { epoch: offer.epoch, given, price: ctx.fair };
     this.handoverLabel[peer] += given;
+    if (given > 0) ctx.log?.({ kind: 'handed-over', to: peer, units: given });
     this.nettedOutUnits += given;
     this.nettedOutCash += given * ctx.fair;
   }
 
   /** Short side: take in the units handed over for my open offer, and close it. */
-  private applyReply(peer: BodyId, reply: { epoch: number; given: number; price: number }): void {
+  private applyReply(peer: BodyId, reply: { epoch: number; given: number; price: number }, ctx: DeskCtx): void {
     if (reply.epoch !== this.myOffer[peer].epoch || reply.epoch <= this.applied[peer]) return;
+    if (reply.given > 0) ctx.log?.({ kind: 'took-on', from: peer, units: reply.given });
     this.pos += reply.given;
     this.cash -= reply.given * reply.price;
     this.applied[peer] = reply.epoch;
@@ -283,7 +319,7 @@ export class LeasedDesk extends BaseDesk {
     if (ctx.now < this.nextGossipAt) return;
     this.nextGossipAt = ctx.now + this.cfg.gossipEvery;
     if (this.mode(ctx.now) !== 'reduce-only') {
-      this.rebalance(ctx.now);
+      this.rebalance(ctx);
       if (this.cfg.netting) this.openOffers(ctx.now);
     }
     this.seq++;
@@ -313,7 +349,8 @@ export class LeasedDesk extends BaseDesk {
   }
 
   /** Give spare budget to a peer that is running low. Only ever gives away budget that is not in use. */
-  private rebalance(now: number): void {
+  private rebalance(ctx: DeskCtx): void {
+    const now = ctx.now;
     for (const p of this.peers) {
       const info = this.peerInfo[p];
       const age = now - info.sentAt;
@@ -327,6 +364,7 @@ export class LeasedDesk extends BaseDesk {
       if (amount < 1) continue;
       this.sent[p] += amount;
       this.lastGrantAt[p] = now;
+      ctx.log?.({ kind: 'allowance-given', to: p, units: amount });
     }
   }
 }
@@ -336,7 +374,7 @@ export class LeasedDesk extends BaseDesk {
  * from its peers. Fast and always available; breaches the limit when that information is stale.
  */
 export class NaiveDesk extends BaseDesk {
-  private readonly peerPos: PerBody<{ seq: number; pos: number }> = perBody(() => ({ seq: 0, pos: 0 }));
+  private readonly peerPos: PerBody<{ seq: number; pos: number; sentAt: number }> = perBody(() => ({ seq: 0, pos: 0, sentAt: 0 }));
   private seq = 0;
   private nextGossipAt = 0;
 
@@ -346,6 +384,13 @@ export class NaiveDesk extends BaseDesk {
 
   mode(): Mode {
     return 'normal';
+  }
+
+  peerView(now: number): PeerView[] {
+    return this.peers.map((body) => {
+      const i = this.peerPos[body];
+      return { body, heardMinAgo: i.seq > 0 ? now - i.sentAt : null, lastKnownHolds: i.seq > 0 ? i.pos : null };
+    });
   }
 
   /** My position plus the last positions I heard. This is the figure I trade against. */
@@ -372,6 +417,7 @@ export class NaiveDesk extends BaseDesk {
     if (p.seq > info.seq) {
       info.seq = p.seq;
       info.pos = p.pos;
+      info.sentAt = p.sentAt;
     }
   }
 
@@ -423,6 +469,10 @@ export class CentralDesk extends BaseDesk {
 
   mode(): Mode {
     return !this.isHq && this.lastRfqAt - this.lastApproveAt > 30 ? 'halted' : 'normal';
+  }
+
+  waitingCount(): number | null {
+    return this.isHq ? null : this.waiting.size;
   }
 
   /** Head office knows the bank's position lies within its bounds. Remote desks keep no figure. */
