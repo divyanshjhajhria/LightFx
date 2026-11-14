@@ -157,6 +157,13 @@ function draw(f: Frame): void {
   g.ellipse(pos.earth[0], pos.earth[1], MOON_DISPLAY_AU * cam.zoom, MOON_DISPLAY_AU * cam.zoom * TILT, 0, 0, 2 * Math.PI);
   g.stroke();
 
+  // Links carrying a labelled hand-over right now: their other labels step aside so the hand-over can be read.
+  const handing = new Set<string>();
+  for (const env of w.net.inFlight) {
+    if (env.payload.kind === 'gossip' && env.payload.handover) handing.add([env.from, env.to].sort().join('-'));
+  }
+  const quiet = (a: BodyId, b: BodyId) => handing.has([a, b].sort().join('-'));
+
   // Links. Drawn before the Sun so a blocked line visibly runs into it.
   for (const l of w.links()) {
     const [x1, y1] = pos[l.a];
@@ -172,7 +179,7 @@ function draw(f: Frame): void {
     g.stroke();
     g.setLineDash([]);
     if (l.cut) cross(g, (x1 + x2) / 2, (y1 + y2) / 2, 0.95);
-    if (l.a === 'earth' && l.b === 'mars') {
+    if (l.a === 'earth' && l.b === 'mars' && !quiet(l.a, l.b)) {
       const len = Math.hypot(x2 - x1, y2 - y1) || 1;
       let nx = -(y2 - y1) / len;
       let ny = (x2 - x1) / len;
@@ -267,7 +274,12 @@ function draw(f: Frame): void {
       g.font = `500 11.5px ${FONT}`;
       g.textAlign = 'center';
       g.fillStyle = `rgba(${WARM},0.92)`;
-      g.fillText(`${handover} handed to ${BODY_NAME[env.to]}`, x + nx * 18 * side, y + ny * 18 * side + 4);
+      // Leave the words off right next to a planet, where they would sit on its name; the large dot still shows.
+      if (Math.hypot(x - a[0], y - a[1]) < 36 || Math.hypot(x - b[0], y - b[1]) < 36) continue;
+      // On whichever side of the line is further from the Moon, whose name sits close to the Earth to Mars line.
+      const [mx, my] = pos.moon;
+      const away = Math.hypot(x + nx * 18 - mx, y + ny * 18 - my) >= Math.hypot(x - nx * 18 - mx, y - ny * 18 - my) ? 1 : -1;
+      g.fillText(`${handover} handed to ${BODY_NAME[env.to]}`, x + nx * 22 * away, y + ny * 22 * away + 4);
       continue;
     }
     if (!tagged && (env.from === 'moon' || env.to === 'moon')) {
@@ -311,7 +323,7 @@ function draw(f: Frame): void {
     }
     const key = `${env.from}>${env.to}`;
     const best = lead.get(key);
-    if ((key === 'earth>mars' || key === 'mars>earth') && (!best || left < best.left)) {
+    if ((key === 'earth>mars' || key === 'mars>earth') && !quiet(env.from, env.to) && (!best || left < best.left)) {
       lead.set(key, { x, y, nx: nx * side, ny: ny * side, left });
     }
   }

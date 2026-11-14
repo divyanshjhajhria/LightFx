@@ -3,7 +3,7 @@ import { DEFAULT_CONFIG } from '../src/sim/config';
 import type { SimConfig } from '../src/sim/config';
 import { Director, runScenario, startScenario } from '../src/sim/scenario';
 import type { Scenario } from '../src/sim/scenario';
-import { SCENARIOS } from '../src/sim/scenarios';
+import { GAP_HALVED, SCENARIOS } from '../src/sim/scenarios';
 import { BODIES, STRATEGIES } from '../src/sim/types';
 import { Arena, World } from '../src/sim/world';
 
@@ -150,8 +150,37 @@ describe('presets', () => {
     expect(reconnected).toBe(down);
     expect(end).toBeGreaterThan(reconnected);
 
-    const off = runScenario(s, s.durationMin, { ...DEFAULT_CONFIG, netting: false } as SimConfig).arena.worlds.leased;
-    expect(gross(w)).toBeLessThan(gross(off));
+    // After the links return, netting leaves the bank holding less gross exposure on average. (Compared over the whole
+    // stretch from reconnection to the end: at any single tick the two runs' customers can swap which is lower.)
+    const meanGross = (netting: boolean) => {
+      const r = startScenario(s, { ...DEFAULT_CONFIG, netting } as SimConfig);
+      let sum = 0;
+      let n = 0;
+      while (r.arena.now < s.durationMin) {
+        r.arena.step();
+        r.director.advance();
+        if (r.arena.now >= 150) {
+          sum += gross(r.arena.worlds.leased);
+          n++;
+        }
+      }
+      return sum / n;
+    };
+    expect(meanGross(true)).toBeLessThan(meanGross(false));
+  });
+
+  it('reconnect: when the last note says most of the gap is cancelled, it really is', () => {
+    const s = preset('reconnect');
+    const note = s.events.find((e) => e.kind === 'note' && e.text.startsWith('Earth and Mars have cancelled'))!;
+    expect(note.at).toBe(GAP_HALVED);
+    const run = startScenario(s);
+    const w = run.arena.worlds.leased;
+    const gap = () => Math.abs(w.desks.earth.pos) + Math.abs(w.desks.mars.pos);
+    playTo(run, 150);
+    const at150 = gap();
+    expect(at150).toBeGreaterThan(0);
+    playTo(run, note.at);
+    expect(gap()).toBeLessThanOrEqual(at150 / 2);
   });
 
   it('reconnect: the leased Mars desk never plays safe, so it still has something to cancel', () => {

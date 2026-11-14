@@ -2,11 +2,11 @@
 import type { Scenario } from './scenario';
 
 /**
- * When the first LABELLED hand-over from Earth after the links return lands at Mars in Trade winds (seed 11):
- * 21 units, applied at 185.5. Measured with this seed, rounded up. An earlier, unlabelled 4 units lands at 161.5:
- * Earth answered that offer during the outage, so the one message carrying its label was dropped.
+ * Trade winds (seed 11): the first whole minute at which |Earth's position| + |Mars's position| has fallen to half or
+ * less of its value when the links return at 150 (80, Earth +39 and Mars -41, down to 39, Earth +19 and Mars -20).
+ * Measured with this seed; tests/scenario.test.ts checks it still holds.
  */
-const HANDOVER_LANDS = 186;
+export const GAP_HALVED = 186;
 
 export const SCENARIOS: Scenario[] = [
   {
@@ -43,10 +43,11 @@ export const SCENARIOS: Scenario[] = [
       { at: 120, kind: 'flow', body: 'mars', sellProb: 0.2 },
       { at: 120, kind: 'note', text: 'Links go down. Each desk carries on alone, inside its own allowance.' },
       { at: 150, kind: 'blackout', on: false },
-      { at: 150, kind: 'flow', body: 'earth', sellProb: 0.65 },
-      { at: 150, kind: 'flow', body: 'mars', sellProb: 0.35 },
+      // Even customers from here on, so nothing keeps re-opening the gap while the desks cancel it.
+      { at: 150, kind: 'flow', body: 'earth', sellProb: 0.5 },
+      { at: 150, kind: 'flow', body: 'mars', sellProb: 0.5 },
       { at: 150, kind: 'note', text: 'Links return. Watch Earth hand its surplus to Mars.' },
-      { at: HANDOVER_LANDS, kind: 'note', text: 'Earth and Mars have cancelled their opposite positions.' },
+      { at: GAP_HALVED, kind: 'note', text: 'Earth and Mars have cancelled most of their opposite positions.' },
     ],
   },
   {
