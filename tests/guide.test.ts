@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '../src/sim/config';
 import type { SimConfig } from '../src/sim/config';
-import { GUIDE_BEATS, GUIDE_SEED, GUIDE_SEPARATION, GUIDE_WARMUP, Guide } from '../src/sim/guide';
+import { GUIDE_SEED, GUIDE_SEPARATION, GUIDE_WARMUP, Guide } from '../src/sim/guide';
 import type { Line } from '../src/sim/guide';
 import type { TraceEvent } from '../src/sim/trace';
 import { BODIES } from '../src/sim/types';
@@ -56,11 +56,19 @@ function runGuide(cfg: SimConfig = DEFAULT_CONFIG): Run {
   return run;
 }
 
-/** Every line the script can say, in the order a full run says them. */
-const SCRIPT: Line[] = GUIDE_BEATS.flatMap((b) => [
-  ...(b.say ? [{ ...b.say, id: b.id }] : []),
-  ...(b.settle?.say ? [{ ...b.settle.say, id: `${b.id}-settle` }] : []),
-]);
+/** Every line a full run with the default trade says, in order, word for word as the script gives it. */
+const SCRIPT: Line[] = [
+  ['ready', 'This is one bank with offices on Earth, the Moon and Mars. A message between Earth and Mars takes twenty minutes each way. Go ahead: sell five Mars credits to the Mars desk.'],
+  ['trade', 'Mars took your five credits on its own, straight away. Now it is telling Earth what it holds. Watch the message go.'],
+  ['storm', 'A solar storm. Every link between the planets is gone, and your message was destroyed on the way. Earth has no idea your trade happened.'],
+  ['silence', 'Time passes.', 'An hour goes by.'],
+  ['silence-settle', 'An hour with no word from anyone. Our Mars desk does not guess. It stops taking on new risk, by itself, and waits.'],
+  ['panic', 'Now the market panics. Everyone is selling at once, on every planet.'],
+  ['panic-settle', 'The bank that trusts old news has just gone through its limit. Look at what each desk thinks the bank holds. None of them is right. Ours is holding inside the line.'],
+  ['alone', 'Now Earth and the Moon lose each other too. Three desks, and no links at all. The bank that asks head office has not completed one trade on Mars since the storm began. Ours is still inside its limit, because no desk ever needed permission.'],
+  ['recovery', 'The storm passes. The links come back, and the desks catch up.'],
+  ['recovery-settle', 'Earth has finally heard about your trade. Through all of that, our bank never crossed its limit and never needed head office. That is Lightspeed FX.'],
+].map(([id, caption, voice]) => ({ id, caption, voice: voice ?? caption }));
 
 describe('the guided demo', () => {
   const full = runGuide();
@@ -142,5 +150,27 @@ describe('the guided demo', () => {
     const p = full.panicSettle!;
     expect(p).toBeDefined();
     expect(p.believed.filter((b) => b !== p.truth).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('words the lines for the trade the visitor actually placed: buy 10 at Earth', () => {
+    const arena = new Arena(GUIDE_SEED, { separationDeg: GUIDE_SEPARATION });
+    arena.run(GUIDE_WARMUP);
+    const g = new Guide(arena);
+    const lines: Line[] = [...g.tick(0)];
+    g.tradePlaced(arena.placeTrade('earth', 'buy', 10));
+    let real = 0;
+    for (let steps = 0; !g.finished && steps < 100_000; steps++) {
+      if (g.canAdvance && g.beat.advance === 'space') g.space();
+      lines.push(...g.tick(real));
+      if (g.finished) break;
+      arena.step();
+      real += 0.25 / g.speed;
+      lines.push(...g.tick(real));
+    }
+    const said = Object.fromEntries(lines.map((l) => [l.id, l.caption]));
+    expect(said.trade).toBe('Earth sold you ten credits on its own, straight away. Now it is telling Mars what it holds. Watch the message go.');
+    expect(said.storm).toBe('A solar storm. Every link between the planets is gone, and your message was destroyed on the way. Mars has no idea your trade happened.');
+    expect(said['recovery-settle']).toMatch(/^Mars has finally heard about your trade\./);
+    expect(lines.map((l) => l.id)).toEqual(SCRIPT.map((l) => l.id));
   });
 });

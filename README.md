@@ -4,6 +4,39 @@ One bank, three currency desks (Earth, Moon, Mars), quoting dollars against Mars
 Messages between desks travel at light speed and stop in a solar storm, so no desk can wait for head office.
 The app runs three ways of managing the bank's risk limit side by side on identical events.
 
+## Running the demo
+
+Start it with `npm run dev` and open http://localhost:5173/?demo, or press **G** in the app, or choose
+"Guided demo" at the top of the Scenario menu. The bank is warmed up for an hour, the Mars desk is open with its
+trade ticket set to sell 5, and the controls are hidden. A caption bar and a voice explain each step.
+
+| Key | What it does |
+|---|---|
+| Space | Moves the demo on (stops the current line first). On the first step it sells 5 at Mars for the visitor. On the results card it starts again. |
+| M | Mute or unmute the voice. The captions always show. |
+| Esc | Leave the demo: free play, with the bank exactly as it stands and every control back. |
+
+The bottom-right hint says what the next press does ("Space then: Market panic"), greyed while the demo is
+fast-forwarding to its next moment, with a dot per step.
+
+| # | Step | What happens | Moves on |
+|---|---|---|---|
+| 1 | Place a trade | The visitor sells 5 to the Mars desk with the ticket's button (or the presenter presses space). | When the trade is placed |
+| 2 | Your trade | Mars says yes on its own and starts telling Earth. | By itself, when the message is half-way |
+| 3 | Solar storm | Every link goes; the visitor's message is destroyed in mid-space. | Space |
+| 4 | An hour of silence | Fast-forward until our Mars desk starts playing safe. | Space |
+| 5 | Market panic | Fast-forward until the bank that trusts old news goes through its limit; the canvas shows that bank, so each desk's "thinks the bank holds" can be compared with what it really holds. | Space |
+| 6 | Total isolation | Earth and the Moon lose each other too. | Space |
+| 7 | The storm passes | Links return; once Earth has heard about the trade, a results card closes the demo. | Space |
+
+A line that states an outcome ("has gone through its limit") is spoken only once the simulation has really got
+there; if it never does, the demo slows down and says nothing. Lines about the visitor's trade are worded from the
+trade actually placed, so a different trade (buy 10 at Earth, say) is described correctly.
+
+**Recorded voice.** Put MP3s in `public/vo/` named after the line they replace (`ready.mp3`, `panic-settle.mp3` and
+so on; see `public/vo/README.md`). Lines without a file use the browser's speech voice, British English if it has
+one. **If the voice fails** or the room is noisy, press M and read the captions aloud.
+
 ## Try it: follow a trade
 
 1. Open the app (`npm run dev`) and click Mars.
@@ -100,12 +133,15 @@ src/sim/world.ts     one bank's main loop; Arena runs all three on one seed
 src/sim/scenario.ts  scenario events, the Director that plays them, startScenario and runScenario
 src/sim/scenarios.ts the preset scenarios in the menu
 src/sim/trace.ts     the steps of a visitor trade's story
+src/sim/guide.ts     the guided demo: its seven steps and the state machine that plays them
 src/ui/App.tsx       top bar, scenario menu, timeline, control dock, desk inspector, main loop
 src/ui/SolarView.tsx the solar system canvas: camera, messages, drops, planets
 src/ui/Intel.tsx     the three-strategy comparison panel ("The banks")
 src/ui/StoryPanel.tsx "Your trade": the visitor trade's story, one column per bank
 src/ui/story.ts      the plain-English sentence for each step of a story
 src/ui/describe.ts   the plain-English description of a message, for the hover tooltip
+src/ui/Presenter.tsx the guided demo's caption bar, presenter hint and results card
+src/ui/voice.ts      the guided demo's voice: recorded files, else the browser's speech
 src/ui/theme.ts      colours, labels and number formatting shared by the above
 scripts/             headless scenario runner; netting study; CSV to JSON converter for real prices
 tests/               orbits, network, market feed, safety property, demo scenario, netting, scenarios

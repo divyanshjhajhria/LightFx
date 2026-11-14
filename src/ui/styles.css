@@ -682,6 +682,117 @@ input[type='range']::-moz-range-thumb {
   font-size: 12px;
 }
 
+/* ---- Presenter mode: caption, hint, results ---------------------------------- */
+
+/* Sits where the control dock normally is; readable from two metres away. */
+.captionBar {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(920px, calc(100% - 520px));
+  padding: 12px 22px;
+  border-radius: 16px;
+  font-size: 20px;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--text);
+}
+
+.presenterHint {
+  position: absolute;
+  right: 20px;
+  bottom: 18px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.presenterHint p {
+  margin: 3px 0 0;
+}
+
+.presenterHint p:first-child {
+  color: var(--text-2);
+}
+
+.presenterHint p.waiting {
+  opacity: 0.45;
+}
+
+.presenterHint kbd {
+  font: inherit;
+  padding: 1px 7px;
+  margin-right: 4px;
+  border: 1px solid var(--hair-strong);
+  border-radius: 5px;
+  color: var(--text);
+}
+
+.presenterHint .dots {
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+  margin: 6px 0;
+}
+
+.presenterHint .dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fill-strong);
+}
+
+.presenterHint .dots i.done {
+  background: var(--text-3);
+}
+
+.presenterHint .dots i.now {
+  background: var(--text);
+}
+
+.resultsCard {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  width: min(660px, calc(100% - 32px));
+  padding: 22px 26px 18px;
+  border-radius: 18px;
+}
+
+.resultsCard dl {
+  margin: 0;
+}
+
+.resultsCard dl div {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--hair);
+  font-size: 15px;
+}
+
+.resultsCard dl div:first-child {
+  border-top: 0;
+}
+
+.resultsCard dt {
+  color: var(--text-2);
+}
+
+.resultsCard dd {
+  margin: 0;
+}
+
+.resultsCard p {
+  margin: 12px 0 0;
+  color: var(--text-3);
+}
+
 /* ---- Trade ticket (top of the desk inspector) ------------------------------ */
 
 .ticket {
@@ -1160,6 +1271,17 @@ input[type='range']::-moz-range-thumb {
 
   .session {
     margin-left: auto;
+  }
+
+  .captionBar {
+    max-width: calc(100% - 32px);
+    bottom: 96px;
+    font-size: 17px;
+  }
+
+  .resultsCard dl div {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
 
   .timeline {

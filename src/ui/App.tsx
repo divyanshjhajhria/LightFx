@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { lightDelayMin, separationDeg } from '../sim/orbits';
+import { GUIDE_BEATS, GUIDE_SEED, GUIDE_SEPARATION, GUIDE_WARMUP, Guide } from '../sim/guide';
+import type { Line } from '../sim/guide';
 import { Director, runScenario, startScenario } from '../sim/scenario';
 import type { Scenario } from '../sim/scenario';
 import { SCENARIOS } from '../sim/scenarios';
@@ -8,6 +10,9 @@ import { BODIES, STRATEGIES, perBody } from '../sim/types';
 import type { BodyId, PerBody, StrategyId } from '../sim/types';
 import { Arena } from '../sim/world';
 import { Intel } from './Intel';
+import { CaptionBar, PresenterHint, ResultsCard, readResults } from './Presenter';
+import type { Results } from './Presenter';
+import { isMuted, prepareVoice, setMuted, speak, speaking, stop as stopVoice } from './voice';
 import { SolarView } from './SolarView';
 import { Story } from './StoryPanel';
 import type { FollowedTrade } from './StoryPanel';
@@ -189,7 +194,17 @@ function Inspector({
 }
 
 /** Scenario picker: a button that opens a short list. Escape or a click outside closes it. */
-function ScenarioMenu({ current, onChoose }: { current: Scenario | null; onChoose: (s: Scenario | null) => void }) {
+function ScenarioMenu({
+  current,
+  presenting,
+  onChoose,
+  onDemo,
+}: {
+  current: Scenario | null;
+  presenting: boolean;
+  onChoose: (s: Scenario | null) => void;
+  onDemo: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -230,14 +245,24 @@ function ScenarioMenu({ current, onChoose }: { current: Scenario | null; onChoos
         onClick={() => setOpen(!open)}
       >
         <span>Scenario</span>
-        <b>{current ? current.name : 'Free play'}</b>
+        <b>{presenting ? 'Guided demo' : current ? current.name : 'Free play'}</b>
         <svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true">
           <path d="M1.5 3.5L5 7l3.5-3.5" />
         </svg>
       </button>
       {open && (
         <div className="menuPanel glass" role="group" aria-label="Choose a scenario">
-          <button aria-current={current === null} onClick={() => choose(null)}>
+          <button
+            aria-current={presenting}
+            onClick={() => {
+              setOpen(false);
+              onDemo();
+            }}
+          >
+            <b>Guided demo</b>
+            <span>Seven steps, about three minutes. Press G to start, Space to move on.</span>
+          </button>
+          <button aria-current={!presenting && current === null} onClick={() => choose(null)}>
             <b>Free play</b>
             <span>Drive the storm, panic and Mars yourself.</span>
           </button>
@@ -335,14 +360,37 @@ export function App() {
   const bottom = useRef<HTMLDivElement>(null);
   const banksHeight = useRef(0);
   const [, repaint] = useReducer((n: number) => n + 1, 0);
+  // Presenter mode: the guided demo.
+  const guide = useRef<Guide | null>(null);
+  const [presenting, setPresenting] = useState(false);
+  const [caption, setCaption] = useState('');
+  const [results, setResults] = useState<Results | null>(null);
+  const [muted, setMutedState] = useState(isMuted());
+  /** Bumped on each demo start, so the desk panel's ticket starts again at "sell 5". */
+  const [demoRun, setDemoRun] = useState(0);
+  const demoStart = useRef(0);
+  const demoBeat = useRef(-1);
+  /** Central Mars desk's customers served when the storm started and when it passed. */
+  const marsServed = useRef<{ storm?: number; recovery?: number }>({});
+  const lastSpace = useRef(0);
 
   const series = useRef<number[] | undefined>(undefined);
   const arena = useRef<Arena | null>(null);
   if (!arena.current) arena.current = new Arena(seed, { separationDeg: 150 });
   const director = useRef<Director | null>(null);
   const partial = useRef(0); // Simulated minutes owed but not yet stepped, for smooth message motion.
-  const live = useRef({ running, speed, view });
-  live.current = { running, speed, view };
+  const live = useRef({
+    running,
+    speed,
+    view,
+    presenting,
+    onLines: (_l: Line[]) => {},
+    onGuideFrame: (_g: Guide) => {},
+    startDemo: () => {},
+    leaveDemo: () => {},
+    hasResults: false,
+  });
+  live.current = { ...live.current, running, speed, view, presenting };
 
   useEffect(() => {
     let id = 0;
@@ -353,9 +401,11 @@ export function App() {
       last = t;
       const a = arena.current!;
       const d = director.current;
+      const g = guide.current;
+      const realSec = (t - demoStart.current) / 1000;
       if (live.current.running) {
         const dt = a.worlds.leased.cfg.dt;
-        partial.current += real * live.current.speed;
+        partial.current += real * (g ? g.speed : live.current.speed);
         let n = 0;
         while (partial.current >= dt && n < 400) {
           if (d?.done) {
@@ -367,10 +417,15 @@ export function App() {
           }
           a.step();
           d?.advance();
+          if (g) live.current.onLines(g.tick(realSec));
           partial.current -= dt;
           n++;
         }
         if (n === 400) partial.current = 0;
+      }
+      if (g) {
+        live.current.onLines(g.tick(realSec));
+        live.current.onGuideFrame(g);
       }
       if (t - lastPaint > 120) {
         lastPaint = t;
@@ -432,7 +487,7 @@ export function App() {
   // Space bar plays and pauses, unless a control has focus.
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (e.code !== 'Space' || e.target !== document.body) return;
+      if (e.code !== 'Space' || e.target !== document.body || live.current.presenting) return;
       e.preventDefault();
       setRunning((r) => !r);
     };
@@ -445,7 +500,7 @@ export function App() {
   const getFollowing = useCallback(() => followingRef.current, []);
   /** While following a trade, each planet says what its desk believes the bank holds. */
   const getBelieves = useCallback((): PerBody<string | null> | null => {
-    if (followingRef.current === null) return null;
+    if (followingRef.current === null && !live.current.presenting) return null;
     const w = arena.current!.worlds[live.current.view];
     return perBody((b) => {
       const v = w.desks[b].believedTotal();
@@ -465,6 +520,8 @@ export function App() {
     live.current.running = true;
     setRunning(true);
   }, []);
+  /** In the demo a stray click on a message must not stall things: hover still describes it, but nothing pins. */
+  const canPin = useCallback(() => !live.current.presenting, []);
 
   const a = arena.current;
   const lead = a.worlds.leased;
@@ -485,6 +542,12 @@ export function App() {
     setFollowed({ trade, at, side, size });
     if (banksHeight.current === 0 && bottom.current) banksHeight.current = bottom.current.offsetHeight;
     setTab('trade');
+    const g = guide.current;
+    if (g) {
+      // In the demo the guide alone sets the speed, and only the first trade drives the script.
+      if (g.trade === null) g.tradePlaced(trade);
+      return;
+    }
     if (speed > 1 && savedSpeed.current === null) {
       savedSpeed.current = speed;
       setSpeed(1);
@@ -539,6 +602,126 @@ export function App() {
     setRunning(!running);
   };
 
+  // ---- Presenter mode: the guided demo ----------------------------------------------------
+
+  /** A fresh bank, warmed up for an hour, with the guide at its first beat. */
+  const startDemo = () => {
+    stopVoice();
+    const fresh = new Arena(GUIDE_SEED, { separationDeg: GUIDE_SEPARATION, earthSeries: series.current });
+    fresh.run(GUIDE_WARMUP);
+    swapIn(fresh);
+    setScenarioId(null);
+    setSeed(GUIDE_SEED);
+    guide.current = new Guide(fresh);
+    demoStart.current = performance.now();
+    demoBeat.current = -1;
+    marsServed.current = {};
+    setPresenting(true);
+    setResults(null);
+    setCaption('');
+    setDemoRun((n) => n + 1);
+    setSelected('mars');
+    setView('leased');
+    setTab('banks');
+    live.current.running = true;
+    setRunning(true);
+    void prepareVoice(GUIDE_BEATS.flatMap((b) => [b.id, `${b.id}-settle`]));
+  };
+
+  /** Back to free play with the bank exactly as it stands. */
+  const leaveDemo = () => {
+    stopVoice();
+    guide.current = null;
+    setPresenting(false);
+    setCaption('');
+    setResults(null);
+  };
+
+  /** Lines the guide wants said: the caption shows the latest; the voice says it. */
+  live.current.onLines = (lines: Line[]) => {
+    const l = lines[lines.length - 1];
+    if (!l) return;
+    setCaption(l.caption);
+    speak(l.id, l.voice);
+  };
+
+  /** Once a frame in the demo: follow the visitor's trade, react to a new beat, and show the results at the end. */
+  live.current.onGuideFrame = (g: Guide) => {
+    const w = arena.current!.worlds;
+    if (g.trade !== null && followingRef.current !== g.trade && followed?.trade !== g.trade && !results) {
+      const placed = w.leased.trace(g.trade)[0];
+      if (placed?.kind === 'placed' && demoBeat.current <= 1) {
+        setFollowed({ trade: g.trade, at: placed.body, side: placed.side, size: placed.size });
+        setTab('trade');
+      }
+    }
+    if (g.index !== demoBeat.current) {
+      demoBeat.current = g.index;
+      const b = g.beat;
+      if (b.view) setView(b.view);
+      if (b.id === 'storm') marsServed.current.storm = w.central.desks.mars.served;
+      if (b.id === 'panic') setTab('banks');
+      if (b.id === 'recovery') {
+        marsServed.current.recovery = w.central.desks.mars.served;
+        if (followingRef.current !== null) setTab('trade');
+      }
+    }
+    if (g.finished && !results) {
+      live.current.running = false;
+      setRunning(false);
+      const m = marsServed.current;
+      setResults(readResults(arena.current!, g.trade, (m.recovery ?? 0) - (m.storm ?? 0)));
+    }
+  };
+
+  // Keys. In presenter mode, space moves the demo on (captured before any focused button sees it), M mutes and
+  // Escape leaves. Anywhere else, G starts the demo.
+  useEffect(() => {
+    const typing = (t: EventTarget | null) =>
+      t instanceof HTMLElement && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+    const key = (e: KeyboardEvent) => {
+      if (typing(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
+      const g = guide.current;
+      if (!g) {
+        if (e.key === 'g' || e.key === 'G') live.current.startDemo();
+        return;
+      }
+      if (e.code === 'Space') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.repeat) return;
+        const now = performance.now();
+        if (now - lastSpace.current < 400) return;
+        lastSpace.current = now;
+        if (live.current.hasResults) {
+          live.current.startDemo();
+          return;
+        }
+        if (speaking()) stopVoice();
+        g.space();
+        live.current.onLines(g.tick((now - demoStart.current) / 1000));
+        repaint();
+      } else if (e.key === 'm' || e.key === 'M') {
+        const m = !isMuted();
+        setMuted(m);
+        setMutedState(m);
+      } else if (e.key === 'Escape') {
+        live.current.leaveDemo();
+      }
+    };
+    window.addEventListener('keydown', key, { capture: true });
+    return () => window.removeEventListener('keydown', key, { capture: true });
+  }, []);
+  live.current.startDemo = startDemo;
+  live.current.leaveDemo = leaveDemo;
+  live.current.hasResults = results !== null;
+
+  // ?demo in the address starts the guided demo straight away.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has('demo')) live.current.startDemo();
+  }, []);
+
+  const g = presenting ? guide.current : null;
   const marsLink = lead.links().find((l) => l.a === 'earth' && l.b === 'mars')!;
 
   return (
@@ -569,7 +752,7 @@ export function App() {
             </b>
           </div>
         </div>
-        {followed && (
+        {(followed || presenting) && (
           <div className="readouts holds">
             <div>
               <span>The bank really holds</span>
@@ -577,7 +760,15 @@ export function App() {
             </div>
           </div>
         )}
-        <ScenarioMenu current={scenario} onChoose={chooseScenario} />
+        <ScenarioMenu
+          current={scenario}
+          presenting={presenting}
+          onChoose={(s) => {
+            if (presenting) leaveDemo();
+            chooseScenario(s);
+          }}
+          onDemo={startDemo}
+        />
         <div className="session">
           <label>
             Seed
@@ -589,7 +780,7 @@ export function App() {
         </div>
       </header>
 
-      {dir && <Timeline director={dir} onJump={jump} />}
+      {dir && !presenting && <Timeline director={dir} onJump={jump} />}
 
       <main className="stage">
         <SolarView
@@ -602,10 +793,14 @@ export function App() {
           getBelieves={getBelieves}
           onPause={pause}
           onResume={resume}
+          canPin={canPin}
         />
-        <p className="hint">Click a planet to trade with its desk. Hover a message to read it. Click a link to cut it.</p>
+        {!presenting && (
+          <p className="hint">Click a planet to trade with its desk. Hover a message to read it. Click a link to cut it.</p>
+        )}
         {selected && (
           <Inspector
+            key={`${selected}-${demoRun}`}
             arena={a}
             view={view}
             body={selected}
@@ -615,69 +810,78 @@ export function App() {
           />
         )}
 
-        <div className="dock glass" role="toolbar" aria-label="Simulation controls">
-          <button
-            className="play"
-            onClick={play}
-            aria-label={running ? 'Pause' : dir?.done ? 'Play again from the start' : 'Play'}
-          >
-            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-              {running ? <path d="M3 2h3.5v12H3zM9.5 2H13v12H9.5z" /> : <path d="M4 2l10 6-10 6z" />}
-            </svg>
-          </button>
-          <div className="seg" role="group" aria-label="Simulated minutes per second">
-            {SPEEDS.map((s) => (
-              <button key={s.value} aria-pressed={s.value === speed} onClick={() => setSpeed(s.value)}>
-                {s.label}
-              </button>
-            ))}
-          </div>
-          <span className="rule" />
-          <div className="seg" role="group" aria-label="Where Mars is">
-            {PRESETS.map((p) => (
-              <button key={p.deg} aria-pressed={p.deg === sep} onClick={() => a.setSeparation(p.deg)}>
-                {p.label}
-              </button>
-            ))}
-          </div>
-          <label className="angle">
-            <input
-              type="range"
-              min={0}
-              max={180}
-              value={sep}
-              aria-label="Angle between Earth and Mars"
-              onChange={(e) => {
-                a.setSeparation(Number(e.target.value));
+        {presenting && g && (
+          <>
+            <CaptionBar text={caption} />
+            <PresenterHint guide={g} muted={muted} />
+            {results && <ResultsCard r={results} />}
+          </>
+        )}
+        {!presenting && (
+          <div className="dock glass" role="toolbar" aria-label="Simulation controls">
+            <button
+              className="play"
+              onClick={play}
+              aria-label={running ? 'Pause' : dir?.done ? 'Play again from the start' : 'Play'}
+            >
+              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+                {running ? <path d="M3 2h3.5v12H3zM9.5 2H13v12H9.5z" /> : <path d="M4 2l10 6-10 6z" />}
+              </svg>
+            </button>
+            <div className="seg" role="group" aria-label="Simulated minutes per second">
+              {SPEEDS.map((s) => (
+                <button key={s.value} aria-pressed={s.value === speed} onClick={() => setSpeed(s.value)}>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <span className="rule" />
+            <div className="seg" role="group" aria-label="Where Mars is">
+              {PRESETS.map((p) => (
+                <button key={p.deg} aria-pressed={p.deg === sep} onClick={() => a.setSeparation(p.deg)}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <label className="angle">
+              <input
+                type="range"
+                min={0}
+                max={180}
+                value={sep}
+                aria-label="Angle between Earth and Mars"
+                onChange={(e) => {
+                  a.setSeparation(Number(e.target.value));
+                  repaint();
+                }}
+              />
+              <output>{sep}°</output>
+            </label>
+            <span className="rule" />
+            <button
+              className="event"
+              aria-pressed={blackout}
+              onClick={() => {
+                a.setBlackout(!blackout);
                 repaint();
               }}
-            />
-            <output>{sep}°</output>
-          </label>
-          <span className="rule" />
-          <button
-            className="event"
-            aria-pressed={blackout}
-            onClick={() => {
-              a.setBlackout(!blackout);
-              repaint();
-            }}
-          >
-            <i className="dot" />
-            Solar storm
-          </button>
-          <button
-            className="event"
-            aria-pressed={panic}
-            onClick={() => {
-              a.setPanic(!panic);
-              repaint();
-            }}
-          >
-            <i className="dot" />
-            Market panic
-          </button>
-        </div>
+            >
+              <i className="dot" />
+              Solar storm
+            </button>
+            <button
+              className="event"
+              aria-pressed={panic}
+              onClick={() => {
+                a.setPanic(!panic);
+                repaint();
+              }}
+            >
+              <i className="dot" />
+              Market panic
+            </button>
+          </div>
+        )}
       </main>
 
       <div

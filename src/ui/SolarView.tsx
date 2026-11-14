@@ -467,20 +467,33 @@ interface Props {
   /** Pause the simulation and say whether it was running. */
   onPause: () => boolean;
   onResume: () => void;
+  /** Whether clicking a message may pin it (and pause). */
+  canPin: () => boolean;
 }
 
 /**
  * Interactive solar system for one world: scroll to zoom, drag to pan, click a planet, a message or a link.
  * Hovering a message describes it; clicking one pauses and pins the description. Redraws every frame.
  */
-export function SolarView({ getWorld, getNow, getFollowing, getBelieves, selected, onSelect, onToggleLink, onPause, onResume }: Props) {
+export function SolarView({
+  getWorld,
+  getNow,
+  getFollowing,
+  getBelieves,
+  selected,
+  onSelect,
+  onToggleLink,
+  onPause,
+  onResume,
+  canPin,
+}: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const tip = useRef<HTMLDivElement>(null);
   const cam = useRef<Camera>({ cx: 0, cy: 0, zoom: 200, tcx: 0, tcy: 0, tzoom: 200, fit: 200, touched: false });
   const [showNews, setShowNews] = useState(false);
-  const live = useRef({ selected, onSelect, onToggleLink, onPause, onResume, showNews });
-  live.current = { selected, onSelect, onToggleLink, onPause, onResume, showNews };
+  const live = useRef({ selected, onSelect, onToggleLink, onPause, onResume, showNews, canPin });
+  live.current = { selected, onSelect, onToggleLink, onPause, onResume, showNews, canPin };
   /** The pinned message (by envelope id), and whether the simulation was running when it was pinned. */
   const pin = useRef<{ id: number; wasRunning: boolean } | null>(null);
 
@@ -639,9 +652,11 @@ export function SolarView({ getWorld, getNow, getFollowing, getBelieves, selecte
         const link = body || msg !== null ? null : hitLink(mx, my);
         if (body) live.current.onSelect(body);
         else if (msg !== null) {
-          // Pin it: pause, and remember whether we were running so that unpinning can restart.
-          const wasRunning = pin.current ? pin.current.wasRunning : live.current.onPause();
-          pin.current = { id: msg, wasRunning };
+          // Pin it: pause, and remember whether we were running so that unpinning can restart. (Not in the demo.)
+          if (live.current.canPin()) {
+            const wasRunning = pin.current ? pin.current.wasRunning : live.current.onPause();
+            pin.current = { id: msg, wasRunning };
+          }
         } else if (link) live.current.onToggleLink(link[0], link[1]);
         else {
           unpin();

@@ -13,8 +13,8 @@ export type Condition =
   | { kind: 'desk-mode'; strategy: StrategyId; body: BodyId; mode: Mode }
   /** |true total| > limit right now. */
   | { kind: 'breached'; strategy: StrategyId }
-  /** The leased bank's story for the visitor's trade has 'heard' at this body. */
-  | { kind: 'trade-heard'; body: BodyId }
+  /** The leased bank's story for the visitor's trade has 'heard' at this body ('far': the trade's farthest peer). */
+  | { kind: 'trade-heard'; body: BodyId | 'far' }
   /** Simulated minutes since this beat started. */
   | { kind: 'elapsed'; minutes: number };
 
@@ -25,6 +25,27 @@ export interface Line {
   /** Recorded-audio name: the beat id, or "<beat id>-settle". */
   id: string;
 }
+
+/** What a line may depend on: the visitor's trade as it actually happened, read from the leased bank's story. */
+export interface GuideContext {
+  trade: {
+    at: BodyId;
+    side: 'buy' | 'sell';
+    size: number;
+    /** Units the leased desk took: 0 if it said no. */
+    filled: number;
+    /** The peer the story is about: Earth for a trade on Mars, Mars for a trade on Earth or the Moon. */
+    far: BodyId;
+  } | null;
+  /** A message carrying the trade's news is travelling right now. */
+  newsInFlight: boolean;
+  /** The far peer has already heard about the trade. */
+  heardFar: boolean;
+}
+
+type Words = Omit<Line, 'id'>;
+/** A line, or a line that depends on what actually happened, so it never says something untrue. */
+type Say = Words | ((c: GuideContext) => Words);
 
 export interface Beat {
   id: string;
@@ -37,14 +58,14 @@ export interface Beat {
   /** Simulated minutes per second while the beat is unsettled. */
   speed: number;
   /** Spoken when the beat starts. */
-  say?: Omit<Line, 'id'>;
+  say?: Say;
   /** Optional second phase: run at `speed` until `when` holds (or `capMinutes` pass), then slow to `settle.speed`. */
   settle?: {
     when: Condition;
     capMinutes: number;
     speed: number;
     /** Spoken ONLY if `when` became true. A capped beat says nothing, so no line claims what did not happen. */
-    say?: Omit<Line, 'id'>;
+    say?: Say;
   };
   /** What moves on to the next beat. */
   advance: 'space' | Condition;
@@ -53,6 +74,42 @@ export interface Beat {
 }
 
 const both = (text: string) => ({ caption: text, voice: text });
+
+const NUMBER = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve',
+  'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
+const spell = (n: number) => NUMBER[n] ?? String(n);
+const NAME: Record<BodyId, string> = { earth: 'Earth', moon: 'the Moon', mars: 'Mars' };
+const Name = (b: BodyId) => (b === 'moon' ? 'The Moon' : NAME[b]);
+
+/** Beat 2: what the desk did with the visitor's trade. The default trade gives the scripted wording exactly. */
+function tradeLine(c: GuideContext): Words {
+  const t = c.trade;
+  if (!t) return both('Watch the message go.');
+  const desk = Name(t.at);
+  const credits = (n: number) => `${spell(n)} ${n === 1 ? 'credit' : 'credits'}`;
+  let did: string;
+  if (t.filled === 0) {
+    return both(`${desk} said no on its own, straight away: its allowance has no room for that. Nothing to tell anyone.`);
+  } else if (t.side === 'sell') {
+    did = t.filled < t.size ? `${desk} took ${spell(t.filled)} of your ${credits(t.size)}` : `${desk} took your ${credits(t.size)}`;
+  } else {
+    did = t.filled < t.size ? `${desk} sold you ${spell(t.filled)} of the ${credits(t.size)} you asked for` : `${desk} sold you ${credits(t.size)}`;
+  }
+  return both(`${did} on its own, straight away. Now it is telling ${NAME[t.far]} what it holds. Watch the message go.`);
+}
+
+/** Beat 3: says the visitor's message was destroyed only if one really was in flight when the storm hit. */
+function stormLine(c: GuideContext): Words {
+  const far = c.trade ? NAME[c.trade.far] : 'Earth';
+  const Far = c.trade ? Name(c.trade.far) : 'Earth';
+  if (c.newsInFlight) {
+    return both(
+      `A solar storm. Every link between the planets is gone, and your message was destroyed on the way. ${Far} has no idea your trade happened.`,
+    );
+  }
+  if (c.heardFar) return both(`A solar storm. Every link between the planets is gone. ${Far} heard about your trade just in time.`);
+  return both(`A solar storm. Every link between the planets is gone, and ${far} has not heard about your trade.`);
+}
 
 /** The visitor's default trade when the presenter presses space instead of the button. */
 export const DEFAULT_TRADE = { at: 'mars' as BodyId, side: 'sell' as const, size: 5 };
@@ -81,9 +138,9 @@ export const GUIDE_BEATS: Beat[] = [
     enter: [],
     advance: { kind: 'trade-message-halfway' },
     fallbackSeconds: 14,
-    say: both(
-      'Mars took your five credits on its own, straight away. Now it is telling Earth what it holds. Watch the message go.',
-    ),
+    // For the default trade (sell 5 at Mars): "Mars took your five credits on its own, straight away. Now it is
+    // telling Earth what it holds. Watch the message go."
+    say: tradeLine,
   },
   {
     id: 'storm',
@@ -91,10 +148,9 @@ export const GUIDE_BEATS: Beat[] = [
     speed: 1,
     enter: [{ at: 0, kind: 'blackout', on: true }],
     advance: 'space',
-    say: both(
-      'A solar storm. Every link between the planets is gone, and your message was destroyed on the way. ' +
-        'Earth has no idea your trade happened.',
-    ),
+    // For the default trade: "A solar storm. Every link between the planets is gone, and your message was destroyed on
+    // the way. Earth has no idea your trade happened."
+    say: stormLine,
   },
   {
     id: 'silence',
@@ -156,13 +212,14 @@ export const GUIDE_BEATS: Beat[] = [
     advance: 'space',
     say: both('The storm passes. The links come back, and the desks catch up.'),
     settle: {
-      when: { kind: 'trade-heard', body: 'earth' },
+      when: { kind: 'trade-heard', body: 'far' },
       capMinutes: 90,
       speed: 1,
-      say: both(
-        'Earth has finally heard about your trade. Through all of that, our bank never crossed its limit and never ' +
-          'needed head office. That is Lightspeed FX.',
-      ),
+      say: (c) =>
+        both(
+          `${c.trade ? Name(c.trade.far) : 'Earth'} has finally heard about your trade. Through all of that, our bank ` +
+            'never crossed its limit and never needed head office. That is Lightspeed FX.',
+        ),
     },
   },
 ];
@@ -220,7 +277,7 @@ export class Guide {
       if (b.settle && !this.settled) {
         if (this.holds(b.settle.when)) {
           this.settled = true;
-          if (b.settle.say) this.queue.push({ ...b.settle.say, id: `${b.id}-settle` });
+          if (b.settle.say) this.queue.push({ ...this.words(b.settle.say), id: `${b.id}-settle` });
         } else if (this.arena.now - this.beatStartSim >= b.settle.capMinutes) {
           // Out of time: slow down, but say nothing that would claim the condition happened.
           this.settled = true;
@@ -259,8 +316,36 @@ export class Guide {
     this.capped = false;
     this.beatStartSim = this.arena.now;
     this.beatStartReal = this.beatStartReal === null ? null : this.lastReal;
+    // Work out what can truthfully be said before the beat's events change anything.
+    const words = b.say ? this.words(b.say) : null;
     for (const e of b.enter) applyEvent(this.arena, e);
-    if (b.say) this.queue.push({ ...b.say, id: b.id });
+    if (words) this.queue.push({ ...words, id: b.id });
+  }
+
+  private words(s: Say): Words {
+    return typeof s === 'function' ? s(this.context()) : s;
+  }
+
+  /** The visitor's trade as it actually happened, from the leased bank's story. */
+  context(): GuideContext {
+    const lead = this.arena.worlds.leased;
+    const tr = this.trade === null ? [] : lead.trace(this.trade);
+    const placed = tr.find((e) => e.kind === 'placed');
+    if (!placed || placed.kind !== 'placed') return { trade: null, newsInFlight: false, heardFar: false };
+    const filled = tr.find((e) => e.kind === 'filled');
+    // The peer across the gulf: Earth for a trade on Mars, Mars for a trade on Earth or the Moon.
+    const far: BodyId = placed.body === 'mars' ? 'earth' : 'mars';
+    return {
+      trade: {
+        at: placed.body,
+        side: placed.side,
+        size: placed.size,
+        filled: filled?.kind === 'filled' ? filled.units : 0,
+        far,
+      },
+      newsInFlight: lead.net.inFlight.some((e) => e.trade === this.trade && e.to !== placed.body),
+      heardFar: tr.some((e) => e.kind === 'heard' && e.body === far),
+    };
   }
 
   /** Whether a condition is true right now. Reads the simulation's god view; the desks never see any of this. */
@@ -289,8 +374,11 @@ export class Guide {
         const w = a.worlds[c.strategy];
         return Math.abs(w.totalPosition()) > w.cfg.limit;
       }
-      case 'trade-heard':
-        return this.trade !== null && lead.trace(this.trade).some((e) => e.kind === 'heard' && e.body === c.body);
+      case 'trade-heard': {
+        if (this.trade === null) return false;
+        const body = c.body === 'far' ? this.context().trade?.far : c.body;
+        return lead.trace(this.trade).some((e) => e.kind === 'heard' && e.body === body);
+      }
       case 'elapsed':
         return a.now - this.beatStartSim >= c.minutes;
     }
