@@ -50,7 +50,8 @@ export function BanksChart({ arena, mode, view, onView, hover }: Props) {
 
   const narrow = width > 0 && width < 700;
   const H = narrow ? 120 : 150;
-  const RIGHT = narrow ? 110 : 170;
+  // Room on the right for the end labels. The longest, "Trusts old news +150 On canvas", needs about 200px.
+  const RIGHT = narrow ? 110 : 210;
   const LEFT = 12;
   const TOP = narrow ? 28 : 34;
   const BOTTOM = H - 18;
@@ -77,6 +78,10 @@ export function BanksChart({ arena, mode, view, onView, hover }: Props) {
     const mx = x(m.t);
     if (marks.every((k) => Math.abs(k.x - mx) > 64)) marks.push({ x: mx });
   }
+
+  // "Your trade" sits just above the time axis, where "Limit −100" also sits: start that label after any trade label
+  // near the left edge so the two never overlap.
+  const lowLabelX = Math.max(LEFT + 4, ...marks.filter((m) => m.x < LEFT + 110).map((m) => m.x + 36));
 
   const spans = arena.worlds.leased.spans
     .map((sp) => ({ ...sp, a: Math.max(sp.from, t0), b: Math.min(sp.to ?? now, t1) }))
@@ -127,7 +132,7 @@ export function BanksChart({ arena, mode, view, onView, hover }: Props) {
             Limit +{L}
           </text>
           {/* Above its line: below it there are only a few pixels before the time axis on the ±1.2 × limit scale. */}
-          <text x={LEFT + 4} y={y(-L) - 5} className="chartLabel limitLabel">
+          <text x={lowLabelX} y={y(-L) - 5} className="chartLabel limitLabel">
             Limit −{L}
           </text>
 
@@ -218,13 +223,13 @@ export function BanksChart({ arena, mode, view, onView, hover }: Props) {
         latest.map(({ s, v }, i) => (
           <button
             key={s}
-            className={`endLabel ${Math.abs(v) > L ? 'over' : ''}`}
+            className={`endLabel ${Math.abs(v) > L ? 'over' : ''} ${s === view ? 'current' : ''}`}
             style={{ left: lastX + 8, top: labelYs[i] - 9 }}
             aria-pressed={s === view}
             onClick={() => onView(s)}
           >
             {STRATEGY[s].short} {signed(v)}
-            {s === view && <span className="tag">On canvas</span>}
+            {s === view && !narrow && <span className="tag">On canvas</span>}
           </button>
         ))}
 

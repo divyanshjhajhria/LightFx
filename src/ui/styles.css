@@ -1192,6 +1192,14 @@ input[type='range']::-moz-range-thumb {
   color: var(--alert);
 }
 
+/* On narrow screens there is no room for "On canvas": the bank on the canvas is underlined instead. */
+@media (max-width: 900px) {
+  .endLabel.current {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
 .endLabel .tag {
   font-size: 11px;
   font-weight: 400;
