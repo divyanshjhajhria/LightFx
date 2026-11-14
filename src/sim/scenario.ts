@@ -64,27 +64,31 @@ export class Director {
   }
 
   private apply(e: ScenarioEvent): void {
-    const a = this.arena;
-    switch (e.kind) {
-      case 'separation':
-        a.setSeparation(e.deg);
-        break;
-      case 'blackout':
-        a.setBlackout(e.on);
-        break;
-      case 'panic':
-        a.setPanic(e.on);
-        break;
-      case 'cut':
-        a.setCut(e.a, e.b, e.on);
-        break;
-      case 'flow':
-        a.setFlow(e.body, e.sellProb);
-        break;
-      case 'note':
-        this.note = e.text;
-        break;
-    }
+    if (e.kind === 'note') this.note = e.text;
+    else applyEvent(this.arena, e);
+  }
+}
+
+/** Apply one event to every bank in the arena. Notes change nothing in the simulation. */
+export function applyEvent(a: Arena, e: ScenarioEvent): void {
+  switch (e.kind) {
+    case 'separation':
+      a.setSeparation(e.deg);
+      break;
+    case 'blackout':
+      a.setBlackout(e.on);
+      break;
+    case 'panic':
+      a.setPanic(e.on);
+      break;
+    case 'cut':
+      a.setCut(e.a, e.b, e.on);
+      break;
+    case 'flow':
+      a.setFlow(e.body, e.sellProb);
+      break;
+    case 'note':
+      break;
   }
 }
 
