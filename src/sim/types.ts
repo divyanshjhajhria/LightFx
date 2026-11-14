@@ -117,6 +117,8 @@ export interface LinkView {
   b: BodyId;
   delayMin: number;
   open: boolean;
+  /** Cut by hand. A cut link is also closed; a closed link need not be cut. */
+  cut: boolean;
 }
 
 export interface Metrics {

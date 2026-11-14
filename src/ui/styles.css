@@ -98,6 +98,10 @@ button {
   background: radial-gradient(120% 80% at 50% 38%, #15171c 0%, var(--ink) 62%);
 }
 
+.app.hasTimeline {
+  grid-template-rows: auto auto minmax(360px, 1fr) auto;
+}
+
 .top {
   display: flex;
   align-items: center;
@@ -159,6 +163,177 @@ button {
   border-radius: 8px;
   padding: 5px 8px;
   color: var(--text);
+}
+
+/* ---- Scenario menu -------------------------------------------------------- */
+
+.scenarioMenu {
+  position: relative;
+}
+
+.scenarioButton {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.scenarioButton:hover,
+.scenarioButton[aria-expanded='true'] {
+  background: var(--fill);
+}
+
+.scenarioButton span {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.scenarioButton b {
+  font-weight: 500;
+}
+
+.scenarioButton svg {
+  fill: none;
+  stroke: var(--text-2);
+  stroke-width: 1.4;
+  align-self: center;
+}
+
+.menuPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  padding: 6px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.menuPanel button {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.menuPanel button + button {
+  border-top: 1px solid var(--hair);
+}
+
+.menuPanel button:hover,
+.menuPanel button:focus-visible {
+  background: var(--fill);
+}
+
+.menuPanel button[aria-current='true'] b {
+  color: var(--text);
+}
+
+.menuPanel b {
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.menuPanel span {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+/* ---- Timeline ------------------------------------------------------------- */
+
+.timeline {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 34px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--hair);
+}
+
+.timeline p {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.timeline .caption {
+  /* A fixed share, so the track does not shift sideways each time the caption changes. */
+  flex: 0 0 34%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-2);
+}
+
+.timeline .time {
+  color: var(--text);
+}
+
+.timeline .time span {
+  color: var(--text-3);
+}
+
+.track {
+  position: relative;
+  flex: 1;
+  min-width: 120px;
+  height: 22px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.track i {
+  position: absolute;
+  top: 50%;
+  display: block;
+  pointer-events: none;
+}
+
+.track .rail,
+.track .done {
+  left: 0;
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 2px;
+}
+
+.track .rail {
+  right: 0;
+  background: var(--hair-strong);
+}
+
+.track .done {
+  background: var(--text);
+}
+
+.track .band {
+  height: 8px;
+  margin-top: -4px;
+  background: rgba(232, 105, 93, 0.3);
+  border-radius: 2px;
+}
+
+.track .tick {
+  width: 1px;
+  height: 8px;
+  margin-top: -4px;
+  background: var(--text-3);
+}
+
+.track .head {
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: var(--text);
 }
 
 /* ---- Stage ---------------------------------------------------------------- */
@@ -343,6 +518,9 @@ input[type='range']::-moz-range-thumb {
   top: 16px;
   right: 20px;
   width: 290px;
+  /* Stop above the control dock; scroll if the stage is short. */
+  max-height: calc(100% - 96px);
+  overflow-y: auto;
   border-radius: 18px;
   padding: 16px 18px 14px;
 }
@@ -429,6 +607,28 @@ input[type='range']::-moz-range-thumb {
 .inspector tr.current th,
 .inspector tr.current td {
   color: var(--text);
+}
+
+.inspector .links {
+  margin-top: 12px;
+}
+
+.inspector .links h3 {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-3);
+}
+
+.inspector .links div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 4px;
+  margin: 0 -10px;
+}
+
+.inspector .links button {
+  font-size: 12px;
 }
 
 /* ---- Comparison panel ----------------------------------------------------- */
@@ -676,6 +876,18 @@ input[type='range']::-moz-range-thumb {
 
   .session {
     margin-left: auto;
+  }
+
+  .timeline {
+    flex-wrap: wrap;
+    height: auto;
+    gap: 2px 16px;
+    padding: 8px 16px;
+  }
+
+  .timeline .caption {
+    flex-basis: 100%;
+    white-space: normal;
   }
 
   .stage {

@@ -1,18 +1,22 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { BODIES } from '../src/sim/types';
+import type { BodyId } from '../src/sim/types';
 import { Arena } from '../src/sim/world';
 
 /** Something the operator (or a judge) does to the system part-way through a run. */
 const event = fc.record({
   afterTicks: fc.integer({ min: 1, max: 400 }),
-  kind: fc.constantFrom('blackout', 'panic', 'separation', 'cutEarthMoon', 'cutEarthMars', 'cutMoonMars'),
+  kind: fc.constantFrom('blackout', 'panic', 'separation', 'cutEarthMoon', 'cutEarthMars', 'cutMoonMars', 'flow'),
   on: fc.boolean(),
   deg: fc.integer({ min: 0, max: 180 }),
+  body: fc.constantFrom(...BODIES),
+  sellProb: fc.constantFrom(0.2, 0.5, 0.8),
 });
 
-function apply(arena: Arena, e: { kind: string; on: boolean; deg: number }): void {
-  if (e.kind === 'blackout') arena.setBlackout(e.on);
+function apply(arena: Arena, e: { kind: string; on: boolean; deg: number; body?: BodyId; sellProb?: number }): void {
+  if (e.kind === 'flow') arena.setFlow(e.body!, e.sellProb!);
+  else if (e.kind === 'blackout') arena.setBlackout(e.on);
   else if (e.kind === 'panic') arena.setPanic(e.on);
   else if (e.kind === 'separation') arena.setSeparation(e.deg);
   else if (e.kind === 'cutEarthMoon') arena.setCut('earth', 'moon', e.on);

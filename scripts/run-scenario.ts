@@ -1,29 +1,24 @@
-// Headless run of the demo scenario: `npm run sim -- [seed] [separationDeg]`.
-// Prints one row per strategy so you can tune config.ts without opening the browser.
+// Headless run of a named scenario: `npm run sim -- <scenarioId> [seed]`.
+// Prints one row per strategy each time a note fires and once at the end, then what netting buys the leased bank.
+// With no argument, lists the scenario ids.
 import { DEFAULT_CONFIG } from '../src/sim/config';
-import { Arena } from '../src/sim/world';
+import { runScenario, startScenario } from '../src/sim/scenario';
+import { SCENARIOS } from '../src/sim/scenarios';
 import { STRATEGIES } from '../src/sim/types';
+import type { Arena } from '../src/sim/world';
 
-const seed = Number(process.argv[2] ?? 42);
-const separationDeg = Number(process.argv[3] ?? 150);
-
-/** The demo: calm trading, then a solar storm with a market panic, then the storm ends. */
-function runPhases(arena: Arena, after?: (label: string) => void): void {
-  arena.run(120);
-  after?.('Calm trading');
-  arena.setBlackout(true);
-  arena.setPanic(true);
-  arena.run(180);
-  after?.('Solar storm and panic');
-  arena.setBlackout(false);
-  arena.setPanic(false);
-  arena.run(120);
-  after?.('After the storm');
+const id = process.argv[2];
+const found = SCENARIOS.find((s) => s.id === id);
+if (!found) {
+  if (id) console.log(`No scenario called "${id}".\n`);
+  console.log('Usage: npm run sim -- <scenarioId> [seed]\n\nScenarios:');
+  for (const s of SCENARIOS) console.log(`  ${s.id.padEnd(16)} ${s.name}: ${s.summary}`);
+  process.exit(id ? 1 : 0);
 }
+const scenario = process.argv[3] === undefined ? found : { ...found, seed: Number(process.argv[3]) };
 
-const arena = new Arena(seed, { separationDeg });
-const report = (label: string) => {
-  console.log(`\n${label}  (t = ${arena.now} min)`);
+function table(arena: Arena, heading: string): void {
+  console.log(`\n${heading}  (t = ${arena.now} min)`);
   console.table(
     Object.fromEntries(
       STRATEGIES.map((s) => {
@@ -46,16 +41,26 @@ const report = (label: string) => {
       }),
     ),
   );
-};
+}
 
-runPhases(arena, report);
+console.log(`${scenario.name} (${scenario.id}), seed ${scenario.seed}, ${scenario.durationMin} minutes`);
+const run = startScenario(scenario);
+let caption = run.director.caption;
+if (caption) table(run.arena, caption);
+while (!run.director.done) {
+  run.arena.step();
+  run.director.advance();
+  if (run.director.caption !== caption) {
+    caption = run.director.caption;
+    table(run.arena, caption);
+  }
+}
+table(run.arena, 'End');
 
-// Same seed and phases with netting switched off, to show what netting buys the leased bank.
-const off = new Arena(seed, { separationDeg, cfg: { ...DEFAULT_CONFIG, netting: false } });
-runPhases(off);
-const on = arena.worlds.leased.metrics;
-const offM = off.worlds.leased.metrics;
-console.log('\nLeased strategy, netting on vs off (same seed, same phases)');
+// Same scenario and seed with netting switched off, to show what netting buys the leased bank.
+const on = run.arena.worlds.leased.metrics;
+const offM = runScenario(scenario, scenario.durationMin, { ...DEFAULT_CONFIG, netting: false }).arena.worlds.leased.metrics;
+console.log('\nLeased strategy, netting on vs off (same scenario, same seed)');
 console.table({
   'netting on': { volFilled: on.volFilled, served: on.served, netted: on.nettedUnits, breachMin: on.breachTicks * DEFAULT_CONFIG.dt },
   'netting off': { volFilled: offM.volFilled, served: offM.served, netted: offM.nettedUnits, breachMin: offM.breachTicks * DEFAULT_CONFIG.dt },

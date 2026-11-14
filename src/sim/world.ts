@@ -101,6 +101,11 @@ export class World {
     else this.cuts.delete(linkKey(a, b));
   }
 
+  /** True when the link between a and b has been cut by hand (it may also be closed for other reasons). */
+  isCut(a: BodyId, b: BodyId): boolean {
+    return this.cuts.has(linkKey(a, b));
+  }
+
   /** Set the calm-market probability that a customer at `b` sells Mars credits. Clamped to [0, 1]. */
   setFlow(b: BodyId, sellProb: number): void {
     this.flow[b] = Math.max(0, Math.min(1, sellProb));
@@ -323,6 +328,7 @@ export class World {
       b,
       delayMin: lightDelayMin(this.orbit, a, b),
       open: this.linkOpen(a, b),
+      cut: this.isCut(a, b),
     }));
   }
 }
@@ -367,5 +373,10 @@ export class Arena {
 
   setFlow(b: BodyId, sellProb: number): void {
     for (const s of STRATEGIES) this.worlds[s].setFlow(b, sellProb);
+  }
+
+  /** Flip a hand cut on every world, based on the leased world's current value. */
+  toggleCut(a: BodyId, b: BodyId): void {
+    this.setCut(a, b, !this.worlds.leased.isCut(a, b));
   }
 }

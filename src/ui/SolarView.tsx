@@ -85,9 +85,23 @@ interface Frame {
   fx: DropFx[];
   stars: Star[];
   still: boolean;
+  /** Link under the pointer, as "a-b" with a and b in the order World.links() gives them. */
+  hoverLink: string | null;
 }
 
-function draw({ g, W, H, cam, w, now, tReal, selected, fx, stars, still }: Frame): void {
+/** A small cross, the mark for a message that died on a dead link. */
+function cross(g: CanvasRenderingContext2D, x: number, y: number, alpha: number): void {
+  g.strokeStyle = `rgba(${ALERT_RGB},${alpha})`;
+  g.lineWidth = 1.2;
+  g.beginPath();
+  g.moveTo(x - 3, y - 3);
+  g.lineTo(x + 3, y + 3);
+  g.moveTo(x + 3, y - 3);
+  g.lineTo(x - 3, y + 3);
+  g.stroke();
+}
+
+function draw({ g, W, H, cam, w, now, tReal, selected, fx, stars, still, hoverLink }: Frame): void {
   const P = (v: Vec): [number, number] => [
     W / 2 + (v.x - cam.cx) * cam.zoom,
     H / 2 - LIFT - (v.y - cam.cy) * cam.zoom * TILT,
@@ -123,14 +137,17 @@ function draw({ g, W, H, cam, w, now, tReal, selected, fx, stars, still }: Frame
   for (const l of w.links()) {
     const [x1, y1] = pos[l.a];
     const [x2, y2] = pos[l.b];
+    const hover = hoverLink === `${l.a}-${l.b}`;
+    const k = hover ? 2 : 1;
     g.setLineDash(l.open ? [] : [3, 7]);
-    g.strokeStyle = l.open ? `rgba(${WARM},0.16)` : `rgba(${ALERT_RGB},0.6)`;
-    g.lineWidth = 1;
+    g.strokeStyle = l.open ? `rgba(${WARM},${0.16 * k})` : `rgba(${ALERT_RGB},${Math.min(1, 0.6 * k)})`;
+    g.lineWidth = hover ? 1.5 : 1;
     g.beginPath();
     g.moveTo(x1, y1);
     g.lineTo(x2, y2);
     g.stroke();
     g.setLineDash([]);
+    if (l.cut) cross(g, (x1 + x2) / 2, (y1 + y2) / 2, 0.95);
     if (l.a === 'earth' && l.b === 'mars') {
       const len = Math.hypot(x2 - x1, y2 - y1) || 1;
       let nx = -(y2 - y1) / len;
@@ -142,7 +159,7 @@ function draw({ g, W, H, cam, w, now, tReal, selected, fx, stars, still }: Frame
       g.font = `500 12px ${FONT}`;
       g.textAlign = 'center';
       g.fillStyle = l.open ? `rgba(${WARM},0.62)` : `rgba(${ALERT_RGB},0.95)`;
-      const text = l.open ? `${l.delayMin.toFixed(1)} light-minutes` : 'No signal';
+      const text = l.open ? `${l.delayMin.toFixed(1)} light-minutes` : l.cut ? 'Link cut' : 'No signal';
       g.fillText(text, (x1 + x2) / 2 + nx * 20, (y1 + y2) / 2 + ny * 20 + 4);
     }
   }
@@ -260,14 +277,7 @@ function draw({ g, W, H, cam, w, now, tReal, selected, fx, stars, still }: Frame
     const reach = Math.min(0.12, 70 / len) * (1 - (1 - p) ** 2) + 18 / len;
     const x = a[0] + dx * reach - (dy / len) * 3;
     const y = a[1] + dy * reach + (dx / len) * 3;
-    g.strokeStyle = `rgba(${ALERT_RGB},${(1 - p) * 0.9})`;
-    g.lineWidth = 1.2;
-    g.beginPath();
-    g.moveTo(x - 3, y - 3);
-    g.lineTo(x + 3, y + 3);
-    g.moveTo(x + 3, y - 3);
-    g.lineTo(x - 3, y + 3);
-    g.stroke();
+    cross(g, x, y, (1 - p) * 0.9);
     g.strokeStyle = `rgba(${ALERT_RGB},${(1 - p) * 0.35})`;
     g.beginPath();
     g.arc(x, y, 4 + 9 * p, 0, 2 * Math.PI);
@@ -344,15 +354,16 @@ interface Props {
   getNow: () => number;
   selected: BodyId | null;
   onSelect: (b: BodyId | null) => void;
+  onToggleLink: (a: BodyId, b: BodyId) => void;
 }
 
-/** Interactive solar system for one world: scroll to zoom, drag to pan, click a planet. Redraws every frame. */
-export function SolarView({ getWorld, getNow, selected, onSelect }: Props) {
+/** Interactive solar system for one world: scroll to zoom, drag to pan, click a planet or a link. Redraws every frame. */
+export function SolarView({ getWorld, getNow, selected, onSelect, onToggleLink }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const cam = useRef<Camera>({ cx: 0, cy: 0, zoom: 200, tcx: 0, tcy: 0, tzoom: 200, fit: 200, touched: false });
-  const live = useRef({ selected, onSelect });
-  live.current = { selected, onSelect };
+  const live = useRef({ selected, onSelect, onToggleLink });
+  live.current = { selected, onSelect, onToggleLink };
 
   const resetView = useCallback(() => {
     const c = cam.current;
@@ -375,6 +386,7 @@ export function SolarView({ getWorld, getNow, selected, onSelect }: Props) {
     let seenWorld: World | null = null;
     let seenDrop = 0;
     let first = true;
+    let hoverLink: string | null = null;
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -398,14 +410,16 @@ export function SolarView({ getWorld, getNow, selected, onSelect }: Props) {
       const r = el.getBoundingClientRect();
       return [e.clientX - r.left, e.clientY - r.top];
     };
+    const screen = (w: World, b: BodyId): [number, number] => {
+      const v = bodyWorld(w, b);
+      return [W / 2 + (v.x - c.cx) * c.zoom, H / 2 - LIFT - (v.y - c.cy) * c.zoom * TILT];
+    };
     const hit = (mx: number, my: number): BodyId | null => {
       const w = getWorld();
       let best: BodyId | null = null;
       let bestD = Infinity;
       for (const b of DRAW_ORDER) {
-        const v = bodyWorld(w, b);
-        const x = W / 2 + (v.x - c.cx) * c.zoom;
-        const y = H / 2 - LIFT - (v.y - c.cy) * c.zoom * TILT;
+        const [x, y] = screen(w, b);
         const d = Math.hypot(mx - x, my - y);
         if (d < bodyRadius(b, c.zoom) + 12 && d < bestD) {
           best = b;
@@ -413,6 +427,32 @@ export function SolarView({ getWorld, getNow, selected, onSelect }: Props) {
         }
       }
       return best;
+    };
+    /**
+     * The link under the pointer: the nearest within 8px, ignoring the ends where the planets sit.
+     * Earth to Mars and Moon to Mars nearly coincide, so Earth to Mars wins a near tie.
+     */
+    const hitLink = (mx: number, my: number): [BodyId, BodyId] | null => {
+      const w = getWorld();
+      const near: { a: BodyId; b: BodyId; d: number }[] = [];
+      for (const l of w.links()) {
+        const [x1, y1] = screen(w, l.a);
+        const [x2, y2] = screen(w, l.b);
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const len = Math.hypot(dx, dy);
+        if (len === 0) continue;
+        const along = ((mx - x1) * dx + (my - y1) * dy) / len;
+        if (along < bodyRadius(l.a, c.zoom) + 12 || along > len - bodyRadius(l.b, c.zoom) - 12) continue;
+        const d = Math.abs((mx - x1) * dy - (my - y1) * dx) / len;
+        if (d <= 8) near.push({ a: l.a, b: l.b, d });
+      }
+      if (!near.length) return null;
+      near.sort((p, q) => p.d - q.d);
+      const em = near.find((n) => n.a === 'earth' && n.b === 'mars');
+      const mm = near.find((n) => n.a === 'moon' && n.b === 'mars');
+      if (em && mm && Math.abs(em.d - mm.d) <= 2) return [em.a, em.b];
+      return [near[0].a, near[0].b];
     };
 
     let drag: { x: number; y: number; moved: number } | null = null;
@@ -423,7 +463,9 @@ export function SolarView({ getWorld, getNow, selected, onSelect }: Props) {
     const move = (e: PointerEvent) => {
       const [mx, my] = local(e);
       if (!drag) {
-        el.style.cursor = hit(mx, my) ? 'pointer' : 'grab';
+        const link = hit(mx, my) ? null : hitLink(mx, my);
+        hoverLink = link ? `${link[0]}-${link[1]}` : null;
+        el.style.cursor = hit(mx, my) || link ? 'pointer' : 'grab';
         return;
       }
       const dx = e.clientX - drag.x;
@@ -439,10 +481,17 @@ export function SolarView({ getWorld, getNow, selected, onSelect }: Props) {
       c.cy = c.tcy;
       c.touched = true;
     };
+    const leave = () => {
+      hoverLink = null;
+    };
     const up = (e: PointerEvent) => {
       if (drag && drag.moved < 4) {
         const [mx, my] = local(e);
-        live.current.onSelect(hit(mx, my));
+        const body = hit(mx, my);
+        const link = body ? null : hitLink(mx, my);
+        // A click on a link cuts or restores it and leaves the selected planet alone.
+        if (link) live.current.onToggleLink(link[0], link[1]);
+        else live.current.onSelect(body);
       }
       drag = null;
       el.style.cursor = 'grab';
@@ -461,6 +510,7 @@ export function SolarView({ getWorld, getNow, selected, onSelect }: Props) {
     el.addEventListener('pointermove', move);
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
+    el.addEventListener('pointerleave', leave);
     el.addEventListener('wheel', wheel, { passive: false });
     el.addEventListener('dblclick', resetView);
 
@@ -487,7 +537,7 @@ export function SolarView({ getWorld, getNow, selected, onSelect }: Props) {
       }
 
       if (W > 0 && H > 0) {
-        draw({ g, W, H, cam: c, w, now: getNow(), tReal: t, selected: live.current.selected, fx, stars, still });
+        draw({ g, W, H, cam: c, w, now: getNow(), tReal: t, selected: live.current.selected, fx, stars, still, hoverLink });
       }
       id = requestAnimationFrame(frame);
     };
@@ -500,6 +550,7 @@ export function SolarView({ getWorld, getNow, selected, onSelect }: Props) {
       el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up);
       el.removeEventListener('pointercancel', up);
+      el.removeEventListener('pointerleave', leave);
       el.removeEventListener('wheel', wheel);
       el.removeEventListener('dblclick', resetView);
     };
