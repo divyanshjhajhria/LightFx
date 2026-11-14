@@ -8,9 +8,15 @@ import type { Scenario } from '../sim/scenario';
 import { SCENARIOS } from '../sim/scenarios';
 import { BODIES, STRATEGIES, perBody } from '../sim/types';
 import type { BodyId, PerBody, StrategyId } from '../sim/types';
+import type { DeskBriefing } from '../sim/briefing';
 import { Arena } from '../sim/world';
 import { deskBriefing } from '../sim/briefing';
+import { NO_MODEL_ANSWER, READY_QUESTIONS, readyAnswer } from './askDesk';
 import { deskSays } from './deskVoice';
+import { makeClient } from './llm';
+import type { LlmClient } from './llm';
+import { ModelVoice, systemPrompt } from './modelVoice';
+import { acceptable } from './voiceCheck';
 import { Intel } from './Intel';
 import { useSteadyText } from './steadyText';
 import { CaptionBar, PresenterHint, ResultsCard, readResults } from './Presenter';
@@ -90,15 +96,99 @@ function Ticket({ body, onTrade }: { body: BodyId; onTrade: (side: 'buy' | 'sell
   );
 }
 
+/** The optional language model, read once from the environment. Null means every desk speaks from templates. */
+const LLM: LlmClient | null = makeClient();
+
+/** A desk's words, and whether a language model wrote them. */
+export interface Words {
+  text: string;
+  ai: boolean;
+}
+
 /** "In its own words": the desk's sentence about itself, steady for at least four seconds at a time. */
-function OwnWords({ text }: { text: string }) {
-  const steady = useSteadyText(text);
+function OwnWords({ words }: { words: Words }) {
+  const steady = useSteadyText(words.text);
   return (
     <section className="ownWords" aria-label="In its own words">
       <h3>In its own words</h3>
       <p key={steady.version} className="voiceText">
         {steady.text}
+        {words.ai && steady.text === words.text && <span className="aiTag"> AI</span>}
       </p>
+    </section>
+  );
+}
+
+/** "Ask the Mars desk": three ready questions and a text box. Keeps the last three answers until the panel closes. */
+function AskDesk({ body, brief }: { body: BodyId; brief: () => DeskBriefing }) {
+  const [log, setLog] = useState<{ q: string; a: string; ai: boolean }[]>([]);
+  const [thinking, setThinking] = useState(false);
+  const [draft, setDraft] = useState('');
+  const pending = useRef<AbortController | null>(null);
+  useEffect(() => () => pending.current?.abort(), []);
+
+  const ask = async (q: string) => {
+    if (!q.trim() || thinking) return;
+    const b = brief();
+    const ready = (READY_QUESTIONS as readonly string[]).includes(q) ? readyAnswer(q as (typeof READY_QUESTIONS)[number], b) : null;
+    const fallback = ready ?? NO_MODEL_ANSWER;
+    let answer = { a: fallback, ai: false };
+    if (LLM) {
+      setThinking(true);
+      pending.current?.abort();
+      const ctl = new AbortController();
+      pending.current = ctl;
+      try {
+        const text = await LLM.complete(
+          `${systemPrompt(b)} Answer the visitor's question in at most three short sentences.`,
+          `${JSON.stringify(b)}\n\nThe visitor asks: ${q}`,
+          ctl.signal,
+        );
+        if (acceptable(text, b)) answer = { a: text, ai: true };
+      } catch {
+        // Keep the templated answer.
+      }
+      if (ctl.signal.aborted) return;
+      setThinking(false);
+    }
+    setLog((l) => [...l, { q, a: answer.a, ai: answer.ai }].slice(-3));
+  };
+
+  return (
+    <section className="askDesk" aria-label={`Ask the ${BODY_LABEL[body]} desk`}>
+      <h3>Ask this desk</h3>
+      <div className="readyQs">
+        {READY_QUESTIONS.map((q) => (
+          <button key={q} type="button" className="quiet" disabled={thinking} onClick={() => void ask(q)}>
+            {q}
+          </button>
+        ))}
+      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void ask(draft);
+          setDraft('');
+        }}
+      >
+        <input
+          type="text"
+          value={draft}
+          placeholder={`Ask the ${BODY_LABEL[body]} desk`}
+          aria-label={`Ask the ${BODY_LABEL[body]} desk`}
+          onChange={(e) => setDraft(e.target.value)}
+        />
+      </form>
+      {thinking && <p className="thinking">Thinking</p>}
+      {log.map((x, i) => (
+        <div key={i} className="qa">
+          <p className="q">{x.q}</p>
+          <p className="a">
+            {x.a}
+            {x.ai && <span className="aiTag"> AI</span>}
+          </p>
+        </div>
+      ))}
     </section>
   );
 }
@@ -115,7 +205,7 @@ function Inspector({
   arena: Arena;
   view: StrategyId;
   body: BodyId;
-  voice: string;
+  voice: Words;
   onClose: () => void;
   onToggleLink: (a: BodyId, b: BodyId) => void;
   onTrade: (side: 'buy' | 'sell', size: number) => void;
@@ -135,7 +225,8 @@ function Inspector({
         </button>
       </header>
       <Ticket body={body} onTrade={onTrade} />
-      <OwnWords text={voice} />
+      <OwnWords words={voice} />
+      <AskDesk body={body} brief={() => deskBriefing(arena.worlds[view], body)} />
       <dl>
         <div>
           <dt>State</dt>
@@ -388,6 +479,8 @@ export function App() {
   /** Bumped on each demo start, so the desk panel's ticket starts again at "sell 5". */
   const [demoRun, setDemoRun] = useState(0);
   const [allVoices, setAllVoices] = useState(false);
+  const modelVoice = useRef<ModelVoice | null>(null);
+  if (!modelVoice.current) modelVoice.current = new ModelVoice(LLM, undefined, () => queueMicrotask(repaint));
   const demoStart = useRef(0);
   const demoBeat = useRef(-1);
   /** Central Mars desk's customers served when the storm started and when it passed. */
@@ -747,13 +840,22 @@ export function App() {
   }, []);
 
   const g = presenting ? guide.current : null;
-  // Each desk's words about itself, for the bank on the canvas: templated, from what that desk alone knows.
-  const voices = perBody((b) => deskSays(deskBriefing(a.worlds[view], b)));
   let bubbleBodies: BodyId[];
   if (g) {
     const id = g.beat.id;
     bubbleBodies = id === 'silence' || id === 'panic' || id === 'alone' ? ['mars'] : id === 'recovery' ? ['earth'] : [];
   } else bubbleBodies = allVoices ? [...BODIES] : selected ? [selected] : [];
+  // Each desk's words about itself, for the bank on the canvas, from what that desk alone knows. Templated first; a
+  // configured model may reword the desks on show, never in the guided demo unless the page was opened with ?demo&ai.
+  const modelAllowed = !presenting || new URLSearchParams(window.location.search).has('ai');
+  const shown = new Set<BodyId>([...bubbleBodies, ...(selected ? [selected] : [])]);
+  const voices = perBody((b): Words => {
+    const brief = deskBriefing(a.worlds[view], b);
+    const template = deskSays(brief);
+    if (!modelAllowed) return { text: template, ai: false };
+    if (shown.has(b)) modelVoice.current!.want(b, brief, template);
+    return modelVoice.current!.line(b, template);
+  });
   const marsLink = lead.links().find((l) => l.a === 'earth' && l.b === 'mars')!;
 
   return (
