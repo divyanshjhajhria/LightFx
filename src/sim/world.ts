@@ -24,9 +24,20 @@ export interface WorldOptions {
 
 export interface HistoryPoint {
   t: number;
+  /** The bank's TRUE total, including position in flight between desks: the figure the breach count uses. */
   total: number;
   pnl: number;
 }
+
+/** A stretch of time with a storm or a panic on. `to` is null while it is still going on. */
+export interface Span {
+  kind: 'storm' | 'panic';
+  from: number;
+  to: number | null;
+}
+
+/** How many spans each world remembers. */
+const SPANS_KEEP = 40;
 
 /** Price components that originate somewhere. The Moon originates none. */
 const SOURCES = ['earth', 'mars'] as const;
@@ -66,6 +77,9 @@ export class World {
   readonly net: DelayNetwork;
   readonly desks: PerBody<Desk>;
   readonly history: HistoryPoint[] = [];
+  /** Storms and panics, oldest first (the last 40), for the chart. */
+  readonly spans: Span[] = [];
+  private spanWas = { storm: false, panic: false };
   readonly metrics: Metrics = {
     breachTicks: 0,
     maxAbsTotal: 0,
@@ -324,6 +338,21 @@ export class World {
 
   step(): void {
     const c = this.cfg;
+    // Open or close a storm or panic span if the switch was flipped since the last step: at this.now, the minute the
+    // controls (or a scenario) changed it, before the clock moves on.
+    for (const [kind, on] of [['storm', this.blackout], ['panic', this.panic]] as const) {
+      if (on === this.spanWas[kind]) continue;
+      this.spanWas[kind] = on;
+      if (on) {
+        this.spans.push({ kind, from: this.now, to: null });
+        if (this.spans.length > SPANS_KEEP) this.spans.shift();
+      } else {
+        const open = [...this.spans].reverse().find((s) => s.kind === kind && s.to === null);
+        if (open) open.to = this.now;
+      }
+    }
+
+
     this.tickCount++;
     this.now = this.tickCount * c.dt;
     advanceOrbit(this.orbit, c.dt);
@@ -578,6 +607,16 @@ export class Arena {
 
   setFlow(b: BodyId, sellProb: number): void {
     for (const s of STRATEGIES) this.worlds[s].setFlow(b, sellProb);
+  }
+
+  /** Where and when the last 10 visitor trades were placed, oldest first, for the chart. */
+  tradeMarks(): { t: number; body: BodyId }[] {
+    const marks: { t: number; body: BodyId }[] = [];
+    for (let trade = Math.max(1, this.nextTrade - 10); trade < this.nextTrade; trade++) {
+      const placed = this.worlds.leased.trace(trade)[0];
+      if (placed) marks.push({ t: placed.t, body: placed.body });
+    }
+    return marks;
   }
 
   /** A visitor trade, placed at all three banks at once. Returns its id, the same in every bank. */
