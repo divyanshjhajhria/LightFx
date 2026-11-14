@@ -155,6 +155,9 @@ export function AgentsPanel({
   }
   return (
     <div className="agentsPanel">
+      <p className="agentsGoal">
+        Three agents, one goal: serve as many customers as the bank's limit allows. None can see what the others hold.
+      </p>
       <div className="agentsHead">
         <p>
           Each of our desks is run by its own {decider.ai ? 'AI agent' : 'scripted stand-in'}, which sees only what its desk

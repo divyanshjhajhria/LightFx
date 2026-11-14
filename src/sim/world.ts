@@ -392,7 +392,7 @@ export class World {
     const list = this.deskEvents[b];
     list.push({ t: this.now, ...e });
     if (list.length > DESK_EVENTS_KEEP) list.shift();
-    if (e.kind === 'mode' || e.kind === 'handed-over') {
+    if (e.kind === 'mode' || e.kind === 'handed-over' || e.kind === 'allowance-given') {
       const feed = this.feedEvents[b];
       feed.push({ t: this.now, ...e });
       if (feed.length > 60) feed.shift();

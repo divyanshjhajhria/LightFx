@@ -22,7 +22,7 @@ import { AgentsPanel, runByChip } from './AgentsPanel';
 import { MorePanel } from './MorePanel';
 import { Overview } from './Overview';
 import { DockMenu, Tip } from './Tip';
-import { activity } from './activity';
+import { activity, isSharingLine } from './activity';
 import { publicFiles } from './publicFiles';
 import { NO_INSETS } from './fit';
 import type { Insets } from './fit';
@@ -1276,7 +1276,7 @@ export function App() {
               insets={insets}
             />
             {!presenting &&
-              (feed.length > 0 ? (
+              (feed.some((l) => !isSharingLine(l.text)) ? (
                 <ol className="feed" aria-label="What has happened">
                   {feed.map((l, i) => (
                     <li

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { startScenario } from '../src/sim/scenario';
 import { SCENARIOS } from '../src/sim/scenarios';
 import { Arena } from '../src/sim/world';
-import { activity } from '../src/ui/activity';
+import { activity, isSharingLine } from '../src/ui/activity';
 import type { ActivityLine } from '../src/ui/activity';
 
 /** Play 'solar-storm' on seed 42, collecting every line the feed ever shows for our bank. */
@@ -62,11 +62,13 @@ describe('the activity feed', () => {
   it('says when the storm and the panic end, and nothing on an untouched run', () => {
     const a = new Arena(9);
     a.run(30);
-    expect(activity(a, 'leased')).toEqual([]);
+    // Step 12: desks share allowance from the first minute on their own; those lines alone are not "something happened".
+    const others = () => activity(a, 'leased').filter((l) => !isSharingLine(l.text));
+    expect(others()).toEqual([]);
     a.setPanic(true);
     a.run(10);
     a.setPanic(false);
     a.run(1);
-    expect(activity(a, 'leased').map((l) => l.text)).toEqual(['Market panic. Customers everywhere are selling.', 'The panic ends.']);
+    expect(others().map((l) => l.text)).toEqual(['Market panic. Customers everywhere are selling.', 'The panic ends.']);
   });
 });

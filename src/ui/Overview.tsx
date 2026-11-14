@@ -2,6 +2,9 @@
 // survival map. Every figure comes from the simulation or from sweep.json.
 import { useEffect, useState } from 'react';
 import type { SweepFile } from '../sim/sweep';
+import type { TogetherFile } from '../sim/together';
+import { Tip } from './Tip';
+import { togetherFigure } from './togetherFigure';
 import { STRATEGIES } from '../sim/types';
 import type { StrategyId } from '../sim/types';
 import type { Arena } from '../sim/world';
@@ -19,6 +22,16 @@ function loadEvidence(): Promise<SweepSummary | null> {
     .then((d: SweepFile | null) => (d && Array.isArray(d.cells) ? summarise(d) : null))
     .catch(() => null);
   return evidenceCache;
+}
+
+/** together.json, fetched once per page, or null when there is none. */
+let togetherCache: Promise<TogetherFile | null> | null = null;
+function loadTogether(): Promise<TogetherFile | null> {
+  togetherCache ??= fetch('together.json')
+    .then((r) => (r.ok && (r.headers.get('content-type') ?? '').includes('json') ? r.json() : null))
+    .then((d: TogetherFile | null) => (d && d.overall && d.byMarket ? d : null))
+    .catch(() => null);
+  return togetherCache;
 }
 
 function BankCard({
@@ -77,19 +90,28 @@ function BankCard({
         Served {served}% of customers
         {viewing && <span className="tag">On canvas</span>}
       </span>
+      {s === 'leased' && (
+        <span className="cardSharing">
+          Sharing: {Math.round(w.allowanceShared())} of allowance handed over, {Math.round(w.metrics.nettedUnits)} cancelled
+          between desks
+        </span>
+      )}
     </button>
   );
 }
 
 function Evidence({ onOpenMap }: { onOpenMap: () => void }) {
   const [summary, setSummary] = useState<SweepSummary | null | undefined>(undefined);
+  const [together, setTogether] = useState<TogetherFile | null>(null);
   useEffect(() => {
     let live = true;
     void loadEvidence().then((s) => live && setSummary(s));
+    void loadTogether().then((t) => live && setTogether(t));
     return () => {
       live = false;
     };
   }, []);
+  const team = together ? togetherFigure(together) : null;
   // No map yet: leave the card out entirely.
   if (!summary) return null;
   const f = summary.overall;
@@ -105,6 +127,14 @@ function Evidence({ onOpenMap }: { onOpenMap: () => void }) {
         <b>{Math.round(f.banks.naive.breachedPct)}%</b>
         <span>of storms, the bank that trusts old news did</span>
       </p>
+      {team && (
+        <Tip text={team.detail}>
+          <p className="evidenceFigure evidenceTeam" tabIndex={0}>
+            <b>{team.figure}</b>
+            <span>{team.label}</span>
+          </p>
+        </Tip>
+      )}
       <button className="quiet" onClick={onOpenMap}>
         Open the survival map
       </button>

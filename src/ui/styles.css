@@ -789,6 +789,11 @@ input[type='range']::-moz-range-thumb {
   animation: appear 180ms ease;
 }
 
+/* Tooltips can open over other text: the glass colour at full strength, so nothing shows through. */
+.tip.glass {
+  background: rgb(20, 21, 25);
+}
+
 .tip[hidden] {
   display: none;
 }
@@ -1973,6 +1978,38 @@ input[type='range']::-moz-range-thumb {
   gap: 8px;
   font-size: var(--t-small);
   color: var(--text-2);
+}
+
+.cardSharing {
+  font-size: var(--t-small);
+  color: var(--text-2);
+}
+
+.evidenceCard .tipWrap {
+  display: flex;
+}
+
+.evidenceCard .tip {
+  width: 280px;
+  text-align: left;
+}
+
+.evidenceTeam {
+  cursor: help;
+}
+
+.agentsGoal {
+  margin: 0;
+  padding: 8px 28px 0;
+  font-size: var(--t-name);
+  font-weight: 500;
+}
+
+.moreAbout {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--text-2);
+  line-height: 1.45;
 }
 
 .cardServed .tag {

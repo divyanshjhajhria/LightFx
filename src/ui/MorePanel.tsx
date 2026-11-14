@@ -2,6 +2,12 @@
 // keyboard; Escape or a click elsewhere closes it.
 import { useEffect, useRef, useState } from 'react';
 
+/** The shared goal, in the words used everywhere. */
+export const ABOUT =
+  'The three desks run one bank between them. Together they serve as many customers as they can without the bank as ' +
+  'a whole ever holding more than its limit, though no desk can see what the others hold now. They cooperate in ' +
+  'three ways: sharing spare allowance, cancelling opposite positions, and telling each other what they hold.';
+
 export interface AgentOption {
   /** The mode's id, passed back on choosing. */
   id: string;
@@ -65,6 +71,11 @@ export function MorePanel(p: Props) {
       </button>
       {open && (
         <div className="morePanel glass" role="dialog" aria-label="More">
+          <section>
+            <h3>What you are looking at</h3>
+            <p className="moreAbout">{ABOUT}</p>
+          </section>
+
           <section>
             <h3>Prices</h3>
             <dl className="moreFigures">
