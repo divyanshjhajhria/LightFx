@@ -16,6 +16,12 @@ export interface Decider {
   ai: boolean;
 }
 
+/** The chip beside our bank's name: who decides, or nothing when it runs on rules. */
+export function runByChip(label: string): string | null {
+  if (label === 'Rules') return null;
+  return label.replace(/ \((live|replay)\)$/, ', $1');
+}
+
 const PRICING = { keen: 'Pricing keenly', steady: 'Pricing steadily', cautious: 'Pricing cautiously' } as const;
 
 const mins = (m: number) => (m < 1 ? 'under a minute' : minutes(m));

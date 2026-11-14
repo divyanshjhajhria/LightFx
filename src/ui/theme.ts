@@ -30,6 +30,9 @@ export const STRATEGY: Record<StrategyId, { name: string; short: string; blurb: 
   central: { name: 'The bank that asks Earth', short: 'Asks Earth', blurb: 'Earth approves every trade.' },
 };
 
+/** The short names, for read-outs and cards. */
+export const SHORT_NAME: Record<StrategyId, string> = { leased: 'Our bank', naive: 'Trusts old news', central: 'Asks Earth' };
+
 export const FONT =
   '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, "Helvetica Neue", Arial, sans-serif';
 

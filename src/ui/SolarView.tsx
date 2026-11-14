@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { position } from '../sim/orbits';
 import type { Vec } from '../sim/orbits';
 import type { BodyId, Envelope, PerBody } from '../sim/types';
@@ -193,7 +193,7 @@ function draw(f: Frame): void {
       g.font = `500 12.5px ${FONT}`;
       g.textAlign = 'center';
       g.fillStyle = l.open ? `rgba(${WARM},0.62)` : `rgba(${ALERT_RGB},0.95)`;
-      const text = l.open ? `${l.delayMin.toFixed(1)} light-minutes` : l.cut ? 'Link cut' : 'No signal';
+      const text = l.open ? `${l.delayMin.toFixed(1)} min one way` : l.cut ? 'Link cut' : 'No signal';
       g.fillText(text, (x1 + x2) / 2 + nx * 20, (y1 + y2) / 2 + ny * 20 + 4);
     }
   }
@@ -530,6 +530,10 @@ interface Props {
   allVoices: { on: boolean; toggle: () => void } | null;
   /** How long a bubble keeps its words before changing, in real milliseconds. */
   holdMs: number;
+  /** Draw the price news travelling between planets. */
+  showNews: boolean;
+  /** Bumped to return the camera to its starting view. */
+  resetSignal: number;
 }
 
 /**
@@ -551,12 +555,13 @@ export function SolarView({
   bubbleBodies,
   allVoices,
   holdMs,
+  showNews,
+  resetSignal,
 }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const tip = useRef<HTMLDivElement>(null);
   const cam = useRef<Camera>({ cx: 0, cy: 0, zoom: 200, tcx: 0, tcy: 0, tzoom: 200, fit: 200, touched: false });
-  const [showNews, setShowNews] = useState(false);
   const live = useRef({ selected, onSelect, onToggleLink, onPause, onResume, showNews, canPin, noteText: !!allVoices?.on });
   live.current = { selected, onSelect, onToggleLink, onPause, onResume, showNews, canPin, noteText: !!allVoices?.on };
   /** The pinned message (by envelope id), and whether the simulation was running when it was pinned. */
@@ -569,6 +574,10 @@ export function SolarView({
     c.tzoom = c.fit;
     c.touched = false;
   }, []);
+  const firstReset = useRef(resetSignal);
+  useEffect(() => {
+    if (resetSignal !== firstReset.current) resetView();
+  }, [resetSignal, resetView]);
 
   const unpin = useCallback(() => {
     const p = pin.current;
@@ -883,19 +892,6 @@ export function SolarView({
         <button className="quiet" onClick={unpin}>
           Resume
         </button>
-      </div>
-      <div className="viewControls">
-        <button className="quiet" onClick={resetView}>
-          Reset view
-        </button>
-        <button className="quiet" aria-pressed={showNews} onClick={() => setShowNews(!showNews)}>
-          {showNews ? 'Hide market news' : 'Show market news'}
-        </button>
-        {allVoices && (
-          <button className="quiet" aria-pressed={allVoices.on} onClick={allVoices.toggle}>
-            {allVoices.on ? 'Hide desk voices' : 'Show all desk voices'}
-          </button>
-        )}
       </div>
     </div>
   );

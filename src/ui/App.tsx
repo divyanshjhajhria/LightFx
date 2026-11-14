@@ -18,7 +18,9 @@ import type { LlmClient } from '../agents/llm';
 import { AgentRunner } from '../agents/runner';
 import type { AgentMode, SessionFile } from '../agents/runner';
 import type { ScenarioEvent } from '../sim/scenario';
-import { AgentsPanel } from './AgentsPanel';
+import { AgentsPanel, runByChip } from './AgentsPanel';
+import { MorePanel } from './MorePanel';
+import type { AgentOption } from './MorePanel';
 import type { Decider } from './AgentsPanel';
 import { ModelVoice, systemPrompt } from './modelVoice';
 import { acceptable } from './voiceCheck';
@@ -33,7 +35,7 @@ import { isMuted, prepareVoice, setMuted, speak, speaking, stop as stopVoice } f
 import { SolarView } from './SolarView';
 import { Story } from './StoryPanel';
 import type { FollowedTrade } from './StoryPanel';
-import { BODY_LABEL, MODE_LABEL, STATE, STRATEGY, clock, signed } from './theme';
+import { BODY_LABEL, MODE_LABEL, SHORT_NAME, STATE, STRATEGY, clock, signed } from './theme';
 
 /** Simulated minutes per real second, with their button labels. */
 const SPEEDS: { value: number; label: string }[] = [
@@ -130,6 +132,16 @@ function deciderFor(mode: AgentMode, session: SessionFile | null): Decider {
   return { label: 'Rules', ai: false };
 }
 
+/** The choices for "Our desks run by", with why any cannot be chosen. */
+function agentOptions(session: SessionFile | null): AgentOption[] {
+  return [
+    { id: 'live', why: LLM ? null : 'no key configured', description: 'A language model decides for each desk, through the guard.' },
+    { id: 'replay', why: session ? null : 'no recorded session', description: 'Decisions recorded earlier, applied again at the same moments.' },
+    { id: 'stand-in', why: null, description: 'A fixed script stands in for the model. Not AI.' },
+    { id: 'off', why: null, description: 'Each desk follows its built-in rules.' },
+  ].map((o) => ({ ...o, label: deciderFor(o.id as AgentMode, session).label }));
+}
+
 /** A recorded session, read back as a scenario: the same seed, distance and controls. */
 function sessionScenario(f: SessionFile): Scenario {
   const preset = f.scenarioId ? SCENARIOS.find((x) => x.id === f.scenarioId) : undefined;
@@ -143,90 +155,6 @@ function sessionScenario(f: SessionFile): Scenario {
     durationMin: Math.max(preset?.durationMin ?? 0, Math.ceil(end)),
     events: preset ? preset.events : f.controls,
   };
-}
-
-/** "Our desks run by": a read-out in the top bar, with a menu of the modes available and why the others are not. */
-function AgentModeMenu({
-  mode,
-  session,
-  locked,
-  onChoose,
-}: {
-  mode: AgentMode;
-  session: SessionFile | null;
-  locked: boolean;
-  onChoose: (m: AgentMode) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const box = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const outside = (e: PointerEvent) => {
-      if (!box.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('pointerdown', outside);
-    document.addEventListener('keydown', key);
-    return () => {
-      document.removeEventListener('pointerdown', outside);
-      document.removeEventListener('keydown', key);
-    };
-  }, [open]);
-  const options: { mode: AgentMode; why: string | null }[] = [
-    { mode: 'live', why: LLM ? null : 'no key configured' },
-    { mode: 'replay', why: session ? null : 'no recorded session' },
-    { mode: 'stand-in', why: null },
-    { mode: 'off', why: null },
-  ];
-  return (
-    <div className="scenarioMenu agentMenu" ref={box}>
-      <button
-        className="scenarioButton"
-        aria-haspopup="true"
-        aria-expanded={open}
-        disabled={locked}
-        onClick={() => setOpen(!open)}
-      >
-        <span>Our desks run by</span>
-        <b>{deciderFor(mode, session).label}</b>
-        {!locked && (
-          <svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true">
-            <path d="M1.5 3.5L5 7l3.5-3.5" />
-          </svg>
-        )}
-      </button>
-      {open && (
-        <div className="menuPanel glass" role="group" aria-label="Who runs our desks">
-          {options.map((o) => (
-            <button
-              key={o.mode}
-              aria-current={o.mode === mode}
-              disabled={o.why !== null}
-              onClick={() => {
-                setOpen(false);
-                onChoose(o.mode);
-              }}
-            >
-              <b>{deciderFor(o.mode, session).label}</b>
-              <span>
-                {o.why
-                  ? `Not available: ${o.why}.`
-                  : o.mode === 'live'
-                    ? 'A language model decides for each desk, through the guard.'
-                    : o.mode === 'replay'
-                      ? 'Decisions recorded earlier, applied again at the same moments.'
-                      : o.mode === 'stand-in'
-                        ? 'A fixed script stands in for the model. Not AI.'
-                        : 'Each desk follows its built-in rules.'}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 }
 
 /** A desk's words, and whether a language model wrote them. */
@@ -632,6 +560,8 @@ export function App() {
   /** Bumped on each demo start, so the desk panel's ticket starts again at "sell 5". */
   const [demoRun, setDemoRun] = useState(0);
   const [allVoices, setAllVoices] = useState(false);
+  const [showNews, setShowNews] = useState(false);
+  const [resetSignal, setResetSignal] = useState(0);
   const modelVoice = useRef<ModelVoice | null>(null);
   if (!modelVoice.current) modelVoice.current = new ModelVoice(LLM, undefined, () => queueMicrotask(repaint));
   const demoStart = useRef(0);
@@ -1121,6 +1051,10 @@ export function App() {
     return modelVoice.current!.line(b, template);
   });
   const marsLink = lead.links().find((l) => l.a === 'earth' && l.b === 'mars')!;
+  // The top bar's first two read-outs always describe the bank on the canvas.
+  const onCanvas = a.worlds[view];
+  const roomLeft = onCanvas.cfg.limit - Math.abs(onCanvas.totalPosition());
+  const overLimit = Math.abs(onCanvas.totalPosition()) > onCanvas.cfg.limit + 1e-9;
 
   /** "Play this storm": one square of the survival map, seed 1, at 16x, with the bank that did worst on the canvas. */
   const playStorm = (p: CellParams, worst: StrategyId) => {
@@ -1145,37 +1079,34 @@ export function App() {
       <header className="top">
         <h1>Lightspeed FX</h1>
         <div className="readouts" hidden={mapOpen}>
-          <div>
-            <span>Elapsed</span>
-            <b>{clock(a.now)}</b>
+          <div className={overLimit ? 'alert' : ''}>
+            <span>{SHORT_NAME[view]} holds</span>
+            <b>{signed(onCanvas.totalPosition())}</b>
           </div>
-          <div>
-            <span>Earth price</span>
-            <b>{lead.fair('earth').toFixed(5)}</b>
-          </div>
-          <div>
-            <span>Mars price</span>
-            <b>{lead.fair('mars').toFixed(5)}</b>
+          <div className={roomLeft <= 0 ? 'alert' : ''}>
+            <span>Room left</span>
+            <b>{roomLeft <= 0 ? 'None' : Math.floor(roomLeft)}</b>
           </div>
           <div className={marsLink.open ? '' : 'alert'}>
             <span>Earth to Mars</span>
             <b>
-              {marsLink.open
-                ? `${lightDelayMin(lead.orbit, 'earth', 'mars').toFixed(1)} min`
-                : marsLink.cut
-                  ? 'Link cut'
-                  : 'No signal'}
+              {marsLink.open ? (
+                <>
+                  {lightDelayMin(lead.orbit, 'earth', 'mars').toFixed(1)}
+                  <small> min one way</small>
+                </>
+              ) : marsLink.cut ? (
+                'Link cut'
+              ) : (
+                'No signal'
+              )}
             </b>
           </div>
-        </div>
-        {(followed || presenting) && !mapOpen && (
-          <div className="readouts holds">
-            <div>
-              <span>The bank really holds</span>
-              <b>{signed(a.worlds[view].totalPosition())}</b>
-            </div>
+          <div>
+            <span>Elapsed</span>
+            <b>{clock(a.now)}</b>
           </div>
-        )}
+        </div>
         <ScenarioMenu
           current={scenario}
           presenting={presenting}
@@ -1189,16 +1120,27 @@ export function App() {
             setMapOpen(true);
           }}
         />
-        {!mapOpen && <AgentModeMenu mode={effMode} session={session} locked={presenting} onChoose={chooseAgentMode} />}
-        <div className="session">
-          <label>
-            Seed
-            <input type="number" value={seed} onChange={(e) => setSeed(Number(e.target.value) || 0)} />
-          </label>
-          <button className="quiet" onClick={restart}>
-            Restart
-          </button>
-        </div>
+        <MorePanel
+          earthPrice={lead.fair('earth')}
+          marsPrice={lead.fair('mars')}
+          seed={seed}
+          onSeed={setSeed}
+          onRestart={restart}
+          showNews={showNews}
+          onShowNews={setShowNews}
+          allVoices={presenting ? null : { on: allVoices, toggle: () => setAllVoices(!allVoices) }}
+          onResetView={() => setResetSignal((n) => n + 1)}
+          agents={{
+            current: effMode,
+            options: agentOptions(session),
+            locked: presenting,
+            onChoose: (id) => chooseAgentMode(id as AgentMode),
+          }}
+          onOpenMap={() => {
+            if (presenting) leaveDemo();
+            setMapOpen(true);
+          }}
+        />
       </header>
 
       {mapOpen ? (
@@ -1223,6 +1165,8 @@ export function App() {
               bubbleBodies={bubbleBodies}
               allVoices={presenting ? null : { on: allVoices, toggle: () => setAllVoices(!allVoices) }}
               holdMs={holdMs}
+              showNews={showNews}
+              resetSignal={resetSignal}
             />
             {!presenting && (
               <p className="hint">Click a planet to trade with its desk. Hover a message to read it. Click a link to cut it.</p>
@@ -1377,7 +1321,7 @@ export function App() {
               ) : tab === 'agents' ? (
                 <AgentsPanel arena={a} runner={r} decider={decider} onSave={effMode === 'live' ? saveSession : null} />
               ) : (
-                <Story arena={a} followed={followed} view={view} onView={setView} onDone={endFollow} />
+                <Story arena={a} followed={followed} view={view} onView={setView} onDone={endFollow} ourChip={runByChip(decider.label)} />
               )}
             </div>
           </div>

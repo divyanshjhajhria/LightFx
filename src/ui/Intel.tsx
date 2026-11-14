@@ -1,6 +1,7 @@
 import { STRATEGIES } from '../sim/types';
 import type { BodyId, DeskView, StrategyId } from '../sim/types';
 import type { Arena, World } from '../sim/world';
+import { runByChip } from './AgentsPanel';
 import { BanksChart } from './BanksChart';
 import type { TimeMode } from './chartMath';
 import { BODY_LABEL, MODE_LABEL, STATE, STRATEGY, signed } from './theme';
@@ -51,12 +52,8 @@ function StrategyColumn({ w, viewing, runBy, selected, onView, onSelect }: Colum
       <div className="colTop">
         <button className="colHead" onClick={onView} aria-pressed={viewing}>
           <span className="name">{STRATEGY[w.strategy].name}</span>
-          {/* Agent-run, the line says who decides; on rules it is the bank's one-line description, as before. */}
-          {runBy && runBy !== 'Rules' ? (
-            <span className="blurb runBy">Run by {runBy.replace(/^Scripted/, 'scripted')}</span>
-          ) : (
-            <span className="blurb">{STRATEGY[w.strategy].blurb}</span>
-          )}
+          {runBy && runByChip(runBy) && <span className="chip">{runByChip(runBy)}</span>}
+          <span className="blurb">{STRATEGY[w.strategy].blurb}</span>
           {viewing && <span className="tag">On canvas</span>}
         </button>
         <span className="profit">Profit {signed(w.pnl(), 2)}</span>

@@ -54,6 +54,7 @@ function StoryColumn({
   viewing,
   onView,
   onGiveUp,
+  chip,
 }: {
   arena: Arena;
   strategy: StrategyId;
@@ -61,6 +62,7 @@ function StoryColumn({
   viewing: boolean;
   onView: () => void;
   onGiveUp: () => void;
+  chip?: string | null;
 }) {
   const w = arena.worlds[strategy];
   const now = w.now;
@@ -73,6 +75,7 @@ function StoryColumn({
       <button className="colHead" onClick={onView} aria-pressed={viewing}>
         <span className="name">
           {STRATEGY[strategy].name}
+          {chip && <span className="chip">{chip}</span>}
           {viewing && <span className="tag">On canvas</span>}
         </span>
         <span className="blurb">{STRATEGY[strategy].blurb}</span>
@@ -121,12 +124,15 @@ export function Story({
   view,
   onView,
   onDone,
+  ourChip = null,
 }: {
   arena: Arena;
   followed: FollowedTrade | null;
   view: StrategyId;
   onView: (s: StrategyId) => void;
   onDone: () => void;
+  /** Who runs our bank's desks, as a chip beside its name; null on rules. */
+  ourChip?: string | null;
 }) {
   if (!followed) {
     return <p className="storyEmpty">Click a planet and place a trade to see what happens next.</p>;
@@ -153,6 +159,7 @@ export function Story({
             viewing={s === view}
             onView={() => onView(s)}
             onGiveUp={() => arena.cancelTrade(followed.trade)}
+            chip={s === 'leased' ? ourChip : null}
           />
         ))}
       </div>
