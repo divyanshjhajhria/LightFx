@@ -15,6 +15,10 @@ export interface SimConfig {
   /** Grant budget to a peer when my free budget exceeds theirs by more than this. */
   grantThreshold: number;
   grantCooldown: number;
+  /** The share of the difference in spare allowance a desk hands a peer that has less. */
+  grantShare: number;
+  /** After a grant, wait at least this many times the age of the peer's news (plus one update) before the next. */
+  grantWaitFactor: number;
   /** Let a short desk absorb long position from a long peer, cancelling opposite positions to free budget. */
   netting: boolean;
   /**
@@ -78,6 +82,8 @@ export const DEFAULT_CONFIG: SimConfig = {
   leaseDuration: 60,
   grantThreshold: 10,
   grantCooldown: 10,
+  grantShare: 0.25,
+  grantWaitFactor: 2.5,
   netting: true,
   sharing: true,
   agentStaleMinutes: 30,

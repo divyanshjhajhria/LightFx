@@ -478,11 +478,11 @@ export class LeasedDesk extends BaseDesk {
       const age = now - info.sentAt;
       if (age > this.cfg.leaseDuration) continue;
       // Wait long enough to see the effect of the last grant before granting again.
-      const cooldown = Math.max(this.cfg.grantCooldown, 2.5 * age + this.cfg.gossipEvery);
+      const cooldown = Math.max(this.cfg.grantCooldown, this.cfg.grantWaitFactor * age + this.cfg.gossipEvery);
       if (now - this.lastGrantAt[p] < cooldown) continue;
       const diff = this.free() - info.free;
       if (diff <= this.cfg.grantThreshold) continue;
-      const amount = Math.floor(diff / 4);
+      const amount = Math.floor(diff * this.cfg.grantShare);
       if (amount < 1) continue;
       this.sent[p] += amount;
       this.lastGrantAt[p] = now;

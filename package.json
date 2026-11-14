@@ -13,7 +13,8 @@
     "sweep": "tsx scripts/sweep.ts",
     "package": "tsx scripts/package.ts",
     "facts": "tsx scripts/facts.ts",
-    "together": "tsx scripts/together.ts"
+    "together": "tsx scripts/together.ts",
+    "grants": "tsx scripts/grant-study.ts"
   },
   "dependencies": {
     "react": "^19.3.1",
