@@ -7,6 +7,7 @@ import { sanitise } from '../sim/directive';
 import type { Directive } from '../sim/directive';
 import { BODIES, perBody } from '../sim/types';
 import type { BodyId, Mode, PerBody } from '../sim/types';
+import type { ScenarioEvent } from '../sim/scenario';
 import type { Arena } from '../sim/world';
 import { acceptable } from '../ui/voiceCheck';
 import type { LlmClient } from './llm';
@@ -58,7 +59,7 @@ export interface SessionFile {
   separationDeg: number;
   /** The scenario played, if any, or the controls used in free play, as scenario events. */
   scenarioId: string | null;
-  controls: { at: number; kind: string; [k: string]: unknown }[];
+  controls: ScenarioEvent[];
   entries: SessionEntry[];
 }
 
@@ -80,6 +81,9 @@ interface Desk {
   rejected: number;
   /** The latest thought that passed the checker, and whether a model (live or recorded) wrote it. */
   thought: string;
+  /** When it was decided (simulated minutes) and what the desk knew then. */
+  thoughtAt: number;
+  thoughtBriefing: DeskBriefing | null;
 }
 
 export interface RunnerOptions {
@@ -142,6 +146,8 @@ export class AgentRunner {
       calls: 0,
       rejected: 0,
       thought: '',
+      thoughtAt: 0,
+      thoughtBriefing: null,
     }));
   }
 
@@ -263,6 +269,9 @@ export class AgentRunner {
     d.lastGoodSim = this.arena.now;
     d.outcome = 'decided';
     d.thought = directive.thought;
+    d.thoughtAt = this.arena.now;
+    d.thoughtBriefing = b;
+    this.decidedNow(body);
     this.record(body, b, raw, directive, checks);
     this.refreshShown(body);
     this.onChange();
@@ -308,6 +317,9 @@ export class AgentRunner {
       d.firstAttemptSim ??= this.arena.now;
       d.outcome = 'decided';
       d.thought = directive.thought;
+      d.thoughtAt = this.arena.now;
+      d.thoughtBriefing = now;
+      this.decidedNow(e.body);
       this.record(e.body, now, e.raw, directive, checks);
       changed = true;
     }
@@ -317,6 +329,13 @@ export class AgentRunner {
 
   private record(body: BodyId, briefing: DeskBriefing, raw: string, directive: Directive | null, checks: Checks): void {
     this.entries.push({ body, simTime: this.arena.now, realSeconds: this.clock() - this.startReal, briefing, raw, directive, checks });
+  }
+
+  /** "Decided N s ago" counts from the newest decision, not from the first of a run of them. */
+  private decidedNow(body: BodyId): void {
+    const d = this.desks[body];
+    d.shown = 'decided';
+    d.shownSinceReal = this.clock();
   }
 
   private refreshShown(body: BodyId): void {
@@ -347,6 +366,12 @@ export class AgentRunner {
   /** The latest thought that passed the checker, or ''. */
   thought(body: BodyId): string {
     return this.desks[body].thought;
+  }
+
+  /** When the latest thought was decided, and what the desk knew then. */
+  thoughtContext(body: BodyId): { at: number; briefing: DeskBriefing | null } {
+    const d = this.desks[body];
+    return { at: d.thoughtAt, briefing: d.thoughtBriefing };
   }
 
   /** Everything decided (or refused) this session, oldest first. */

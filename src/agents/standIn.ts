@@ -6,7 +6,7 @@ import { BODIES } from '../sim/types';
 import type { BodyId } from '../sim/types';
 
 const NAME: Record<BodyId, string> = { earth: 'Earth', moon: 'the Moon', mars: 'Mars' };
-const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
+const signed = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '0');
 
 /** Minutes since this desk last decided; everything newer than that is news to it. */
 const sinceLast = (b: DeskBriefing) => b.lastDirective?.minAgo ?? Infinity;
@@ -28,12 +28,14 @@ export function standIn(b: DeskBriefing): Directive {
     left -= units;
   }
 
-  // Under a fifth spare: ask the peer that last reported the most spare, at most once every 15 minutes.
+  // Under a fifth spare: ask the peer that last reported the most spare (and was heard from lately), at most once
+  // every 15 minutes.
   const ask: Partial<Record<BodyId, number>> = {};
   const askedLately = (b.lastDirective?.asked ?? false) && since < 15;
   if (spare < allowance / 5 && !askedLately) {
     const best = [...(b.spareByLastWord ?? [])]
-      .filter((s) => s.spare !== null && s.spare > 0)
+      // Only a peer heard from within the hour: one silent longer is probably out of reach.
+      .filter((s) => s.spare !== null && s.spare > 0 && s.ageMin !== null && s.ageMin <= 60)
       .sort((x, y) => y.spare! - x.spare!)[0];
     if (best) ask[best.body] = Math.max(1, Math.min(best.spare!, Math.round(allowance / 4)));
   }

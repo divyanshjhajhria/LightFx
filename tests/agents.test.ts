@@ -63,6 +63,25 @@ describe('the agent runner', () => {
     expect(r.log().at(-1)!.checks).toMatchObject({ parsed: true, thought: 'ok', given: { moon: 2 } });
   });
 
+  it('counts "decided N s ago" from the newest decision', async () => {
+    const { arena, clock, advance } = setup();
+    const { client, calls } = fakeClient();
+    const r = new AgentRunner(arena, { mode: 'live', client, clock });
+    r.tick();
+    calls[0].resolve(GOOD);
+    await flush();
+    advance(30);
+    expect(r.status('earth').sinceRealSeconds).toBe(30);
+    arena.placeTrade('earth', 'sell', 1);
+    arena.step();
+    r.tick();
+    const next = calls.filter((c) => JSON.parse(c.user).body === 'earth')[1];
+    next.resolve(GOOD);
+    await flush();
+    advance(2);
+    expect(r.status('earth')).toMatchObject({ state: 'decided', sinceRealSeconds: 2 });
+  });
+
   it('accepts fenced JSON, and refuses prose around JSON or garbage, applying nothing', async () => {
     expect(extractJson('```json\n{"pricing":"keen"}\n```')).toEqual({ pricing: 'keen' });
     expect(extractJson('```\n{"pricing":"keen"}\n```')).toEqual({ pricing: 'keen' });

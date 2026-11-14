@@ -188,3 +188,10 @@ export function makeClient(
     ? anthropic(key, model, fetchFn)
     : gemini(key, model, fetchFn);
 }
+
+/** The model a configured client would use, for the session file; null if none is configured. */
+export function configuredModel(env: LlmEnv = import.meta.env as LlmEnv): string | null {
+  const provider = env.VITE_LLM_PROVIDER?.trim().toLowerCase();
+  if (!env.VITE_LLM_KEY?.trim() || (provider !== 'anthropic' && provider !== 'gemini')) return null;
+  return `${provider} ${env.VITE_LLM_MODEL?.trim() || DEFAULT_MODEL[provider]}`;
+}

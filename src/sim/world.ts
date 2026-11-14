@@ -663,7 +663,10 @@ export class Arena {
   readonly worlds: Record<StrategyId, World>;
   private nextTrade = 1;
 
-  constructor(seed: number, opts: Omit<WorldOptions, 'strategy' | 'seed'> = {}) {
+  constructor(
+    readonly seed: number,
+    opts: Omit<WorldOptions, 'strategy' | 'seed'> = {},
+  ) {
     const make = (strategy: StrategyId) => new World({ ...opts, strategy, seed });
     this.worlds = { leased: make('leased'), naive: make('naive'), central: make('central') };
   }

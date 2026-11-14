@@ -1491,6 +1491,159 @@ input[type='range']::-moz-range-thumb {
   text-align: right;
 }
 
+/* ---- The agents ------------------------------------------------------------------ */
+
+.agentMenu .scenarioButton:disabled {
+  cursor: default;
+}
+
+.agentMenu .scenarioButton:disabled:hover {
+  background: none;
+}
+
+.menuPanel button:disabled {
+  cursor: default;
+}
+
+.menuPanel button:disabled:hover {
+  background: none;
+}
+
+.menuPanel button:disabled b {
+  color: var(--text-3);
+}
+
+.colHead .runBy {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.agentsPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border-top: 1px solid var(--hair);
+}
+
+.agentsEmpty {
+  margin: 0;
+  padding: 18px 28px;
+  color: var(--text-2);
+}
+
+.agentsHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 7px 28px 5px;
+}
+
+.agentsHead p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+.agentsGrid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--hair);
+}
+
+.agentCol {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 22px 10px;
+  font-size: 12.5px;
+}
+
+.agentCol + .agentCol {
+  border-left: 1px solid var(--hair);
+}
+
+.agentHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.agentHead h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.agentState {
+  font-size: 12px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.agentState.thinking {
+  color: var(--text);
+}
+
+.agentMeta {
+  margin: 1px 0 6px;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.agentThought {
+  margin: 0 0 4px;
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+.agentThought .noteMeta {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.agentChoices {
+  margin: 0 0 6px;
+  color: var(--text-2);
+}
+
+.agentNotes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.agentNotes h4 {
+  margin: 0 0 2px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-3);
+}
+
+.agentNotes p {
+  margin: 0 0 5px;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+}
+
+.agentNotes .noteMeta {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.agentNotes .noteMeta.alert {
+  color: var(--alert);
+}
+
+.agentsPanel .muted {
+  color: var(--text-3);
+}
+
 /* ---- The survival map --------------------------------------------------------- */
 
 .app.mapOpen {
@@ -1715,6 +1868,21 @@ input[type='range']::-moz-range-thumb {
   .mapGrid,
   .mapPair {
     grid-template-columns: 1fr;
+  }
+
+  .agentsGrid {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .agentCol + .agentCol {
+    border-left: none;
+    border-top: 1px solid var(--hair);
+  }
+
+  .agentsHead {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .mapColHead {

@@ -36,12 +36,14 @@ function DeskRow({ d, active, onSelect }: { d: DeskView; active: boolean; onSele
 interface ColumnProps {
   w: World;
   viewing: boolean;
+  /** Our bank only: who is making its desks' judgment calls, in the interface's words. */
+  runBy?: string;
   selected: BodyId | null;
   onView: () => void;
   onSelect: (b: BodyId) => void;
 }
 
-function StrategyColumn({ w, viewing, selected, onView, onSelect }: ColumnProps) {
+function StrategyColumn({ w, viewing, runBy, selected, onView, onSelect }: ColumnProps) {
   const v = verdict(w);
   const servedPct = Math.round((100 * w.metrics.served) / Math.max(1, w.metrics.arrived));
   return (
@@ -49,7 +51,12 @@ function StrategyColumn({ w, viewing, selected, onView, onSelect }: ColumnProps)
       <div className="colTop">
         <button className="colHead" onClick={onView} aria-pressed={viewing}>
           <span className="name">{STRATEGY[w.strategy].name}</span>
-          <span className="blurb">{STRATEGY[w.strategy].blurb}</span>
+          {/* Agent-run, the line says who decides; on rules it is the bank's one-line description, as before. */}
+          {runBy && runBy !== 'Rules' ? (
+            <span className="blurb runBy">Run by {runBy.replace(/^Scripted/, 'scripted')}</span>
+          ) : (
+            <span className="blurb">{STRATEGY[w.strategy].blurb}</span>
+          )}
           {viewing && <span className="tag">On canvas</span>}
         </button>
         <span className="profit">Profit {signed(w.pnl(), 2)}</span>
@@ -90,12 +97,14 @@ interface IntelProps {
   mode: TimeMode;
   /** The chart's hover read-out (off in presenter mode). */
   hover: boolean;
+  /** Who runs our bank's desks, in the interface's words ("AI agents (live)", "Scripted stand-in", "Rules"). */
+  runBy?: string;
   onView: (s: StrategyId) => void;
   onSelect: (s: StrategyId, b: BodyId) => void;
 }
 
 /** "The banks": one shared chart of the three banks against the limit, then a column for each. */
-export function Intel({ arena, view, selected, mode, hover, onView, onSelect }: IntelProps) {
+export function Intel({ arena, view, selected, mode, hover, runBy, onView, onSelect }: IntelProps) {
   return (
     <div className="banksPanel">
       <BanksChart arena={arena} mode={mode} view={view} onView={onView} hover={hover} />
@@ -105,6 +114,7 @@ export function Intel({ arena, view, selected, mode, hover, onView, onSelect }: 
             key={s}
             w={arena.worlds[s]}
             viewing={s === view}
+            runBy={s === 'leased' ? runBy : undefined}
             selected={selected}
             onView={() => onView(s)}
             onSelect={(b) => onSelect(s, b)}

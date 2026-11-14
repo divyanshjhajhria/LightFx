@@ -92,6 +92,8 @@ interface Frame {
   /** Link under the pointer, as "a-b" with a and b in the order World.links() gives them. */
   hoverLink: string | null;
   showNews: boolean;
+  /** Draw each note's words beside its message (when few are in flight). */
+  noteText: boolean;
   /** Trade being followed: its messages are emphasised and everything else fades. */
   following: number | null;
   /** An extra line under each planet's name, or null for none. */
@@ -126,7 +128,7 @@ function cross(g: CanvasRenderingContext2D, x: number, y: number, alpha: number)
 }
 
 function draw(f: Frame): void {
-  const { g, W, H, cam, w, now, tReal, selected, fx, stars, still, hoverLink, showNews, following, believes, shown } = f;
+  const { g, W, H, cam, w, now, tReal, selected, fx, stars, still, hoverLink, showNews, noteText, following, believes, shown } = f;
   const P = (v: Vec): [number, number] => [
     W / 2 + (v.x - cam.cx) * cam.zoom,
     H / 2 - LIFT - (v.y - cam.cy) * cam.zoom * TILT,
@@ -235,6 +237,8 @@ function draw(f: Frame): void {
   /** Where the followed trade's labels went, so two messages flying together get one label, not two on top. */
   const labelled: [number, number][] = [];
   const lead = new Map<string, { x: number; y: number; nx: number; ny: number; left: number }>();
+  const carriesNote = (e: Envelope) => e.payload.kind === 'gossip' && (e.payload.note !== undefined || e.payload.asks !== undefined);
+  const notesInFlight = w.net.inFlight.filter(carriesNote).length;
   for (const env of w.net.inFlight) {
     const a = pos[env.from];
     const b = pos[env.to];
@@ -261,6 +265,28 @@ function draw(f: Frame): void {
     shown.push({ env, x, y });
     // Labels sit on the side of the line away from the Sun-ward bottom of the screen.
     const side = ny > 0 ? -1 : 1;
+    if (carriesNote(env) && len >= 40) {
+      // An agent's note rides on this message: a small speech mark beside its head. Hovering reads it.
+      const sx = x + nx * 11 * side;
+      const sy = y + ny * 11 * side - 3;
+      g.fillStyle = `rgba(${WARM},0.85)`;
+      g.beginPath();
+      g.roundRect(sx - 4.5, sy - 3.5, 9, 7, 2.5);
+      g.fill();
+      g.beginPath();
+      g.moveTo(sx - 2, sy + 3);
+      g.lineTo(sx - 3.5, sy + 6);
+      g.lineTo(sx + 1, sy + 3);
+      g.fill();
+      const note = (env.payload as { note?: string }).note;
+      if (noteText && notesInFlight < 4 && note) {
+        const words = note.length > 64 ? `${note.slice(0, 63).trimEnd()}…` : note;
+        g.font = `400 11px ${FONT}`;
+        g.textAlign = nx * side >= 0 ? 'left' : 'right';
+        g.fillStyle = `rgba(${WARM},0.88)`;
+        g.fillText(`“${words}”`, sx + (nx * side >= 0 ? 8 : -8), sy + 4);
+      }
+    }
     const handover = p.kind === 'gossip' ? p.handover : undefined;
     if (handover && !tagged) {
       // A hand-over of position between desks: larger, and labelled for as long as it is in flight.
@@ -531,8 +557,8 @@ export function SolarView({
   const tip = useRef<HTMLDivElement>(null);
   const cam = useRef<Camera>({ cx: 0, cy: 0, zoom: 200, tcx: 0, tcy: 0, tzoom: 200, fit: 200, touched: false });
   const [showNews, setShowNews] = useState(false);
-  const live = useRef({ selected, onSelect, onToggleLink, onPause, onResume, showNews, canPin });
-  live.current = { selected, onSelect, onToggleLink, onPause, onResume, showNews, canPin };
+  const live = useRef({ selected, onSelect, onToggleLink, onPause, onResume, showNews, canPin, noteText: !!allVoices?.on });
+  live.current = { selected, onSelect, onToggleLink, onPause, onResume, showNews, canPin, noteText: !!allVoices?.on };
   /** The pinned message (by envelope id), and whether the simulation was running when it was pinned. */
   const pin = useRef<{ id: number; wasRunning: boolean } | null>(null);
 
@@ -821,6 +847,7 @@ export function SolarView({
           still,
           hoverLink,
           showNews: live.current.showNews,
+          noteText: live.current.noteText,
           following: getFollowing(),
           believes: getBelieves(),
           shown,

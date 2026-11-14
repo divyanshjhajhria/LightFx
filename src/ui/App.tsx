@@ -13,8 +13,13 @@ import { Arena } from '../sim/world';
 import { deskBriefing } from '../sim/briefing';
 import { NO_MODEL_ANSWER, READY_QUESTIONS, readyAnswer } from './askDesk';
 import { deskSays } from './deskVoice';
-import { makeClient } from '../agents/llm';
+import { configuredModel, makeClient } from '../agents/llm';
 import type { LlmClient } from '../agents/llm';
+import { AgentRunner } from '../agents/runner';
+import type { AgentMode, SessionFile } from '../agents/runner';
+import type { ScenarioEvent } from '../sim/scenario';
+import { AgentsPanel } from './AgentsPanel';
+import type { Decider } from './AgentsPanel';
 import { ModelVoice, systemPrompt } from './modelVoice';
 import { acceptable } from './voiceCheck';
 import { Intel } from './Intel';
@@ -101,6 +106,128 @@ function Ticket({ body, onTrade }: { body: BodyId; onTrade: (side: 'buy' | 'sell
 
 /** The optional language model, read once from the environment. Null means every desk speaks from templates. */
 const LLM: LlmClient | null = makeClient();
+
+/** ?agents=live|replay|stand-in|rules, if given. */
+const AGENTS_PARAM = new URLSearchParams(window.location.search).get('agents');
+
+/** Who runs our desks at start: a configured model unless the address says otherwise. Replay waits for its file. */
+function initialAgentMode(): AgentMode {
+  if (AGENTS_PARAM === 'stand-in') return 'stand-in';
+  if (AGENTS_PARAM === 'rules' || AGENTS_PARAM === 'replay') return 'off';
+  return LLM && (AGENTS_PARAM === null || AGENTS_PARAM === 'live') ? 'live' : 'off';
+}
+
+/** What the interface calls each mode. Only a real model, live or recorded, is ever called AI. */
+function deciderFor(mode: AgentMode, session: SessionFile | null): Decider {
+  if (mode === 'live') return { label: 'AI agents (live)', ai: true };
+  if (mode === 'replay') {
+    // A session recorded from the stand-in says so; only a real model's recording is called AI.
+    return session?.recordedWith === 'stand-in'
+      ? { label: 'Scripted stand-in (replay)', ai: false }
+      : { label: 'AI agents (replay)', ai: session !== null };
+  }
+  if (mode === 'stand-in') return { label: 'Scripted stand-in', ai: false };
+  return { label: 'Rules', ai: false };
+}
+
+/** A recorded session, read back as a scenario: the same seed, distance and controls. */
+function sessionScenario(f: SessionFile): Scenario {
+  const preset = f.scenarioId ? SCENARIOS.find((x) => x.id === f.scenarioId) : undefined;
+  const end = Math.max(60, ...f.entries.map((e) => e.simTime)) + 60;
+  return {
+    id: 'agent-session',
+    name: 'Recorded agent session',
+    summary: 'A session saved from the agents, played back.',
+    seed: f.seed,
+    separationDeg: f.separationDeg,
+    durationMin: Math.max(preset?.durationMin ?? 0, Math.ceil(end)),
+    events: preset ? preset.events : f.controls,
+  };
+}
+
+/** "Our desks run by": a read-out in the top bar, with a menu of the modes available and why the others are not. */
+function AgentModeMenu({
+  mode,
+  session,
+  locked,
+  onChoose,
+}: {
+  mode: AgentMode;
+  session: SessionFile | null;
+  locked: boolean;
+  onChoose: (m: AgentMode) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const outside = (e: PointerEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('keydown', key);
+    return () => {
+      document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('keydown', key);
+    };
+  }, [open]);
+  const options: { mode: AgentMode; why: string | null }[] = [
+    { mode: 'live', why: LLM ? null : 'no key configured' },
+    { mode: 'replay', why: session ? null : 'no recorded session' },
+    { mode: 'stand-in', why: null },
+    { mode: 'off', why: null },
+  ];
+  return (
+    <div className="scenarioMenu agentMenu" ref={box}>
+      <button
+        className="scenarioButton"
+        aria-haspopup="true"
+        aria-expanded={open}
+        disabled={locked}
+        onClick={() => setOpen(!open)}
+      >
+        <span>Our desks run by</span>
+        <b>{deciderFor(mode, session).label}</b>
+        {!locked && (
+          <svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true">
+            <path d="M1.5 3.5L5 7l3.5-3.5" />
+          </svg>
+        )}
+      </button>
+      {open && (
+        <div className="menuPanel glass" role="group" aria-label="Who runs our desks">
+          {options.map((o) => (
+            <button
+              key={o.mode}
+              aria-current={o.mode === mode}
+              disabled={o.why !== null}
+              onClick={() => {
+                setOpen(false);
+                onChoose(o.mode);
+              }}
+            >
+              <b>{deciderFor(o.mode, session).label}</b>
+              <span>
+                {o.why
+                  ? `Not available: ${o.why}.`
+                  : o.mode === 'live'
+                    ? 'A language model decides for each desk, through the guard.'
+                    : o.mode === 'replay'
+                      ? 'Decisions recorded earlier, applied again at the same moments.'
+                      : o.mode === 'stand-in'
+                        ? 'A fixed script stands in for the model. Not AI.'
+                        : 'Each desk follows its built-in rules.'}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /** A desk's words, and whether a language model wrote them. */
 export interface Words {
@@ -481,7 +608,14 @@ export function App() {
   const [customScenario, setCustomScenario] = useState<Scenario | null>(null);
   const [mapOpen, setMapOpen] = useState(() => new URLSearchParams(window.location.search).has('map'));
   const [followed, setFollowed] = useState<FollowedTrade | null>(null);
-  const [tab, setTab] = useState<'trade' | 'banks'>('banks');
+  const [tab, setTab] = useState<'trade' | 'banks' | 'agents'>('banks');
+  // Agents: who runs our bank's desks, the recorded session if there is one, and the runner.
+  const [agentMode, setAgentMode] = useState<AgentMode>(initialAgentMode);
+  const [session, setSession] = useState<SessionFile | null>(null);
+  const runner = useRef<AgentRunner | null>(null);
+  /** Controls used since this bank started, as scenario events, so a saved session can be played back. */
+  const controls = useRef<ScenarioEvent[]>([]);
+  const arenaStart = useRef({ seed: 42, separationDeg: 150 });
   /** The speed to go back to when following ends, if following slowed things down. */
   const savedSpeed = useRef<number | null>(null);
   const followingRef = useRef<number | null>(null);
@@ -522,8 +656,12 @@ export function App() {
     leaveDemo: () => {},
     hasResults: false,
     speedRequest: null as Director['speedRequest'],
+    agentMode: 'off' as AgentMode,
+    session: null as SessionFile | null,
   });
-  live.current = { ...live.current, running, speed, view, presenting };
+  // The guided demo stays on rules (so the pitch cannot be derailed), unless opened with ?demo&agents=replay.
+  const effMode: AgentMode = presenting ? (AGENTS_PARAM === 'replay' && session ? 'replay' : 'off') : agentMode;
+  live.current = { ...live.current, running, speed, view, presenting, agentMode: effMode, session };
 
   useEffect(() => {
     let id = 0;
@@ -562,6 +700,21 @@ export function App() {
         }
         if (n === 400) partial.current = 0;
       }
+      // Our desks' agents: a runner for this bank and this mode, ticked once a frame.
+      const want = live.current.agentMode === 'live' && !LLM ? 'off' : live.current.agentMode;
+      let r = runner.current;
+      if (!r || r.arena !== a || r.mode !== want) {
+        r?.stop();
+        r = new AgentRunner(a, {
+          mode: want,
+          client: LLM,
+          session: want === 'replay' ? (live.current.session?.entries ?? []) : undefined,
+          clock: () => performance.now() / 1000,
+          onChange: () => queueMicrotask(repaint),
+        });
+        runner.current = r;
+      }
+      r.tick();
       if (g) {
         live.current.onLines(g.tick(realSec));
         live.current.onGuideFrame(g);
@@ -599,6 +752,10 @@ export function App() {
       arena.current = run.arena;
       director.current = run.director;
     }
+    // A new bank: the session's record of controls starts again from here.
+    const a0 = arena.current;
+    arenaStart.current = { seed: a0.seed, separationDeg: Math.round(separationDeg(a0.worlds.leased.orbit)) };
+    controls.current = [];
     partial.current = 0;
     repaint();
   };
@@ -628,6 +785,57 @@ export function App() {
     // Runs once on load.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // A recorded agent session, if public/agents/session.json holds one. ?agents=replay plays it back.
+  useEffect(() => {
+    fetch('agents/session.json')
+      .then((r) => (r.ok && (r.headers.get('content-type') ?? '').includes('json') ? r.json() : null))
+      .then((f: SessionFile | null) => {
+        if (!f || f.version !== 1 || !Array.isArray(f.entries) || typeof f.seed !== 'number') return;
+        setSession(f);
+        if (AGENTS_PARAM !== 'replay') return;
+        setAgentMode('replay');
+        if (!live.current.presenting) chooseScenario(sessionScenario(f));
+      })
+      .catch(() => undefined);
+    // Runs once on load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** Note a control the visitor used, so a saved session can replay the same storm. */
+  const recordControl = (e: ScenarioEvent) => {
+    if (!director.current) controls.current.push(e);
+  };
+
+  /** Choose who runs our desks. Replay plays the recorded session from its start. */
+  const chooseAgentMode = (m: AgentMode) => {
+    setAgentMode(m);
+    if (m === 'replay' && session) chooseScenario(sessionScenario(session));
+  };
+
+  /** "Save this session": everything the agents decided, with what is needed to play it back. */
+  const saveSession = () => {
+    const r = runner.current;
+    if (!r) return;
+    const d = director.current;
+    const preset = d && SCENARIOS.some((x) => x.id === d.scenario.id) ? d.scenario.id : null;
+    const file: SessionFile = {
+      version: 1,
+      recordedWith: 'live',
+      model: configuredModel() ?? undefined,
+      seed: d ? d.scenario.seed : arenaStart.current.seed,
+      separationDeg: d ? d.scenario.separationDeg : arenaStart.current.separationDeg,
+      scenarioId: preset,
+      controls: d && !preset ? d.scenario.events : controls.current,
+      entries: r.log(),
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(file, null, 1)], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'session.json';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
 
   // Space bar plays and pauses, unless a control has focus.
   useEffect(() => {
@@ -705,6 +913,7 @@ export function App() {
   };
 
   const toggleLink = (x: BodyId, y: BodyId) => {
+    recordControl({ at: a.now, kind: 'cut', a: x, b: y, on: !a.worlds.leased.isCut(x, y) });
     a.toggleCut(x, y);
     repaint();
   };
@@ -808,6 +1017,12 @@ export function App() {
       if (b.view) setView(b.view);
       if (b.id === 'storm') marsServed.current.storm = w.central.desks.mars.served;
       if (b.id === 'panic') setTab('banks');
+      // Replaying recorded agents in the demo: "The agents" stands in for "The banks" while every desk is alone.
+      if (b.id === 'alone' && live.current.agentMode === 'replay') {
+        if (banksHeight.current === 0 && bottom.current) banksHeight.current = bottom.current.offsetHeight;
+        setTab('agents');
+      }
+      if (b.id === 'recovery' && live.current.agentMode === 'replay') setTab('banks');
       if (b.id === 'recovery') {
         marsServed.current.recovery = w.central.desks.mars.served;
         if (followingRef.current !== null) showTrade();
@@ -880,9 +1095,27 @@ export function App() {
   // Desk words hold for 4 real seconds, or 30 simulated minutes at the current speed if that is shorter.
   const holdMs = Math.min(4000, (30 / (g ? g.speed : speed)) * 1000);
   const shown = new Set<BodyId>([...bubbleBodies, ...(selected ? [selected] : [])]);
+  const decider = deciderFor(effMode, session);
+  const r = runner.current && runner.current.arena === a ? runner.current : null;
   const voices = perBody((b): Words => {
     const brief = deskBriefing(a.worlds[view], b);
     const template = deskSays(brief);
+    // Our desks, agent-run: the agent's latest thought while it is still in force; otherwise the templated voice.
+    if (view === 'leased' && effMode !== 'off' && r) {
+      const thought = r.thought(b);
+      const inForce = a.worlds.leased.runBy(b) !== 'rules (agent silent)' && a.worlds.leased.runBy(b) !== 'rules';
+      // Shown only while still true of the desk as it stands: once its holdings, spare allowance or state have moved
+      // on from when it decided, the always-current templated voice speaks instead.
+      const then = r.thoughtContext(b).briefing;
+      const stillTrue =
+        !!thought &&
+        !!then &&
+        then.holds === brief.holds &&
+        Math.floor(then.allowanceSpare ?? 0) === Math.floor(brief.allowanceSpare ?? 0) &&
+        then.mode === brief.mode &&
+        acceptable(thought, brief, { strict: true, maxLength: 220 });
+      return inForce && stillTrue ? { text: thought, ai: decider.ai } : { text: template, ai: false };
+    }
     if (!modelAllowed) return { text: template, ai: false };
     if (shown.has(b)) modelVoice.current!.want(b, brief, template);
     return modelVoice.current!.line(b, template);
@@ -956,6 +1189,7 @@ export function App() {
             setMapOpen(true);
           }}
         />
+        {!mapOpen && <AgentModeMenu mode={effMode} session={session} locked={presenting} onChoose={chooseAgentMode} />}
         <div className="session">
           <label>
             Seed
@@ -1035,7 +1269,14 @@ export function App() {
                 <span className="rule" />
                 <div className="seg" role="group" aria-label="Where Mars is">
                   {PRESETS.map((p) => (
-                    <button key={p.deg} aria-pressed={p.deg === sep} onClick={() => a.setSeparation(p.deg)}>
+                    <button
+                      key={p.deg}
+                      aria-pressed={p.deg === sep}
+                      onClick={() => {
+                        recordControl({ at: a.now, kind: 'separation', deg: p.deg });
+                        a.setSeparation(p.deg);
+                      }}
+                    >
                       {p.label}
                     </button>
                   ))}
@@ -1048,6 +1289,7 @@ export function App() {
                     value={sep}
                     aria-label="Angle between Earth and Mars"
                     onChange={(e) => {
+                      recordControl({ at: a.now, kind: 'separation', deg: Number(e.target.value) });
                       a.setSeparation(Number(e.target.value));
                       repaint();
                     }}
@@ -1059,6 +1301,7 @@ export function App() {
                   className="event"
                   aria-pressed={blackout}
                   onClick={() => {
+                    recordControl({ at: a.now, kind: 'blackout', on: !blackout });
                     a.setBlackout(!blackout);
                     repaint();
                   }}
@@ -1070,6 +1313,7 @@ export function App() {
                   className="event"
                   aria-pressed={panic}
                   onClick={() => {
+                    recordControl({ at: a.now, kind: 'panic', on: !panic });
                     a.setPanic(!panic);
                     repaint();
                   }}
@@ -1084,13 +1328,14 @@ export function App() {
           <div
             className="bottom"
             ref={bottom}
-            style={tab === 'trade' && banksHeight.current > 0 ? { height: banksHeight.current } : undefined}
+            style={tab !== 'banks' && banksHeight.current > 0 ? { height: banksHeight.current } : undefined}
           >
             <div className="tabs" role="tablist" aria-label="Bottom panel">
               {(
                 [
                   ['trade', 'Your trade'],
                   ['banks', 'The banks'],
+                  ['agents', 'The agents'],
                 ] as const
               ).map(([id, label]) => (
                 <button
@@ -1122,12 +1367,15 @@ export function App() {
                         : { kind: 'free' }
                   }
                   hover={!presenting}
+                  runBy={decider.label}
                   onView={setView}
                   onSelect={(s, b) => {
                     setView(s);
                     setSelected(b);
                   }}
                 />
+              ) : tab === 'agents' ? (
+                <AgentsPanel arena={a} runner={r} decider={decider} onSave={effMode === 'live' ? saveSession : null} />
               ) : (
                 <Story arena={a} followed={followed} view={view} onView={setView} onDone={endFollow} />
               )}
