@@ -1,6 +1,8 @@
 // The guided demo's voice: a recorded file from public/vo/ when one exists, otherwise the browser's speech synthesis.
 // Every failure is silent: the captions always carry the words.
 
+import { publicFiles } from './publicFiles';
+
 const MUTE_KEY = 'lightspeed-fx.muted';
 
 let muted = readMuted();
@@ -61,7 +63,10 @@ export async function prepareVoice(ids: string[]): Promise<void> {
       // Older browsers: the first choice stands.
     }
   }
-  recorded = await findRecorded(ids, (url, init) => fetch(url, init));
+  // Ask only for the lines the server lists as recorded (all of them if it has no list).
+  const listed = await publicFiles();
+  const wanted = listed ? ids.filter((id) => listed.vo.includes(id)) : ids;
+  recorded = await findRecorded(wanted, (url, init) => fetch(url, init));
 }
 
 /**

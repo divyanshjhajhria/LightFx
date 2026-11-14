@@ -23,6 +23,7 @@ import { MorePanel } from './MorePanel';
 import { Overview } from './Overview';
 import { DockMenu, Tip } from './Tip';
 import { activity } from './activity';
+import { publicFiles } from './publicFiles';
 import { NO_INSETS } from './fit';
 import type { Insets } from './fit';
 import type { AgentOption } from './MorePanel';
@@ -766,8 +767,10 @@ export function App() {
 
   // A recorded agent session, if public/agents/session.json holds one. ?agents=replay plays it back.
   useEffect(() => {
-    fetch('agents/session.json')
-      .then((r) => (r.ok && (r.headers.get('content-type') ?? '').includes('json') ? r.json() : null))
+    // Only if the server lists a session (or has no list), so a plain static host never answers with a 404.
+    publicFiles()
+      .then((files) => (files && !files.session ? null : fetch('agents/session.json')))
+      .then((r) => (r && r.ok && (r.headers.get('content-type') ?? '').includes('json') ? r.json() : null))
       .then((f: SessionFile | null) => {
         if (!f || f.version !== 1 || !Array.isArray(f.entries) || typeof f.seed !== 'number') return;
         setSession(f);
