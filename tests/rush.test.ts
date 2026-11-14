@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '../src/sim/config';
+import { startScenario } from '../src/sim/scenario';
+import { SCENARIOS } from '../src/sim/scenarios';
 import { ALONE, measurePairs, rushGrid, runOurs } from '../src/sim/together';
 import type { TogetherFile } from '../src/sim/together';
 
@@ -32,5 +34,32 @@ describe('together against alone under a rush', () => {
     // Recomputing one square gives the same numbers (the whole file is checked in together.test.ts).
     const q = f.rush!.squares[0];
     expect(measurePairs(q, [1, 2])).toEqual(q.perSeed.slice(0, 2));
+  });
+
+  it("'Rush on Mars': the others lend Mars room, the note lands when they do, and nobody passes the limit", () => {
+    const s = SCENARIOS.find((x) => x.id === 'rush-on-mars')!;
+    const { arena, director } = startScenario(s);
+    const mars = arena.worlds.leased.desks.mars;
+    let at120 = 0;
+    let at240 = 0;
+    let firstLanding: number | null = null;
+    let last = mars.budget()!;
+    while (arena.now < s.durationMin) {
+      arena.step();
+      director.advance();
+      const b = mars.budget()!;
+      if (firstLanding === null && arena.now >= 120 && b - last >= 5) firstLanding = arena.now;
+      last = b;
+      if (arena.now === 120) at120 = b;
+      if (arena.now === 240) at240 = b;
+      for (const w of [arena.worlds.leased, arena.worlds.central]) {
+        expect(Math.abs(w.totalPosition())).toBeLessThanOrEqual(w.cfg.limit + 1e-9);
+      }
+    }
+    expect(at240).toBeGreaterThan(at120);
+    const note = s.events.find((e) => e.kind === 'note' && e.text.startsWith('Earth and the Moon lend'))!;
+    expect(note.at).toBe(firstLanding);
+    expect(arena.worlds.leased.metrics.breachTicks).toBe(0);
+    expect(arena.worlds.central.metrics.breachTicks).toBe(0);
   });
 });

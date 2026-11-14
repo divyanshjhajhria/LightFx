@@ -62,7 +62,7 @@ side, in 30/30 runs each, never over the limit.
 
 ## How we built it
 
-TypeScript, React and a canvas, on a seeded simulation so every bank faces the same customers, prices and storms. 294
+TypeScript, React and a canvas, on a seeded simulation so every bank faces the same customers, prices and storms. 308
 automated tests, including property tests that fail if any storm, failure or answer pushes our bank past its limit.
 The survival map is a headless sweep of the same simulation.
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import type { SweepFile } from '../sim/sweep';
 import type { TogetherFile } from '../sim/together';
 import { Tip } from './Tip';
-import { togetherFigure } from './togetherFigure';
+import { rushFigure } from './togetherFigure';
 import { STRATEGIES } from '../sim/types';
 import type { StrategyId } from '../sim/types';
 import type { Arena } from '../sim/world';
@@ -111,7 +111,8 @@ function Evidence({ onOpenMap }: { onOpenMap: () => void }) {
       live = false;
     };
   }, []);
-  const team = together ? togetherFigure(together) : null;
+  // Only what was measured, and only when it is worth saying: null leaves the figure off the card.
+  const team = together ? rushFigure(together) : null;
   // No map yet: leave the card out entirely.
   if (!summary) return null;
   const f = summary.overall;

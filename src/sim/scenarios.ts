@@ -1,4 +1,5 @@
 // The named scenarios in the menu. Notes are written to be read aloud.
+import { RUSH, rushEvents } from './scenario';
 import type { Scenario } from './scenario';
 
 /**
@@ -87,6 +88,23 @@ export const SCENARIOS: Scenario[] = [
       { at: 95, kind: 'note', text: 'An hour without Earth. Mars is marked degraded, and keeps trading.' },
       { at: 150, kind: 'cut', a: 'earth', b: 'mars', on: false },
       { at: 150, kind: 'note', text: 'The line is back.' },
+    ],
+  },
+  {
+    id: 'rush-on-mars',
+    name: 'Rush on Mars',
+    summary: 'A rush of sellers swamps Mars, and the other desks lend it room.',
+    seed: 5,
+    separationDeg: 60,
+    durationMin: 420,
+    events: [
+      { at: 0, kind: 'note', text: 'An ordinary day.' },
+      ...rushEvents('mars').filter((e) => e.at === RUSH.from),
+      { at: RUSH.from, kind: 'note', text: 'A rush of sellers hits the Mars desk. It will run out of room on its own.' },
+      // On this seed the first hand-over of 5 or more reaches Mars at minute 163.5 (the Moon's 5, sent at 152.25).
+      { at: 163.5, kind: 'note', text: 'Earth and the Moon lend Mars some of their allowance.' },
+      ...rushEvents('mars').filter((e) => e.at === RUSH.to),
+      { at: RUSH.to, kind: 'note', text: 'The rush ends.' },
     ],
   },
 ];

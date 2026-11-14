@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { TogetherFile } from '../src/sim/together';
 import { Arena } from '../src/sim/world';
 import { SHARE_MIN, activity } from '../src/ui/activity';
-import { togetherFigure } from '../src/ui/togetherFigure';
+import { down1, rushFigure, togetherFigure } from '../src/ui/togetherFigure';
 
 describe('teamwork on screen', () => {
   it('the feed says when a desk shares 5 or more of its allowance, and never for less', () => {
@@ -51,5 +51,36 @@ describe('teamwork on screen', () => {
     expect(togetherFigure(real).figure).toBe(`${real.overall.gainRelativePct.toFixed(1)}%`);
     const worse = { ...real, overall: { ...real.overall, gainRelativePct: -0.42 } };
     expect(togetherFigure(worse).figure).toBe('-0.4%');
+  });
+
+  it('never rounds the rush figure up', () => {
+    expect(down1(5.93)).toBe('5.9');
+    expect(down1(5.99)).toBe('5.9');
+    expect(down1(5)).toBe('5.0');
+    expect(down1(1.38)).toBe('1.3');
+  });
+
+  it('shows the rush figure from the file, measured with links up on seeds 11 to 30', () => {
+    const real = JSON.parse(readFileSync(join(__dirname, '..', 'public', 'together.json'), 'utf8')) as TogetherFile;
+    const r = rushFigure(real)!;
+    expect(r.label).toBe('points more customers served at a swamped desk when the others lend it room');
+    expect(Number(r.figure)).toBeGreaterThanOrEqual(5);
+    expect(r.detail).toMatch(/^A rush at Mars or Earth \(3 times the customers, 80% selling, for 3 hours\) with the links up: 80 runs, seeds 11 to 30/);
+    expect(r.detail).toMatch(/With the links down during the rush there is little to lend: -?\d+\.\d points \(160 runs\)\./);
+    expect(r.detail).toMatch(/working together served -?\d+\.\d points more of all customers \(900 runs\)\.$/);
+  });
+
+  it('leaves the figure off the card when there are no rush results, or the gain is under 5 points', () => {
+    const real = JSON.parse(readFileSync(join(__dirname, '..', 'public', 'together.json'), 'utf8')) as TogetherFile;
+    expect(rushFigure({ ...real, rush: undefined })).toBe(null);
+    // Make every rushed desk do the same together as alone: the gain is 0, so no figure.
+    const flat = {
+      ...real,
+      rush: {
+        ...real.rush!,
+        squares: real.rush!.squares.map((q) => ({ ...q, perSeed: q.perSeed.map((p) => ({ ...p, together: { ...p.together, rush: p.alone.rush } })) })),
+      },
+    };
+    expect(rushFigure(flat)).toBe(null);
   });
 });

@@ -8,7 +8,9 @@ import { DEFAULT_CONFIG } from '../src/sim/config';
 import { GUIDE_SEED, GUIDE_SEPARATION, GUIDE_WARMUP, Guide } from '../src/sim/guide';
 import { lightDelayMin, makeOrbit } from '../src/sim/orbits';
 import { MARKETS, MARKET_NAME } from '../src/sim/sweep';
+import { pairsFor, rushG, rushMeans } from '../src/sim/together';
 import type { TogetherFile } from '../src/sim/together';
+import { down1 } from '../src/ui/togetherFigure';
 import type { SweepFile } from '../src/sim/sweep';
 import { STRATEGIES } from '../src/sim/types';
 import type { StrategyId } from '../src/sim/types';
@@ -158,6 +160,51 @@ const teamBlock = (prefix: string, f: TogetherFile['overall']) => {
 };
 teamBlock('together.all', together.overall);
 for (const m of MARKETS) teamBlock(`together.${m}`, together.byMarket[m]);
+
+section('A rush at one desk (public/together.json and docs/grant-study.json; minutes 120 to 300, 3 times the customers, 80% selling)');
+{
+  const rushSq = together.rush!.squares;
+  const held = Array.from({ length: 20 }, (_, i) => i + 11);
+  const choosing = Array.from({ length: 10 }, (_, i) => i + 1);
+  const gain = (pairs: ReturnType<typeof pairsFor>) => {
+    const m = rushMeans(pairs);
+    return { g: m.rushTogether - m.rushAlone, runs: m.runs, m };
+  };
+  const up = gain(pairsFor(rushSq.filter((q) => q.stormMinutes === 0), held));
+  const down = gain(pairsFor(rushSq.filter((q) => q.stormMinutes > 0), held));
+  fact('rush.g.seeds1to10', two(rushG(rushSq, choosing)));
+  fact('rush.g.seeds11to30', two(rushG(rushSq, held)));
+  fact('rush.g.card', down1(up.g));
+  fact('rush.linksup.runs', up.runs);
+  fact('rush.linksup.rushdesk.together.percent', `${two(up.m.rushTogether)}%`);
+  fact('rush.linksup.rushdesk.alone.percent', `${two(up.m.rushAlone)}%`);
+  fact('rush.linksup.wins', `${up.m.rushWins} of ${up.runs}`);
+  fact('rush.linksdown.gain.points', two(down.g));
+  fact('rush.linksdown.card', down1(down.g));
+  fact('rush.linksdown.runs', down.runs);
+  for (const m of ['rush-mars', 'rush-earth'] as const) {
+    for (const storm of [0, 120, 360]) {
+      const g = gain(pairsFor(rushSq.filter((q) => q.market === m && q.stormMinutes === storm), held));
+      fact(`rush.${m.replace('rush-', '')}.storm${storm}.gain.points`, two(g.g));
+    }
+  }
+  const rushAll = rushMeans(pairsFor(rushSq, together.seeds));
+  const n = together.overall.runs + rushAll.runs;
+  const tAll = (together.overall.together.servedPct * together.overall.runs + rushAll.servedTogether * rushAll.runs) / n;
+  const aAll = (together.overall.alone.servedPct * together.overall.runs + rushAll.servedAlone * rushAll.runs) / n;
+  fact('rush.allmarkets.gain.card', down1(tAll - aAll));
+  fact('rush.allmarkets.runs', n);
+  const study = JSON.parse(readFileSync('docs/grant-study.json', 'utf8')) as {
+    adopted: boolean;
+    chosen: { grantShare: number; grantThreshold: number; grantWaitFactor: number };
+    heldOut: { today: { G: number }; chosen: { G: number } };
+    gGain: number;
+  };
+  fact('grants.adopted', study.adopted ? 'yes' : 'no');
+  fact('grants.best', `share ${study.chosen.grantShare}, threshold ${study.chosen.grantThreshold}, wait ${study.chosen.grantWaitFactor}`);
+  fact('grants.best.heldout.g', two(study.heldOut.chosen.G));
+  fact('grants.best.heldout.gain', two(study.gGain));
+}
 
 section('Agents');
 const session = 'public/agents/session.json';

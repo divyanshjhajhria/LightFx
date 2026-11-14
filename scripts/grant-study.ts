@@ -181,6 +181,19 @@ In every run of this study, our bank stayed inside its limit.
 `;
 
 writeFileSync('docs/rush.md', md);
+// The figures npm run facts quotes, so they are read rather than copied.
+const r4 = (x: number) => Number(x.toFixed(4));
+writeFileSync(
+  'docs/grant-study.json',
+  `${JSON.stringify({
+    adopted: adopt,
+    chosen: chosen.setting,
+    choosing: { today: { G: r4(today.G), served: r4(today.servedAll) }, chosen: { G: r4(chosen.G), served: r4(chosen.servedAll) } },
+    heldOut: { today: { G: r4(heldToday.G), served: r4(heldToday.servedAll) }, chosen: { G: r4(heldChosen.G), served: r4(heldChosen.servedAll) } },
+    gGain: r4(gGain),
+    worstMarketChange: r4(heldFall),
+  })}\n`,
+);
 console.log(md.slice(md.indexOf('## Lending faster')));
 console.log(`\nDECISION: ${adopt ? 'ADOPT' : 'NOTHING ADOPTED'} (${label(chosen.setting)}; held-out G ${f2(heldToday.G)} -> ${f2(heldChosen.G)}, worst market ${sign(heldFall)})`);
 console.log(`ADOPT_JSON ${JSON.stringify({ adopt, setting: chosen.setting })}`);

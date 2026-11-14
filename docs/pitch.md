@@ -13,10 +13,10 @@ three ways: they share spare allowance, they cancel out opposite positions, and 
 
 Each takes under 25 seconds, before pressing G. Use one, in place of the general opening below.
 
-**Neptune North.** "Three trading desks, on Earth, the Moon and Mars, share one goal: serve every customer they
-safely can without their bank passing its limit. They cooperate by sharing spare allowance, cancelling opposite
-positions and telling each other what they hold. When a storm cuts the links, each acts alone. You will see every
-desk cut off."
+**Neptune North.** "Three desks share one goal: serve every customer they safely can without passing the bank's
+limit. They lend room, cancel opposite positions and share what they hold; a swamped desk served 5.9 points more
+customers. When a storm cuts the links there is nothing to lend, and the bank stays safe anyway. Watch each desk get
+cut off."
 
 **Marshall Wace ("New Worlds").** "Banking between planets cannot exist yet, so we built it and ran 5,040 storms
 through it. A bank that trusts old news mostly gets away with it in a calm market: over its limit in 11.7% of storms.
@@ -108,7 +108,7 @@ link: a bank's regional desks, payments that must work offline, fleets of drones
    sits idle. Moving spare allowance when desks can talk, and netting opposite positions, lets more customers trade:
    netting alone raised volume by 12.02% with Mars close, in 30/30 runs.
 
-9. **How do you know it holds?** 294 automated tests, including property tests that try random storms, cuts, trades and
+9. **How do you know it holds?** 308 automated tests, including property tests that try random storms, cuts, trades and
    hostile agent answers. And the survival map: 5,040 storms, 23.8 million simulation steps, 0 breaches for our bank.
 
 10. **What happens when the storm ends?** The desks catch up: positions, allowance and notes flow again. Earth finally
@@ -116,13 +116,16 @@ link: a bank's regional desks, payments that must work offline, fleets of drones
 
 11. **What exactly is the shared goal?** The three desks run one bank: together they serve as many customers as they
     can without the bank as a whole ever holding more than its limit, though none can see what the others hold now.
-    It is one score for all three: a customer served by the Moon counts exactly as much as one served by Mars.
+    It is one score for all three, which is why a desk with room to spare lends it to a swamped one: in a rush with
+    the links up, the swamped desk served 5.9 points more of its customers than it would have alone.
 
-12. **How do you know they cooperate and are not just running side by side?** We ran our bank twice on the same 540
-    runs, once with its desks sharing allowance and cancelling positions and once with each desk on its own: working
-    together served 58.70% of customers against 57.76%, more in 384 of 540. That shows the cooperation is real and
-    measurable but small overall, 0.94 points, and that it pays mostly when customers all push one way (2.28 points,
-    more in 174 of 180); it does not make the bank safe, which the allowances do on their own.
+12. **How do you know they cooperate and are not just running side by side?** We ran our bank twice, its desks
+    lending and cancelling, then each on its own: when one desk is swamped by a rush with the links up, lending served
+    5.9 points more of its customers (better in 79 of 80 runs, on seeds the settings were never tuned on), but with
+    customers spread evenly it adds only 0.94 points, and over every market and storm we tried, 1.0 point. With the
+    links down there is nothing to share, so the gain falls to 1.3 points (worse than alone for a rush at Mars, which
+    has lent room before the storm), and the bank is safe anyway: its safety comes from the allowances, not from
+    talking.
 
 13. **Why should one desk give up allowance to another?** Because they share one score: a customer served by another
     desk counts as much as one served by you, and allowance sitting idle at one desk can serve a customer at a desk

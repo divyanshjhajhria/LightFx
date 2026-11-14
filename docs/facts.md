@@ -5,9 +5,9 @@ every figure in the write-ups is copied from a line here, exactly as written.
 
 ## Tests
 
-- `tests.total`: 294
-- `tests.passed`: 294
-- `tests.files`: 31
+- `tests.total`: 308
+- `tests.passed`: 308
+- `tests.files`: 33
 
 ## The bank
 
@@ -167,6 +167,31 @@ One-way customers:
 - `together.imbalance.wins`: 174 of 180
 - `together.imbalance.shared.perrun`: 83.4
 - `together.imbalance.cancelled.perrun`: 98.4
+
+## A rush at one desk (public/together.json and docs/grant-study.json; minutes 120 to 300, 3 times the customers, 80% selling)
+
+- `rush.g.seeds1to10`: 4.81
+- `rush.g.seeds11to30`: 5.93
+- `rush.g.card`: 5.9
+- `rush.linksup.runs`: 80
+- `rush.linksup.rushdesk.together.percent`: 49.46%
+- `rush.linksup.rushdesk.alone.percent`: 43.53%
+- `rush.linksup.wins`: 79 of 80
+- `rush.linksdown.gain.points`: 1.38
+- `rush.linksdown.card`: 1.3
+- `rush.linksdown.runs`: 160
+- `rush.mars.storm0.gain.points`: 5.17
+- `rush.mars.storm120.gain.points`: -0.67
+- `rush.mars.storm360.gain.points`: -1.40
+- `rush.earth.storm0.gain.points`: 6.70
+- `rush.earth.storm120.gain.points`: 4.72
+- `rush.earth.storm360.gain.points`: 2.87
+- `rush.allmarkets.gain.card`: 1.0
+- `rush.allmarkets.runs`: 900
+- `grants.adopted`: no
+- `grants.best`: share 0.5, threshold 4, wait 1.2
+- `grants.best.heldout.g`: 7.60
+- `grants.best.heldout.gain`: 1.66
 
 ## Agents
 
