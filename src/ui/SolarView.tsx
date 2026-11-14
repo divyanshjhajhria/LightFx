@@ -190,7 +190,7 @@ function draw(f: Frame): void {
         nx = -nx;
         ny = -ny;
       }
-      g.font = `500 12px ${FONT}`;
+      g.font = `500 12.5px ${FONT}`;
       g.textAlign = 'center';
       g.fillStyle = l.open ? `rgba(${WARM},0.62)` : `rgba(${ALERT_RGB},0.95)`;
       const text = l.open ? `${l.delayMin.toFixed(1)} light-minutes` : l.cut ? 'Link cut' : 'No signal';
@@ -281,7 +281,7 @@ function draw(f: Frame): void {
       const note = (env.payload as { note?: string }).note;
       if (noteText && notesInFlight < 4 && note) {
         const words = note.length > 64 ? `${note.slice(0, 63).trimEnd()}…` : note;
-        g.font = `400 11px ${FONT}`;
+        g.font = `400 12.5px ${FONT}`;
         g.textAlign = nx * side >= 0 ? 'left' : 'right';
         g.fillStyle = `rgba(${WARM},0.88)`;
         g.fillText(`“${words}”`, sx + (nx * side >= 0 ? 8 : -8), sy + 4);
@@ -298,7 +298,7 @@ function draw(f: Frame): void {
       g.beginPath();
       g.arc(x, y, 5, 0, 2 * Math.PI);
       g.fill();
-      g.font = `500 11.5px ${FONT}`;
+      g.font = `500 12.5px ${FONT}`;
       g.textAlign = 'center';
       g.fillStyle = `rgba(${WARM},0.92)`;
       // Leave the words off right next to a planet, where they would sit on its name; the large dot still shows.
@@ -342,7 +342,7 @@ function draw(f: Frame): void {
     if (tagged) {
       if (labelled.some(([lx, ly]) => Math.hypot(lx - x, ly - y) < 18)) continue;
       labelled.push([x, y]);
-      g.font = `500 11.5px ${FONT}`;
+      g.font = `500 12.5px ${FONT}`;
       g.textAlign = 'center';
       g.fillStyle = `rgba(${WARM},0.95)`;
       g.fillText(`lands in ${Math.max(0, left).toFixed(1)} min`, x + nx * 20 * side, y + ny * 20 * side + 4);
@@ -356,7 +356,7 @@ function draw(f: Frame): void {
   }
   // Countdown on the next message to land in each direction.
   g.globalAlpha = following !== null ? 0.25 : 1;
-  g.font = `500 10.5px ${FONT}`;
+  g.font = `500 11.5px ${FONT}`;
   g.textAlign = 'center';
   g.fillStyle = `rgba(${WARM},0.6)`;
   for (const p of lead.values()) {
@@ -430,14 +430,14 @@ function draw(f: Frame): void {
     const heard = desk.heardAgo(w.now);
     const leaseLeft = heard === null ? null : w.cfg.leaseDuration - heard;
     const lines: LabelLine[] = [
-      { text: BODY_LABEL[b], font: `500 12.5px ${FONT}`, colour: `rgba(${WARM},${selected === b ? 1 : 0.84})` },
+      { text: BODY_LABEL[b], font: `500 15px ${FONT}`, colour: `rgba(${WARM},${selected === b ? 1 : 0.84})` },
     ];
-    if (mode !== 'normal') lines.push({ text: MODE_LABEL[mode], font: `500 11px ${FONT}`, colour: STATE[mode] });
+    if (mode !== 'normal') lines.push({ text: MODE_LABEL[mode], font: `500 12.5px ${FONT}`, colour: STATE[mode] });
     else if (leaseLeft !== null && leaseLeft < w.cfg.leaseDuration / 2) {
-      lines.push({ text: `Plays safe in ${Math.max(0, leaseLeft).toFixed(0)} min`, font: `500 11px ${FONT}`, colour: STATE.degraded });
+      lines.push({ text: `Plays safe in ${Math.max(0, leaseLeft).toFixed(0)} min`, font: `500 12.5px ${FONT}`, colour: STATE.degraded });
     }
     const belief = believes?.[b];
-    if (belief) lines.push({ text: belief, font: `400 11px ${FONT}`, colour: `rgba(${WARM},0.62)` });
+    if (belief) lines.push({ text: belief, font: `400 12.5px ${FONT}`, colour: `rgba(${WARM},0.62)` });
     let width = 0;
     for (const l of lines) {
       g.font = l.font;
@@ -447,7 +447,7 @@ function draw(f: Frame): void {
     return { b, x, y, r: bodyRadius(b, cam.zoom), mode, lines, width, above: b === 'moon' };
   });
   type Lab = (typeof labels)[number];
-  const LINE = 15;
+  const LINE = 18;
   const box = (l: Lab) => {
     const h = LINE * l.lines.length;
     const top = l.above ? l.y - l.r - 5 - h : l.y + l.r + 5;
@@ -478,7 +478,7 @@ function draw(f: Frame): void {
   for (const l of labels) {
     const top = box(l).y0;
     l.lines.forEach((line, i) => {
-      const base = top + LINE * i + 12;
+      const base = top + LINE * i + 14;
       g.font = line.font;
       g.fillStyle = line.colour;
       g.fillText(line.text, l.x + 5, base);
