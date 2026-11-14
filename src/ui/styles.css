@@ -105,14 +105,14 @@ button {
 
 .app {
   display: grid;
-  grid-template-rows: auto minmax(360px, 1fr) auto;
+  grid-template-rows: auto minmax(300px, 1fr) auto;
   height: 100%;
-  min-height: 800px;
+  min-height: 680px;
   background: radial-gradient(120% 80% at 50% 38%, #15171c 0%, var(--ink) 62%);
 }
 
 .app.hasTimeline {
-  grid-template-rows: auto auto minmax(360px, 1fr) auto;
+  grid-template-rows: auto auto minmax(300px, 1fr) auto;
 }
 
 .top {
@@ -1598,10 +1598,16 @@ input[type='range']::-moz-range-thumb {
 
 /* ---- The banks: columns under the chart ----------------------------------- */
 
-/* One fixed height for the whole bottom panel on desktop, both tabs, so the canvas above never changes size. */
+/* Fixed heights for the bottom panel on desktop: the Overview is short, the detailed tabs taller. Switching animates
+   the height, and the solar system re-fits as the stage above grows or shrinks. */
 @media (min-width: 901px) {
   .bottom {
-    height: 351px !important;
+    height: 352px;
+    transition: height var(--ease);
+  }
+
+  .bottom.short {
+    height: 232px;
   }
 
   .tabPanel {
@@ -1793,6 +1799,196 @@ input[type='range']::-moz-range-thumb {
 
 .right {
   text-align: right;
+}
+
+/* ---- Overview: three bank cards and the evidence ------------------------------------ */
+
+.overview {
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 0.8fr);
+  gap: 8px;
+  padding: 4px 16px 16px;
+}
+
+.bankCard,
+.evidenceCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--fill);
+  text-align: left;
+}
+
+.bankCard {
+  transition: background var(--ease);
+}
+
+.bankCard:hover {
+  background: rgba(var(--warm), 0.09);
+}
+
+.bankCard.viewing {
+  background: var(--fill-strong);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cardName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: var(--t-name);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  font-size: var(--t-small);
+  color: var(--text-2);
+}
+
+.status.alert {
+  color: var(--alert);
+}
+
+.cardHolds {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.cardHolds b {
+  font-size: var(--t-hero);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.cardHolds span {
+  font-size: var(--t-small);
+  color: var(--text-2);
+}
+
+.gauge {
+  position: relative;
+  display: block;
+  height: 6px;
+  margin: 8px 0 4px;
+}
+
+.gauge i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.gauge .in {
+  background: var(--fill-strong);
+}
+
+.gauge .out {
+  background: rgba(232, 105, 93, 0.22);
+}
+
+.gauge .out.left {
+  left: 0;
+  border-radius: 999px 0 0 999px;
+}
+
+.gauge .out.right {
+  border-radius: 0 999px 999px 0;
+}
+
+.gauge .tick {
+  top: -4px;
+  bottom: -4px;
+  width: 1px;
+  background: var(--text-3);
+}
+
+.gauge .marker {
+  top: -4px;
+  bottom: -4px;
+  width: 3px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--text);
+  transition: left var(--ease);
+}
+
+.gauge .marker.over {
+  background: var(--alert);
+}
+
+.cardVerdict {
+  font-size: var(--t-body);
+  color: var(--text);
+}
+
+.cardVerdict.alert {
+  color: var(--alert);
+}
+
+.cardServed {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--t-small);
+  color: var(--text-2);
+}
+
+.cardServed .tag {
+  font-size: var(--t-micro);
+  color: var(--text-3);
+}
+
+.evidenceCard h3 {
+  margin: 0;
+  font-size: var(--t-name);
+  font-weight: 500;
+}
+
+.evidenceCard p {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+}
+
+.evidenceHero b {
+  font-size: var(--t-hero);
+  font-weight: 600;
+  line-height: 1.05;
+}
+
+.evidenceFigure b {
+  font-size: var(--t-figure);
+  font-weight: 600;
+}
+
+.evidenceCard p span {
+  font-size: var(--t-small);
+  color: var(--text-2);
+}
+
+.evidenceCard .quiet {
+  align-self: flex-start;
+  margin: auto -12px 0;
 }
 
 /* ---- The agents ------------------------------------------------------------------ */
@@ -2156,6 +2352,11 @@ input[type='range']::-moz-range-thumb {
     grid-template-columns: 1fr;
   }
 
+  .overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    height: auto;
+  }
+
   .agentsGrid {
     grid-template-columns: 1fr;
     overflow-y: auto;
@@ -2261,5 +2462,11 @@ input[type='range']::-moz-range-thumb {
   * {
     transition: none !important;
     animation: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .overview {
+    grid-template-columns: 1fr;
   }
 }

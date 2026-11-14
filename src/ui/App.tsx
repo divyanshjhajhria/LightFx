@@ -20,6 +20,7 @@ import type { AgentMode, SessionFile } from '../agents/runner';
 import type { ScenarioEvent } from '../sim/scenario';
 import { AgentsPanel, runByChip } from './AgentsPanel';
 import { MorePanel } from './MorePanel';
+import { Overview } from './Overview';
 import { DockMenu, Tip } from './Tip';
 import { activity } from './activity';
 import type { AgentOption } from './MorePanel';
@@ -546,7 +547,7 @@ export function App() {
   const [customScenario, setCustomScenario] = useState<Scenario | null>(null);
   const [mapOpen, setMapOpen] = useState(() => new URLSearchParams(window.location.search).has('map'));
   const [followed, setFollowed] = useState<FollowedTrade | null>(null);
-  const [tab, setTab] = useState<'trade' | 'banks' | 'agents'>('banks');
+  const [tab, setTab] = useState<'overview' | 'trade' | 'banks' | 'agents'>('overview');
   // Agents: who runs our bank's desks, the recorded session if there is one, and the runner.
   const [agentMode, setAgentMode] = useState<AgentMode>(initialAgentMode);
   const [session, setSession] = useState<SessionFile | null>(null);
@@ -559,7 +560,6 @@ export function App() {
   const followingRef = useRef<number | null>(null);
   followingRef.current = followed?.trade ?? null;
   const bottom = useRef<HTMLDivElement>(null);
-  const banksHeight = useRef(0);
   const [, repaint] = useReducer((n: number) => n + 1, 0);
   // Presenter mode: the guided demo.
   const guide = useRef<Guide | null>(null);
@@ -671,7 +671,6 @@ export function App() {
 
   /** Switch to "Your trade" at the same height as "The banks", so the canvas above keeps its size. */
   const showTrade = () => {
-    if (banksHeight.current === 0 && bottom.current) banksHeight.current = bottom.current.offsetHeight;
     setTab('trade');
   };
 
@@ -679,7 +678,7 @@ export function App() {
     if (savedSpeed.current !== null) setSpeed(savedSpeed.current);
     savedSpeed.current = null;
     setFollowed(null);
-    setTab('banks');
+    setTab('overview');
   };
 
   /** Replacing the bank loses any visitor trades, so stop following. */
@@ -924,7 +923,7 @@ export function App() {
     setDemoRun((n) => n + 1);
     setSelected('mars');
     setView('leased');
-    setTab('banks');
+    setTab('overview');
     live.current.running = true;
     setRunning(true);
     void prepareVoice(GUIDE_BEATS.flatMap((b) => [b.id, `${b.id}-settle`]));
@@ -962,16 +961,13 @@ export function App() {
       const b = g.beat;
       if (b.view) setView(b.view);
       if (b.id === 'storm') marsServed.current.storm = w.central.desks.mars.served;
-      if (b.id === 'panic') setTab('banks');
-      // Replaying recorded agents in the demo: "The agents" stands in for "The banks" while every desk is alone.
-      if (b.id === 'alone' && live.current.agentMode === 'replay') {
-        if (banksHeight.current === 0 && bottom.current) banksHeight.current = bottom.current.offsetHeight;
-        setTab('agents');
-      }
-      if (b.id === 'recovery' && live.current.agentMode === 'replay') setTab('banks');
+      // The Overview for the panic and total isolation, so the old-news bank's marker is seen crossing into the red
+      // part of its gauge as the caption says so. Replaying recorded agents, "The agents" stands in during isolation.
+      if (b.id === 'panic') setTab('overview');
+      if (b.id === 'alone') setTab(live.current.agentMode === 'replay' ? 'agents' : 'overview');
       if (b.id === 'recovery') {
         marsServed.current.recovery = w.central.desks.mars.served;
-        if (followingRef.current !== null) showTrade();
+        showTrade();
       }
     }
     if (g.finished && !results) {
@@ -1338,14 +1334,11 @@ export function App() {
             )}
           </main>
 
-          <div
-            className="bottom"
-            ref={bottom}
-            style={tab !== 'banks' && banksHeight.current > 0 ? { height: banksHeight.current } : undefined}
-          >
+          <div className={`bottom ${tab === 'overview' ? 'short' : ''}`} ref={bottom}>
             <div className="tabs" role="tablist" aria-label="Bottom panel">
               {(
                 [
+                  ['overview', 'Overview'],
                   ['trade', 'Your trade'],
                   ['banks', 'The banks'],
                   ['agents', 'The agents'],
@@ -1357,17 +1350,25 @@ export function App() {
                   id={`tab-${id}`}
                   aria-selected={tab === id}
                   aria-controls="bottom-panel"
-                  onClick={() => {
-                    if (tab === 'banks' && bottom.current) banksHeight.current = bottom.current.offsetHeight;
-                    setTab(id);
-                  }}
+                  onClick={() => setTab(id)}
                 >
                   {label}
                 </button>
               ))}
             </div>
             <div id="bottom-panel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="tabPanel">
-              {tab === 'banks' ? (
+              {tab === 'overview' ? (
+                <Overview
+                  arena={a}
+                  view={view}
+                  ourChip={runByChip(decider.label)}
+                  onView={setView}
+                  onOpenMap={() => {
+                    if (presenting) leaveDemo();
+                    setMapOpen(true);
+                  }}
+                />
+              ) : tab === 'banks' ? (
                 <Intel
                   arena={a}
                   view={view}

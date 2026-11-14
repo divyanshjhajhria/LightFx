@@ -33,3 +33,17 @@ export function verdict(w: World): Verdict {
   }
   return { text: 'Inside its limit.', tone: 'ok' };
 }
+
+/**
+ * The one or two words for a bank's status chip, with its tone. Kept beside verdict() rather than added to it, so the
+ * verdict's existing shape (and its tests) stay as they are.
+ */
+export function verdictWord(w: World): { word: string; tone: 'ok' | 'alert' } {
+  const over = Math.abs(w.totalPosition()) > w.cfg.limit;
+  if (over) return { word: 'Over its limit', tone: 'alert' };
+  if (w.metrics.breachTicks > 0) return { word: 'Was over its limit', tone: 'alert' };
+  if (w.strategy === 'central' && BODIES.some((b) => b !== 'earth' && w.desks[b].mode(w.now) === 'halted')) {
+    return { word: 'Offices frozen', tone: 'alert' };
+  }
+  return { word: 'Safe', tone: 'ok' };
+}
