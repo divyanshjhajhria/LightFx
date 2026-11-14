@@ -55,9 +55,37 @@ describe('tell', () => {
     expect(tell(EVENTS[12], 'leased', 130)).toBe('Mars told the Moon. The message lands in 11 minutes.');
   });
 
-  it('says "moments" under a minute', () => {
-    expect(minutes(0.4)).toBe('moments');
+  it('counts whole minutes', () => {
     expect(minutes(1.2)).toBe('1 minute');
     expect(minutes(20.3)).toBe('20 minutes');
+  });
+
+  it('reads naturally when the time is under a minute', () => {
+    const moon = { t: 120, body: 'moon' as const };
+    expect(tell({ ...moon, kind: 'told', to: 'earth', landsAt: 120.02 }, 'leased', 130)).toBe(
+      'The Moon told Earth. The message lands in under a minute.',
+    );
+    expect(tell({ ...moon, body: 'earth', kind: 'earth-approved', landsAt: 120.02 }, 'central', 130)).toBe(
+      'Earth said yes. The answer is on its way back and lands in under a minute.',
+    );
+    expect(tell({ ...moon, kind: 'filled', units: 5, of: 5, price: 1, allowanceLeft: null, waited: 0.04 }, 'central', 130)).toBe(
+      'The answer arrived within a minute. Trade done.',
+    );
+    expect(tell({ ...moon, kind: 'asked-earth', landsAt: 120.02 }, 'central', 130)).toBe(
+      'The Moon cannot decide alone. It has asked Earth, under a minute away.',
+    );
+    for (const s of ['leased', 'naive', 'central'] as const) {
+      for (const e of EVENTS) {
+        const quick = { ...e, ...('landsAt' in e ? { landsAt: e.t + 0.3 } : {}), ...('waited' in e && e.waited ? { waited: 0.3 } : {}) } as TraceEvent;
+        expect(tell(quick, s, 130, 'mars')).not.toMatch(/moments|0 minutes/);
+      }
+    }
+  });
+
+  it('says who sells to whom', () => {
+    expect(tell(EVENTS[0], 'leased', 130)).toBe('You offered to sell 5 Mars credits to Mars.');
+    expect(tell({ ...EVENTS[0], body: 'moon', side: 'buy', size: 10 } as TraceEvent, 'central', 130)).toBe(
+      'You asked to buy 10 Mars credits from the Moon.',
+    );
   });
 });

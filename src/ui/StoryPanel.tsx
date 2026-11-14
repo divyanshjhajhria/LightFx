@@ -2,7 +2,7 @@ import type { TraceEvent } from '../sim/trace';
 import { STRATEGIES } from '../sim/types';
 import type { BodyId, StrategyId } from '../sim/types';
 import type { Arena } from '../sim/world';
-import { minutes, tell } from './story';
+import { afterTime, inTime, minutes, tell } from './story';
 import { BODY_LABEL, BODY_NAME, STRATEGY, clock } from './theme';
 
 export interface FollowedTrade {
@@ -33,15 +33,15 @@ function inFlight(tr: readonly TraceEvent[], now: number, asker: BodyId): { to: 
 function outcome(tr: readonly TraceEvent[], strategy: StrategyId): string | null {
   // Giving up is the visitor's own ending, whatever arrives afterwards.
   const gave = tr.find((e) => e.kind === 'gave-up');
-  if (gave?.kind === 'gave-up') return `You gave up after ${minutes(gave.waited)}`;
+  if (gave?.kind === 'gave-up') return `You gave up ${afterTime(gave.waited)}`;
   for (let i = tr.length - 1; i >= 0; i--) {
     const e = tr[i];
     if (e.kind === 'filled') {
       if (e.waited === 0) return 'Done in 0 minutes';
-      return e.waited < 1 ? 'Done in moments' : `Done after ${minutes(e.waited)}`;
+      return `Done ${afterTime(e.waited)}`;
     }
     if (e.kind === 'refused') return 'Refused';
-    if (e.kind === 'gave-up') return `You gave up after ${minutes(e.waited)}`;
+    if (e.kind === 'gave-up') return `You gave up ${afterTime(e.waited)}`;
     if (e.kind === 'too-late') return 'Too late: you had already left';
   }
   return strategy === 'central' && tr.length ? 'Still waiting' : null;
@@ -89,7 +89,7 @@ function StoryColumn({
         {flights.map((f) => (
           <div className="liveRow" key={`${f.to}-${f.from}`}>
             <span>
-              On its way to {BODY_NAME[f.to]}: {minutes(f.lands - now)} to go
+              On its way to {BODY_NAME[f.to]}: lands {inTime(f.lands - now)}
             </span>
             <span className="bar">
               <span style={{ width: `${Math.min(100, (100 * (now - f.from)) / (f.lands - f.from))}%` }} />
@@ -98,7 +98,10 @@ function StoryColumn({
         ))}
         {waiting && (
           <div className="liveRow waitRow">
-            <span>Waiting for Earth. {minutes(now - tr[0].t)} so far.</span>
+            <span>
+              Waiting for Earth.{' '}
+              {now - tr[0].t < 1 ? 'Less than a minute so far.' : `${minutes(now - tr[0].t)} so far.`}
+            </span>
             <button className="quiet" onClick={onGiveUp}>
               Give up waiting
             </button>
@@ -132,7 +135,9 @@ export function Story({
     <div className="story">
       <div className="storyHead">
         <p>
-          You asked the {BODY_LABEL[followed.at]} desk to {followed.side} {followed.size}.
+          {followed.side === 'sell'
+            ? `You offered to sell ${followed.size} Mars credits to the ${BODY_LABEL[followed.at]} desk.`
+            : `You asked to buy ${followed.size} Mars credits from the ${BODY_LABEL[followed.at]} desk.`}
         </p>
         <button className="quiet" onClick={onDone}>
           Done

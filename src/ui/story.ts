@@ -8,12 +8,18 @@ const name = (b: BodyId) => BODY_NAME[b];
 /** The same, at the start of a sentence: "The Moon". */
 const Name = (b: BodyId) => name(b).charAt(0).toUpperCase() + name(b).slice(1);
 
-/** Whole minutes, or "moments" under one minute. */
+/** Whole minutes: "1 minute", "20 minutes". Callers phrase anything under a minute themselves. */
 export function minutes(m: number): string {
-  if (m < 1) return 'moments';
-  const n = Math.round(m);
+  const n = Math.max(1, Math.round(m));
   return n === 1 ? '1 minute' : `${n} minutes`;
 }
+
+/** "in 20 minutes" / "in under a minute": how long until something happens. */
+export const inTime = (m: number) => (m < 1 ? 'in under a minute' : `in ${minutes(m)}`);
+/** "after 41 minutes" / "within a minute": how long something took. */
+export const afterTime = (m: number) => (m < 1 ? 'within a minute' : `after ${minutes(m)}`);
+/** "20 minutes away" / "under a minute away". */
+export const away = (m: number) => (m < 1 ? 'under a minute away' : `${minutes(m)} away`);
 
 /**
  * The sentence for one step of the story, as told by the bank running `strategy`. `asker` is the desk the visitor
@@ -23,11 +29,13 @@ export function tell(e: TraceEvent, strategy: StrategyId, _now: number, asker?: 
   const B = Name(e.body);
   switch (e.kind) {
     case 'placed':
-      return `You asked ${name(e.body)} to ${e.side} ${e.size}.`;
+      return e.side === 'sell'
+        ? `You offered to sell ${e.size} Mars credits to ${name(e.body)}.`
+        : `You asked to buy ${e.size} Mars credits from ${name(e.body)}.`;
 
     case 'filled':
       if (strategy === 'central') {
-        if (e.waited > 0) return `The answer arrived after ${minutes(e.waited)}. Trade done.`;
+        if (e.waited > 0) return `The answer arrived ${afterTime(e.waited)}. Trade done.`;
         if (e.units < e.of) return `Earth took ${e.units} of your ${e.of}. The bank had no room for more.`;
         return 'Earth is head office, so it said yes straight away.';
       }
@@ -48,7 +56,7 @@ export function tell(e: TraceEvent, strategy: StrategyId, _now: number, asker?: 
         : `${B} said no. Its own allowance is used up, so the bank stays inside its limit.`;
 
     case 'told':
-      return `${B} told ${name(e.to)}. The message lands in ${minutes(e.landsAt - e.t)}.`;
+      return `${B} told ${name(e.to)}. The message lands ${inTime(e.landsAt - e.t)}.`;
 
     case 'not-delivered':
       if (strategy === 'central') {
@@ -65,18 +73,20 @@ export function tell(e: TraceEvent, strategy: StrategyId, _now: number, asker?: 
       return strategy === 'naive' ? `${B} now knows. Until this moment its total was out of date.` : `${B} now knows.`;
 
     case 'asked-earth':
-      return `${B} cannot decide alone. It has asked Earth, ${minutes(e.landsAt - e.t)} away.`;
+      return `${B} cannot decide alone. It has asked Earth, ${away(e.landsAt - e.t)}.`;
 
     case 'earth-approved':
-      return `Earth said yes. The answer is on its way back: ${minutes(e.landsAt - e.t)}.`;
+      return e.landsAt - e.t < 1
+        ? 'Earth said yes. The answer is on its way back and lands in under a minute.'
+        : `Earth said yes. The answer is on its way back: ${minutes(e.landsAt - e.t)}.`;
 
     case 'earth-declined':
       return `Earth said no. The bank is at its limit. ${asker ? Name(asker) : 'The desk that asked'} will never hear.`;
 
     case 'too-late':
-      return `The answer arrived after ${minutes(e.waited)}, but you had already left.`;
+      return `The answer arrived ${afterTime(e.waited)}, but you had already left.`;
 
     case 'gave-up':
-      return `You gave up after ${minutes(e.waited)}.`;
+      return `You gave up ${afterTime(e.waited)}.`;
   }
 }

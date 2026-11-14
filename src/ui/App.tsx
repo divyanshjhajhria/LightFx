@@ -71,7 +71,13 @@ function Ticket({ body, onTrade }: { body: BodyId; onTrade: (side: 'buy' | 'sell
       <button type="submit" className="primary">
         {label}
       </button>
-      <p>Your order goes to all three banks at once.</p>
+      <p>
+        Your order goes to all three banks at once.
+        <br />
+        {side === 'sell'
+          ? 'The desk takes your credits, so the bank holds more.'
+          : 'The desk hands you credits, so the bank holds fewer.'}
+      </p>
     </form>
   );
 }
@@ -444,7 +450,9 @@ export function App() {
     return perBody((b) => {
       const v = w.desks[b].believedTotal();
       if (!v) return null;
-      return v.low === v.high ? `believes ${signed(v.low)}` : `believes ${signed(v.low)} to ${signed(v.high)}`;
+      return v.low === v.high
+        ? `thinks the bank holds ${signed(v.low)}`
+        : `thinks the bank holds ${signed(v.low)} to ${signed(v.high)}`;
     });
   }, []);
   const pause = useCallback(() => {
@@ -564,7 +572,7 @@ export function App() {
         {followed && (
           <div className="readouts holds">
             <div>
-              <span>Bank really holds</span>
+              <span>The bank really holds</span>
               <b>{signed(a.worlds[view].totalPosition())}</b>
             </div>
           </div>
