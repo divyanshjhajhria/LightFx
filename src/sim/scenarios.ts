@@ -24,7 +24,8 @@ export const SCENARIOS: Scenario[] = [
       { at: 120, kind: 'blackout', on: true },
       { at: 120, kind: 'panic', on: true },
       { at: 120, kind: 'note', text: 'A solar storm cuts every interplanetary link as the market panics.' },
-      { at: 180, kind: 'note', text: 'Mars has heard nothing for an hour, so its lease expires.' },
+      // Mars plays safe at 158.5 on this seed: an hour after the last word it heard was sent.
+      { at: 159, kind: 'note', text: 'Mars has heard nothing for an hour, so it starts playing safe.' },
       { at: 300, kind: 'blackout', on: false },
       { at: 300, kind: 'panic', on: false },
       { at: 300, kind: 'note', text: 'The storm passes and the desks reconnect.' },

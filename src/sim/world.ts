@@ -137,6 +137,8 @@ export class World {
   private readonly spreading = new Map<number, Spreading>();
   /** What each desk recently did or saw, newest last, for its briefing. */
   private readonly deskEvents: PerBody<DeskEvent[]> = perBody(() => []);
+  /** Changes of state and hand-overs, kept longer than the briefing's six, for the view's activity feed only. */
+  private readonly feedEvents: PerBody<DeskEvent[]> = perBody(() => []);
   private readonly lastMode: PerBody<Mode>;
   private readonly lastRefusal: PerBody<number> = perBody(() => -Infinity);
   /** Every note an agent sent, newest last, and what became of it. God view: desks never read it. */
@@ -380,6 +382,16 @@ export class World {
     const list = this.deskEvents[b];
     list.push({ t: this.now, ...e });
     if (list.length > DESK_EVENTS_KEEP) list.shift();
+    if (e.kind === 'mode' || e.kind === 'handed-over') {
+      const feed = this.feedEvents[b];
+      feed.push({ t: this.now, ...e });
+      if (feed.length > 60) feed.shift();
+    }
+  }
+
+  /** Desk `b`'s changes of state and hand-overs, oldest first (the last 60). For the view; nothing decides on it. */
+  feedLog(b: BodyId): readonly DeskEvent[] {
+    return this.feedEvents[b];
   }
 
   /** What desk `b` recently did or saw, newest last (at most 6). Part of its briefing; nothing reads it to decide. */
@@ -702,6 +714,13 @@ export class Arena {
 
   setFlow(b: BodyId, sellProb: number): void {
     for (const s of STRATEGIES) this.worlds[s].setFlow(b, sellProb);
+  }
+
+  /** The ids of the last 10 visitor trades, oldest first. */
+  recentTrades(): number[] {
+    const ids: number[] = [];
+    for (let trade = Math.max(1, this.nextTrade - 10); trade < this.nextTrade; trade++) ids.push(trade);
+    return ids;
   }
 
   /** Where and when the last 10 visitor trades were placed, oldest first, for the chart. */

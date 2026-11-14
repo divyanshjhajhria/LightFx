@@ -623,12 +623,6 @@ button {
   white-space: nowrap;
 }
 
-.dock .rule {
-  width: 1px;
-  height: 20px;
-  background: var(--hair-strong);
-}
-
 .play {
   width: 30px;
   height: 30px;
@@ -745,6 +739,153 @@ input[type='range']::-moz-range-thumb {
 .event[aria-pressed='true'] .dot {
   background: var(--alert);
   box-shadow: none;
+}
+
+/* ---- Dock: tooltips and small menus ---------------------------------------------- */
+
+.tipWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.tip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  width: max-content;
+  max-width: 280px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: var(--t-small);
+  color: var(--text);
+  white-space: normal;
+  text-align: center;
+  pointer-events: none;
+  animation: appear 180ms ease;
+}
+
+.tip[hidden] {
+  display: none;
+}
+
+.dockMenu {
+  position: relative;
+}
+
+.dockButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--fill);
+  font-size: var(--t-small);
+  color: var(--text);
+  transition: background var(--ease);
+}
+
+.dockButton:hover,
+.dockButton[aria-expanded='true'] {
+  background: var(--fill-strong);
+}
+
+.dockButton svg {
+  fill: none;
+  stroke: var(--text-2);
+  stroke-width: 1.4;
+}
+
+.dockPop {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  padding: 8px;
+  border-radius: 14px;
+  white-space: normal;
+}
+
+.speedList {
+  display: flex;
+  flex-direction: column;
+  min-width: 72px;
+}
+
+.speedList button {
+  padding: 4px 12px;
+  border-radius: 10px;
+  text-align: left;
+  font-size: var(--t-small);
+  color: var(--text-2);
+  transition: background var(--ease), color var(--ease);
+}
+
+.speedList button:hover {
+  color: var(--text);
+  background: var(--fill);
+}
+
+.speedList button[aria-pressed='true'] {
+  color: var(--text);
+  background: var(--fill-strong);
+}
+
+.marsPop {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 340px;
+  padding: 4px;
+}
+
+.marsPop p {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--text-2);
+}
+
+.dock .primary {
+  padding: 8px 16px;
+}
+
+/* ---- Activity feed: what has happened, top left of the stage ------------------------ */
+
+.feed {
+  position: absolute;
+  top: 16px;
+  left: 24px;
+  z-index: 2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 460px;
+  pointer-events: none;
+}
+
+.feed li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: var(--t-small);
+  color: var(--text);
+  transition: opacity var(--ease);
+}
+
+.feed li.alert {
+  color: var(--alert);
+}
+
+.feed time {
+  flex: none;
+  width: 40px;
+  font-size: var(--t-micro);
+  color: var(--text-3);
 }
 
 /* ---- Desk inspector ------------------------------------------------------- */
@@ -1978,9 +2119,6 @@ input[type='range']::-moz-range-thumb {
     width: calc(100% - 32px);
   }
 
-  .dock .rule {
-    display: none;
-  }
 }
 
 @media (max-width: 900px) {
@@ -2082,6 +2220,10 @@ input[type='range']::-moz-range-thumb {
 
   .hint {
     left: 16px;
+  }
+
+  .feed {
+    display: none;
   }
 
   .inspector {

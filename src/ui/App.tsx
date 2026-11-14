@@ -20,6 +20,8 @@ import type { AgentMode, SessionFile } from '../agents/runner';
 import type { ScenarioEvent } from '../sim/scenario';
 import { AgentsPanel, runByChip } from './AgentsPanel';
 import { MorePanel } from './MorePanel';
+import { DockMenu, Tip } from './Tip';
+import { activity } from './activity';
 import type { AgentOption } from './MorePanel';
 import type { Decider } from './AgentsPanel';
 import { ModelVoice, systemPrompt } from './modelVoice';
@@ -46,6 +48,14 @@ const SPEEDS: { value: number; label: string }[] = [
   { value: 16, label: '16×' },
   { value: 60, label: '60×' },
 ];
+/** Where Mars is, in words, for the dock. */
+function whereMars(deg: number): string {
+  if (deg === 0) return 'close approach';
+  if (deg === 150) return 'far side';
+  if (deg === 180) return 'behind the Sun';
+  return `${deg}°`;
+}
+
 const PRESETS = [
   { label: 'Close approach', deg: 0 },
   { label: 'Far side', deg: 150 },
@@ -782,8 +792,14 @@ export function App() {
   const getNow = useCallback(() => arena.current!.now + partial.current, []);
   const getFollowing = useCallback(() => followingRef.current, []);
   /** While following a trade, each planet says what its desk believes the bank holds. */
+  // "Thinks the bank holds ..." only when it is the point: following a trade, the old-news bank on the canvas, or the
+  // guided demo's market panic step.
   const getBelieves = useCallback((): PerBody<string | null> | null => {
-    if (followingRef.current === null && !live.current.presenting) return null;
+    const point =
+      followingRef.current !== null ||
+      live.current.view === 'naive' ||
+      (live.current.presenting && guide.current?.beat.id === 'panic');
+    if (!point) return null;
     const w = arena.current!.worlds[live.current.view];
     return perBody((b) => {
       const v = w.desks[b].believedTotal();
@@ -1051,6 +1067,13 @@ export function App() {
     return modelVoice.current!.line(b, template);
   });
   const marsLink = lead.links().find((l) => l.a === 'earth' && l.b === 'mars')!;
+  /** The latest six things that happened, oldest first. */
+  const feed = activity(a, view).slice(-6);
+  /** "Place a trade": open the selected desk (Mars if none) with focus on the ticket's button. */
+  const openTicket = () => {
+    setSelected(selected ?? 'mars');
+    window.setTimeout(() => document.querySelector<HTMLButtonElement>('.ticket .primary')?.focus(), 60);
+  };
   // The top bar's first two read-outs always describe the bank on the canvas.
   const onCanvas = a.worlds[view];
   const roomLeft = onCanvas.cfg.limit - Math.abs(onCanvas.totalPosition());
@@ -1168,9 +1191,23 @@ export function App() {
               showNews={showNews}
               resetSignal={resetSignal}
             />
-            {!presenting && (
-              <p className="hint">Click a planet to trade with its desk. Hover a message to read it. Click a link to cut it.</p>
-            )}
+            {!presenting &&
+              (feed.length > 0 ? (
+                <ol className="feed" aria-label="What has happened">
+                  {feed.map((l, i) => (
+                    <li
+                      key={`${l.t}-${l.text}`}
+                      className={l.tone === 'alert' ? 'alert' : ''}
+                      style={{ opacity: 0.4 + (0.6 * (i + 1)) / feed.length }}
+                    >
+                      <time>{clock(l.t)}</time>
+                      <span>{l.text}</span>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="hint">Click a planet to trade with its desk. Hover a message to read it. Click a link to cut it.</p>
+              ))}
             {selected && (
               <Inspector
                 key={`${selected}-${demoRun}`}
@@ -1194,77 +1231,109 @@ export function App() {
             )}
             {!presenting && (
               <div className="dock glass" role="toolbar" aria-label="Simulation controls">
-                <button
-                  className="play"
-                  onClick={play}
-                  aria-label={running ? 'Pause' : dir?.done ? 'Play again from the start' : 'Play'}
+                <Tip text="Space bar does the same.">
+                  <button
+                    className="play"
+                    onClick={play}
+                    aria-label={running ? 'Pause' : dir?.done ? 'Play again from the start' : 'Play'}
+                  >
+                    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+                      {running ? <path d="M3 2h3.5v12H3zM9.5 2H13v12H9.5z" /> : <path d="M4 2l10 6-10 6z" />}
+                    </svg>
+                  </button>
+                </Tip>
+                <DockMenu
+                  label={SPEEDS.find((x) => x.value === speed)?.label ?? `${speed}×`}
+                  tip="How many simulated minutes pass each second."
+                  ariaLabel="Speed"
                 >
-                  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-                    {running ? <path d="M3 2h3.5v12H3zM9.5 2H13v12H9.5z" /> : <path d="M4 2l10 6-10 6z" />}
-                  </svg>
-                </button>
-                <div className="seg" role="group" aria-label="Simulated minutes per second">
-                  {SPEEDS.map((s) => (
-                    <button key={s.value} aria-pressed={s.value === speed} onClick={() => setSpeed(s.value)}>
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-                <span className="rule" />
-                <div className="seg" role="group" aria-label="Where Mars is">
-                  {PRESETS.map((p) => (
-                    <button
-                      key={p.deg}
-                      aria-pressed={p.deg === sep}
-                      onClick={() => {
-                        recordControl({ at: a.now, kind: 'separation', deg: p.deg });
-                        a.setSeparation(p.deg);
-                      }}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-                <label className="angle">
-                  <input
-                    type="range"
-                    min={0}
-                    max={180}
-                    value={sep}
-                    aria-label="Angle between Earth and Mars"
-                    onChange={(e) => {
-                      recordControl({ at: a.now, kind: 'separation', deg: Number(e.target.value) });
-                      a.setSeparation(Number(e.target.value));
+                  {(close) => (
+                    <div className="speedList" role="group" aria-label="Simulated minutes per second">
+                      {SPEEDS.map((x) => (
+                        <button
+                          key={x.value}
+                          aria-pressed={x.value === speed}
+                          onClick={() => {
+                            setSpeed(x.value);
+                            close();
+                          }}
+                        >
+                          {x.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </DockMenu>
+                <Tip text="Sell or buy at a desk and watch what your order sets off.">
+                  <button className="primary" onClick={openTicket}>
+                    Place a trade
+                  </button>
+                </Tip>
+                <Tip text="Cuts every link between the planets until you turn it off.">
+                  <button
+                    className="event"
+                    aria-pressed={blackout}
+                    onClick={() => {
+                      recordControl({ at: a.now, kind: 'blackout', on: !blackout });
+                      a.setBlackout(!blackout);
                       repaint();
                     }}
-                  />
-                  <output>{sep}°</output>
-                </label>
-                <span className="rule" />
-                <button
-                  className="event"
-                  aria-pressed={blackout}
-                  onClick={() => {
-                    recordControl({ at: a.now, kind: 'blackout', on: !blackout });
-                    a.setBlackout(!blackout);
-                    repaint();
-                  }}
-                >
-                  <i className="dot" />
-                  Solar storm
-                </button>
-                <button
-                  className="event"
-                  aria-pressed={panic}
-                  onClick={() => {
-                    recordControl({ at: a.now, kind: 'panic', on: !panic });
-                    a.setPanic(!panic);
-                    repaint();
-                  }}
-                >
-                  <i className="dot" />
-                  Market panic
-                </button>
+                  >
+                    <i className="dot" />
+                    Solar storm
+                  </button>
+                </Tip>
+                <Tip text="Customers on every planet start selling at once.">
+                  <button
+                    className="event"
+                    aria-pressed={panic}
+                    onClick={() => {
+                      recordControl({ at: a.now, kind: 'panic', on: !panic });
+                      a.setPanic(!panic);
+                      repaint();
+                    }}
+                  >
+                    <i className="dot" />
+                    Market panic
+                  </button>
+                </Tip>
+                <DockMenu label={`Mars: ${whereMars(sep)}`} tip="Where Mars is, and so how long messages take." ariaLabel="Where Mars is">
+                  {() => (
+                    <div className="marsPop">
+                      <p>Where Mars is in its orbit. Further away means slower messages. Behind the Sun means none.</p>
+                      <div className="seg" role="group" aria-label="Where Mars is">
+                        {PRESETS.map((x) => (
+                          <button
+                            key={x.deg}
+                            aria-pressed={x.deg === sep}
+                            onClick={() => {
+                              recordControl({ at: a.now, kind: 'separation', deg: x.deg });
+                              a.setSeparation(x.deg);
+                              repaint();
+                            }}
+                          >
+                            {x.label}
+                          </button>
+                        ))}
+                      </div>
+                      <label className="angle">
+                        <input
+                          type="range"
+                          min={0}
+                          max={180}
+                          value={sep}
+                          aria-label="Angle between Earth and Mars"
+                          onChange={(e) => {
+                            recordControl({ at: a.now, kind: 'separation', deg: Number(e.target.value) });
+                            a.setSeparation(Number(e.target.value));
+                            repaint();
+                          }}
+                        />
+                        <output>{sep}°</output>
+                      </label>
+                    </div>
+                  )}
+                </DockMenu>
               </div>
             )}
           </main>
