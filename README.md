@@ -4,6 +4,65 @@ One bank, three currency desks (Earth, Moon, Mars), quoting dollars against Mars
 Messages between desks travel at light speed and stop in a solar storm, so no desk can wait for head office.
 The app runs three ways of managing the bank's risk limit side by side on identical events.
 
+## A multi-agent system
+
+Our bank's three desks (Earth, the Moon, Mars) can each be run by its own language-model agent. Each agent sees only
+its own desk's briefing: what the desk holds, its allowance, what the others last told it and how old that is, the
+notes it has received, and its own last decision. It never sees the other desks or the bank's true total.
+
+**What an agent decides.** Its reply is one JSON object, a *Directive*: how keenly to price (keen, steady,
+cautious), whether to play safe by choice, spare allowance to give each other desk, allowance to ask of them, a short
+note to each, and a sentence on why. The other two banks are never agent-run.
+
+**The guard.** A Directive is the only way model output reaches the simulation. `sanitise()` turns any reply into
+a safe one (unknown values refused, numbers clamped to whole units 0 to 1000, notes cut to 140 characters), and the
+desk applies it through a guard that gives only *spare* allowance, through the same counter the rules use. No reply,
+however wrong, can take a desk past its allowance or the bank past its limit. **The chaos test** proves it: all three
+desks agent-run and fed random directives (nonsense types, huge and negative numbers, NaN, infinities, gives to
+themselves, 10,000-character notes, some sent straight to the guard without `sanitise()`), among random storms, cuts,
+flows and visitor trades. At every step the bank stays inside its limit and every desk inside its allowance.
+
+**Notes at light speed.** A note or ask rides on the desk's next regular message to that peer, once. If that message
+is dropped or destroyed in a storm, the note is lost and never re-sent; the sender is not told. "The agents" tab shows
+the viewer what became of each note.
+
+**When the model is silent.** A desk acts on its agent only while the agent's latest directive is under 30 simulated
+minutes old. On a timeout (6 s), an error or an unreadable reply nothing is applied, and after 30 minutes the desk is
+back on its rules in full. The existing rule still forces playing safe after an hour out of touch, whatever the agent
+says. Each desk thinks when something happens (its state changes, a note or ask arrives, it runs low on allowance, a
+visitor trades with it) or every 15 simulated minutes, at most once per 4 real seconds, never with a call still out.
+Above about 8x a desk cannot think often enough to keep its directive fresh, so it spends part of the time on rules;
+the tab says so ("following rules").
+
+**Who is deciding, honestly.** The top bar says "Our desks run by" one of:
+- **AI agents (live):** a model answers each desk now. Needs a key (below).
+- **AI agents (replay):** decisions a model made earlier, from `public/agents/session.json`, applied at the same
+  simulated moments through the same guard, with no network. A recorded thought is shown only if it is still true.
+- **Scripted stand-in:** a small fixed function (`src/agents/standIn.ts`) for building and testing without a key. It
+  is not AI and is never labelled AI. A session recorded from it replays as "Scripted stand-in (replay)".
+- **Rules:** the desks' built-in behaviour, exactly as before agents existed.
+
+The guided demo always runs on rules unless opened with `?demo&agents=replay`. **The survival map is measured on
+rules**, not agents: the sweep never runs a model.
+
+**Adding a key and recording a session.** Put this in `.env.local` (git-ignored), then `npm run dev`:
+
+```
+VITE_LLM_PROVIDER=anthropic     # or gemini
+VITE_LLM_KEY=...
+VITE_LLM_MODEL=                 # optional; defaults to claude-haiku-5-5 or gemini-3.5-flash-lite
+```
+
+Play (for example Far side, 1x, a solar storm), open "The agents" and press "Save this session". Move the downloaded
+file to `public/agents/session.json`, and `?agents=replay` plays it back on any machine, with no key and no network.
+**Never deploy a build made with a key:** the key would be in the page for anyone to read. Build for deployment with
+`VITE_LLM_KEY` unset.
+
+As of this step **no real model has run**: there was no key on the machine it was built on. Everything was verified
+with the scripted stand-in and a fake model client. On the same storm the stand-in served fewer customers than the
+rules (50.0% against 56.4% over ten seeds, Far side, a 90-minute storm), with no breach either way; it gives
+allowance only when asked, while the rules rebalance on their own.
+
 ## Running the demo
 
 Start it with `npm run dev` and open http://localhost:5173/?demo, or press **G** in the app, or choose
@@ -156,8 +215,11 @@ than 280 characters or three sentences, uses a banned word (gossip, lease, epoch
 sell, guarantee), is not in the first person, or contains a number the briefing does not (allowing ordinary rounding).
 The template is used instead.
 
-**The protocol decides and the language model explains, so a wrong or missing model can never break the bank.**
-Nothing under `src/sim` imports from `src/ui`, a test checks it, and no model output reaches a desk's decisions.
+**For the other two banks, and for ours on rules, the model only explains.** For our bank with agents on, a model
+decides each desk's judgment calls, but only through a Directive and the guard (see "A multi-agent system" at the
+top), so a wrong or missing model still cannot break the bank. Nothing under `src/sim` imports from `src/ui` or
+`src/agents` or does any I/O; a test checks it. With a key configured, our desks are agent-run by default; open the
+app with `?agents=rules` to keep them on rules.
 
 ## The survival map
 
@@ -235,7 +297,10 @@ src/ui/Presenter.tsx the guided demo's caption bar, presenter hint and results c
 src/ui/voice.ts      the guided demo's voice: recorded files, else the browser's speech
 src/ui/deskVoice.ts  what each desk says about itself, from templates
 src/ui/askDesk.ts    the ready questions and their templated answers
-src/ui/llm.ts        the optional language model (Anthropic or Gemini), plain fetch
+src/sim/directive.ts the Directive: the only way model output enters the simulation, and sanitise()
+src/agents/llm.ts    the optional language model (Anthropic or Gemini), plain fetch, JSON output
+src/agents/runner.ts AgentRunner: when each desk thinks, checks on answers, replay; prompt.ts, standIn.ts
+src/ui/AgentsPanel.tsx "The agents" tab
 src/ui/modelVoice.ts when to ask the model, and keeping its answers; voiceCheck.ts checks them
 src/ui/SurvivalMap.tsx the survival map view; sweepSummary.ts computes its headline figures
 src/ui/theme.ts      colours, labels and number formatting shared by the above
@@ -311,8 +376,10 @@ feed whenever that file holds two or more prices. Pick a volatile stretch with `
 5. **Real prices in the map.** The sweep runs on the synthetic price feed. With SGX prices in `public/earth.json`,
    the app would replay them, so a storm played from the map would no longer match its square; rerun the sweep
    with that feed first (not wired up).
-6. **Choosing the storm to play.** A square always plays storm 1 of its 40; there is no way to pick another.
-7. **Several storms in one run.** Each square has one storm; storms back to back, or links cut by hand, are not
+6. **A real model.** No model has run yet: there was no key. Live mode, the JSON request to each provider and
+   "Save this session" are untested against a real API. A recorded session also drops visitor trades.
+7. **Choosing the storm to play.** A square always plays storm 1 of its 40; there is no way to pick another.
+8. **Several storms in one run.** Each square has one storm; storms back to back, or links cut by hand, are not
    swept.
 
 ## Tuning
