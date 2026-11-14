@@ -8,7 +8,7 @@ const brief: DeskBriefing = {
   body: 'mars', strategy: 'leased', now: 200, mode: 'normal', holds: -12, allowance: 35, allowanceSpare: 23, bid: 0.999,
   ask: 1.001, localPrice: 1, remoteNewsAgeMin: 20.3,
   peers: [{ body: 'earth', heardMinAgo: 22.25, lastKnownHolds: 5 }, { body: 'moon', heardMinAgo: 21, lastKnownHolds: -3 }],
-  thinksBankHolds: { low: -10, high: -10 }, minutesUntilPlayingSafe: 37.75, waitingOnEarth: null, recent: [],
+  thinksBankHolds: { low: -10, high: -10 }, limit: 100, minutesUntilPlayingSafe: 37.75, waitingOnEarth: null, recent: [],
 };
 
 describe('checking a model-written line', () => {

@@ -8,7 +8,7 @@ const brief: DeskBriefing = {
   body: 'mars', strategy: 'leased', now: 200, mode: 'normal', holds: 12, allowance: 35, allowanceSpare: 23, bid: 0.999,
   ask: 1.001, localPrice: 1, remoteNewsAgeMin: 20.3,
   peers: [{ body: 'earth', heardMinAgo: 22, lastKnownHolds: 5 }, { body: 'moon', heardMinAgo: 21, lastKnownHolds: -3 }],
-  thinksBankHolds: { low: 14, high: 14 }, minutesUntilPlayingSafe: 39, waitingOnEarth: null, recent: [],
+  thinksBankHolds: { low: 14, high: 14 }, limit: 100, minutesUntilPlayingSafe: 39, waitingOnEarth: null, recent: [],
 };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const anthropicEnv = { VITE_LLM_PROVIDER: 'anthropic', VITE_LLM_KEY: 'test-key' };

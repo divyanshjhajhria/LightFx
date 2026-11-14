@@ -801,6 +801,11 @@ input[type='range']::-moz-range-thumb {
 
 /* ---- Presenter mode: caption, hint, results ---------------------------------- */
 
+/* The desk panel stops above the caption bar and scrolls, so the two never overlap. */
+.presenting .inspector {
+  max-height: calc(100% - 190px);
+}
+
 /* Sits where the control dock normally is; readable from two metres away. */
 .captionBar {
   position: absolute;

@@ -57,6 +57,11 @@ function naive(b: DeskBriefing): string {
   if (stale) {
     return `As far as I know the bank holds ${t}. That includes what ${BODY_NAME[stale.body]} told me ${mins(stale.heardMinAgo!)} ago, and nothing since.`;
   }
+  // Never say there is room when, by its own count, there is none.
+  const n = b.thinksBankHolds?.low ?? b.holds;
+  if (Math.abs(n) >= b.limit) {
+    return `By my count the bank holds ${t}, ${Math.abs(n) > b.limit ? 'past' : 'at'} its limit of ${b.limit}, so I only take trades that bring it back within the limit.`;
+  }
   return `By my count the bank holds ${t}, so there is room to trade.`;
 }
 

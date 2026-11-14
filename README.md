@@ -119,6 +119,44 @@ Then `npm run sim -- <id>` prints the three banks each time a note fires and at 
   positions it heard (the figure it trades against); the same sum for our desks, which keep it but never rely on
   it; head office's lower and upper bounds for the central bank. The planets show it while you follow a trade.
 
+## The desks as agents
+
+Each desk speaks for itself, in the first person: what it knows, what it does not know, and what it is doing about
+it. Open a desk to read "In its own words" and ask it questions; a speech bubble sits beside the selected planet
+("Show all desk voices" puts one at every planet).
+
+**What a desk knows.** `deskBriefing(world, body)` in `src/sim/briefing.ts` gathers only what that desk itself
+could know: what it holds, its allowance and how much is spare, its quote and the local price, how old its news from
+elsewhere is, what each peer last told it and how long ago, what it thinks the bank holds, the bank's limit, how long
+until it would start playing safe, customers waiting on Earth, and its last six events (changes of state, refusals,
+hand-overs, allowance given or received, visitor trades). It never contains the bank's true total or another desk's
+current position. That is deliberate: a desk cannot be allowed to explain itself with knowledge it could not have,
+and a test checks that a change on Earth during a blackout leaves Mars's briefing identical.
+
+**The templated voice.** `deskSays(briefing)` in `src/ui/deskVoice.ts` turns a briefing into one or two sentences,
+the first matching rule winning (playing safe, a hand-over, lost touch with one peer, an hour coming, turning
+customers away, close to its allowance, old prices, all quiet; and the naive and central desks' own rules). It needs
+nothing else and is always available.
+
+**Switching a language model on (optional).** Copy `.env.example` to `.env.local` and set `VITE_LLM_PROVIDER`
+(`anthropic` or `gemini`), `VITE_LLM_KEY` and, if you like, `VITE_LLM_MODEL` (defaults: `claude-haiku-5-5`,
+`gemini-3.5-flash-lite`), then `npm run dev`. The desks on show are reworded by the model when their situation
+changes, at most once every 20 seconds each; answers are marked "AI", and free-text questions are answered. The
+template shows first and stays if the model is slow (4-second limit), fails or is not configured. The guided demo
+uses templates only unless opened with `?demo&ai`.
+
+**Keep the key local.** Vite writes `VITE_` variables into the page, so a build made with a key gives the key to
+anyone who opens it; `npm run build` prints a warning when one is set. Build for deployment WITHOUT the key, and use
+the key only when running locally. `.env.local` is ignored by git.
+
+**The checker.** `acceptable(text, briefing)` in `src/ui/voiceCheck.ts` throws away any model answer that is longer
+than 280 characters or three sentences, uses a banned word (gossip, lease, epoch, RFQ, bp, invest, should buy, should
+sell, guarantee), is not in the first person, or contains a number the briefing does not (allowing ordinary rounding).
+The template is used instead.
+
+**The protocol decides and the language model explains, so a wrong or missing model can never break the bank.**
+Nothing under `src/sim` imports from `src/ui`, a test checks it, and no model output reaches a desk's decisions.
+
 ## Where things are
 
 ```
@@ -134,6 +172,7 @@ src/sim/scenario.ts  scenario events, the Director that plays them, startScenari
 src/sim/scenarios.ts the preset scenarios in the menu
 src/sim/trace.ts     the steps of a visitor trade's story
 src/sim/guide.ts     the guided demo: its seven steps and the state machine that plays them
+src/sim/briefing.ts  what one desk knows, for its voice (deskEvents.ts: the events it keeps)
 src/ui/App.tsx       top bar, scenario menu, timeline, control dock, desk inspector, main loop
 src/ui/SolarView.tsx the solar system canvas: camera, messages, drops, planets
 src/ui/Intel.tsx     the three-strategy comparison panel ("The banks")
@@ -142,6 +181,10 @@ src/ui/story.ts      the plain-English sentence for each step of a story
 src/ui/describe.ts   the plain-English description of a message, for the hover tooltip
 src/ui/Presenter.tsx the guided demo's caption bar, presenter hint and results card
 src/ui/voice.ts      the guided demo's voice: recorded files, else the browser's speech
+src/ui/deskVoice.ts  what each desk says about itself, from templates
+src/ui/askDesk.ts    the ready questions and their templated answers
+src/ui/llm.ts        the optional language model (Anthropic or Gemini), plain fetch
+src/ui/modelVoice.ts when to ask the model, and keeping its answers; voiceCheck.ts checks them
 src/ui/theme.ts      colours, labels and number formatting shared by the above
 scripts/             headless scenario runner; netting study; CSV to JSON converter for real prices
 tests/               orbits, network, market feed, safety property, demo scenario, netting, scenarios

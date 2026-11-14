@@ -859,7 +859,7 @@ export function App() {
   const marsLink = lead.links().find((l) => l.a === 'earth' && l.b === 'mars')!;
 
   return (
-    <div className={dir ? 'app hasTimeline' : 'app'}>
+    <div className={`app${dir && !presenting ? ' hasTimeline' : ''}${presenting ? ' presenting' : ''}`}>
       <header className="top">
         <h1>Lightspeed FX</h1>
         <div className="readouts">

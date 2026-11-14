@@ -53,8 +53,8 @@ export interface Desk {
   peerView(now: number): PeerView[];
   /** Allowance not needed by what it holds or has promised, or null if it has no allowance. */
   spare(): number | null;
-  /** Customers waiting on head office at this desk, or null if it never makes them wait. */
-  waitingCount(): number | null;
+  /** Customers still waiting on head office at this desk (not yet out of patience), or null if it never makes them wait. */
+  waitingCount(now: number): number | null;
   /** A visitor has walked away. Only a desk still holding that customer does anything. */
   cancelVisitor?(trade: number, ctx: DeskCtx, patienceRanOut?: boolean): void;
 }
@@ -111,7 +111,7 @@ abstract class BaseDesk implements Desk {
     return null;
   }
 
-  waitingCount(): number | null {
+  waitingCount(_now: number): number | null {
     return null;
   }
 
@@ -471,8 +471,11 @@ export class CentralDesk extends BaseDesk {
     return !this.isHq && this.lastRfqAt - this.lastApproveAt > 30 ? 'halted' : 'normal';
   }
 
-  waitingCount(): number | null {
-    return this.isHq ? null : this.waiting.size;
+  waitingCount(now: number): number | null {
+    if (this.isHq) return null;
+    let n = 0;
+    for (const c of this.waiting.values()) if (now - c.arrivedAt <= c.patience) n++;
+    return n;
   }
 
   /** Head office knows the bank's position lies within its bounds. Remote desks keep no figure. */

@@ -23,6 +23,8 @@ export interface DeskBriefing {
   remoteNewsAgeMin: number;
   peers: PeerView[];
   thinksBankHolds: { low: number; high: number } | null;
+  /** The bank's limit. Every desk is told it; the naive and central desks trade against it. */
+  limit: number;
   /** Leased only: minutes until it starts playing safe if it hears nothing more. */
   minutesUntilPlayingSafe: number | null;
   /** Central remote desks: customers waiting on Earth. */
@@ -50,8 +52,9 @@ export function deskBriefing(world: World, body: BodyId): DeskBriefing {
     remoteNewsAgeMin: world.newsAge(body),
     peers: d.peerView(now),
     thinksBankHolds: d.believedTotal(),
+    limit: world.cfg.limit,
     minutesUntilPlayingSafe: world.strategy === 'leased' && heard !== null ? Math.max(0, world.cfg.leaseDuration - heard) : null,
-    waitingOnEarth: d.waitingCount(),
+    waitingOnEarth: d.waitingCount(now),
     recent: world.events(body).map((e) => ({ ...e })),
   };
 }
