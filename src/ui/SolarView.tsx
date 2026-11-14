@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { position } from '../sim/orbits';
 import type { Vec } from '../sim/orbits';
-import type { BodyId } from '../sim/types';
+import type { BodyId, Envelope, PerBody } from '../sim/types';
 import type { World } from '../sim/world';
+import { describeEnvelope } from './describe';
 import { ALERT_RGB, BODY_LABEL, BODY_NAME, FONT, MODE_LABEL, STATE, WARM } from './theme';
 
 /** The view looks down on the orbital plane at an angle: vertical distances are squashed by this factor. */
@@ -87,6 +88,26 @@ interface Frame {
   still: boolean;
   /** Link under the pointer, as "a-b" with a and b in the order World.links() gives them. */
   hoverLink: string | null;
+  showNews: boolean;
+  /** Trade being followed: its messages are emphasised and everything else fades. */
+  following: number | null;
+  /** An extra line under each planet's name, or null for none. */
+  believes: PerBody<string | null> | null;
+  /** Filled in by draw(): where each message was drawn this frame, for hit-testing. */
+  shown: Shown[];
+}
+
+/** A message as drawn in the latest frame. */
+interface Shown {
+  env: Envelope;
+  x: number;
+  y: number;
+}
+
+interface LabelLine {
+  text: string;
+  font: string;
+  colour: string;
 }
 
 /** A small cross, the mark for a message that died on a dead link. */
@@ -101,7 +122,8 @@ function cross(g: CanvasRenderingContext2D, x: number, y: number, alpha: number)
   g.stroke();
 }
 
-function draw({ g, W, H, cam, w, now, tReal, selected, fx, stars, still, hoverLink }: Frame): void {
+function draw(f: Frame): void {
+  const { g, W, H, cam, w, now, tReal, selected, fx, stars, still, hoverLink, showNews, following, believes, shown } = f;
   const P = (v: Vec): [number, number] => [
     W / 2 + (v.x - cam.cx) * cam.zoom,
     H / 2 - LIFT - (v.y - cam.cy) * cam.zoom * TILT,
@@ -199,6 +221,7 @@ function draw({ g, W, H, cam, w, now, tReal, selected, fx, stars, still, hoverLi
   }
 
   // Messages in flight. Each direction keeps to its own side of the line.
+  shown.length = 0;
   const lead = new Map<string, { x: number; y: number; nx: number; ny: number; left: number }>();
   for (const env of w.net.inFlight) {
     const a = pos[env.from];
@@ -208,18 +231,26 @@ function draw({ g, W, H, cam, w, now, tReal, selected, fx, stars, still, hoverLi
     const len = Math.hypot(dx, dy);
     if (len < 40) continue; // The Earth-Moon hop takes about a second.
     const span = env.deliverAt - env.sentAt;
-    const f = span > 0 ? clamp((now - env.sentAt) / span, 0, 1) : 1;
+    const t = span > 0 ? clamp((now - env.sentAt) / span, 0, 1) : 1;
     const nx = -dy / len;
     const ny = dx / len;
-    const x = a[0] + dx * f + nx * 3;
-    const y = a[1] + dy * f + ny * 3;
-    if (env.payload.kind === 'news') {
+    const x = a[0] + dx * t + nx * 3;
+    const y = a[1] + dy * t + ny * 3;
+    const tagged = following !== null && env.trade === following;
+    g.globalAlpha = following !== null && !tagged ? 0.25 : 1;
+    const p = env.payload;
+    if (p.kind === 'news') {
+      if (!showNews) continue;
       g.fillStyle = `rgba(${WARM},0.3)`;
       g.fillRect(x - 0.75, y - 0.75, 1.5, 1.5);
+      shown.push({ env, x, y });
       continue;
     }
-    const handover = env.payload.kind === 'gossip' ? env.payload.handover : undefined;
-    if (handover) {
+    shown.push({ env, x, y });
+    // Labels sit on the side of the line away from the Sun-ward bottom of the screen.
+    const side = ny > 0 ? -1 : 1;
+    const handover = p.kind === 'gossip' ? p.handover : undefined;
+    if (handover && !tagged) {
       // A hand-over of position between desks: larger, and labelled for as long as it is in flight.
       g.fillStyle = `rgba(${WARM},0.18)`;
       g.beginPath();
@@ -232,11 +263,10 @@ function draw({ g, W, H, cam, w, now, tReal, selected, fx, stars, still, hoverLi
       g.font = `500 11.5px ${FONT}`;
       g.textAlign = 'center';
       g.fillStyle = `rgba(${WARM},0.92)`;
-      const side = ny > 0 ? -1 : 1;
       g.fillText(`${handover} handed to ${BODY_NAME[env.to]}`, x + nx * 18 * side, y + ny * 18 * side + 4);
       continue;
     }
-    if (env.from === 'moon' || env.to === 'moon') {
+    if (!tagged && (env.from === 'moon' || env.to === 'moon')) {
       // The Moon's traffic runs almost on top of Earth's, so it stays in the background.
       g.fillStyle = `rgba(${WARM},0.55)`;
       g.beginPath();
@@ -244,40 +274,50 @@ function draw({ g, W, H, cam, w, now, tReal, selected, fx, stars, still, hoverLi
       g.fill();
       continue;
     }
-    const tf = Math.max(0, f - 52 / len);
+    const head = tagged ? 5 : 3.5;
+    const tf = Math.max(0, t - (tagged ? 110 : 70) / len);
     const x0 = a[0] + dx * tf + nx * 3;
     const y0 = a[1] + dy * tf + ny * 3;
     const trail = g.createLinearGradient(x0, y0, x, y);
     trail.addColorStop(0, `rgba(${WARM},0)`);
     trail.addColorStop(1, `rgba(${WARM},0.8)`);
     g.strokeStyle = trail;
-    g.lineWidth = 1.4;
+    g.lineWidth = tagged ? 2.2 : 1.6;
     g.beginPath();
     g.moveTo(x0, y0);
     g.lineTo(x, y);
     g.stroke();
     g.fillStyle = `rgba(${WARM},0.16)`;
     g.beginPath();
-    g.arc(x, y, 5, 0, 2 * Math.PI);
+    g.arc(x, y, head + 3, 0, 2 * Math.PI);
     g.fill();
     g.fillStyle = '#fffcf5';
     g.beginPath();
-    g.arc(x, y, 2, 0, 2 * Math.PI);
+    g.arc(x, y, head, 0, 2 * Math.PI);
     g.fill();
-    const key = `${env.from}>${env.to}`;
     const left = env.deliverAt - now;
+    if (tagged) {
+      g.font = `500 11.5px ${FONT}`;
+      g.textAlign = 'center';
+      g.fillStyle = `rgba(${WARM},0.95)`;
+      g.fillText(`lands in ${Math.max(0, left).toFixed(1)} min`, x + nx * 20 * side, y + ny * 20 * side + 4);
+      continue;
+    }
+    const key = `${env.from}>${env.to}`;
     const best = lead.get(key);
     if ((key === 'earth>mars' || key === 'mars>earth') && (!best || left < best.left)) {
-      lead.set(key, { x, y, nx, ny, left });
+      lead.set(key, { x, y, nx: nx * side, ny: ny * side, left });
     }
   }
   // Countdown on the next message to land in each direction.
+  g.globalAlpha = following !== null ? 0.25 : 1;
   g.font = `500 10.5px ${FONT}`;
   g.textAlign = 'center';
   g.fillStyle = `rgba(${WARM},0.6)`;
   for (const p of lead.values()) {
     g.fillText(`${Math.max(0, p.left).toFixed(1)} min`, p.x + p.nx * 15, p.y + p.ny * 15 + 3);
   }
+  g.globalAlpha = 1;
 
   // Messages sent into a dead link: they leave the desk and die.
   for (let i = fx.length - 1; i >= 0; i--) {
@@ -335,53 +375,107 @@ function draw({ g, W, H, cam, w, now, tReal, selected, fx, stars, still, hoverLi
       g.arc(x, y, r + 6, 0, 2 * Math.PI);
       g.stroke();
     }
+  }
 
-    // Name, a state dot, and a second line only when something needs saying.
+  // Labels: a name with a state dot, then a line only when something needs saying, then what the desk believes.
+  const labels = DRAW_ORDER.map((b) => {
     const desk = w.desks[b];
     const mode = desk.mode(w.now);
     const heard = desk.heardAgo(w.now);
     const leaseLeft = heard === null ? null : w.cfg.leaseDuration - heard;
-    let note = '';
-    let noteColour = STATE[mode];
-    if (mode !== 'normal') note = MODE_LABEL[mode];
+    const lines: LabelLine[] = [
+      { text: BODY_LABEL[b], font: `500 12.5px ${FONT}`, colour: `rgba(${WARM},${selected === b ? 1 : 0.84})` },
+    ];
+    if (mode !== 'normal') lines.push({ text: MODE_LABEL[mode], font: `500 11px ${FONT}`, colour: STATE[mode] });
     else if (leaseLeft !== null && leaseLeft < w.cfg.leaseDuration / 2) {
-      note = `Lease ends in ${Math.max(0, leaseLeft).toFixed(0)} min`;
-      noteColour = STATE.degraded;
+      lines.push({ text: `Plays safe in ${Math.max(0, leaseLeft).toFixed(0)} min`, font: `500 11px ${FONT}`, colour: STATE.degraded });
     }
-    const above = b === 'moon';
-    const nameY = above ? y - r - (note ? 23 : 9) : y + r + 19;
-    g.font = `500 12.5px ${FONT}`;
-    g.textAlign = 'center';
-    g.fillStyle = `rgba(${WARM},${selected === b ? 1 : 0.84})`;
-    g.fillText(BODY_LABEL[b], x + 5, nameY);
-    const tw = g.measureText(BODY_LABEL[b]).width;
-    g.fillStyle = STATE[mode];
-    g.beginPath();
-    g.arc(x + 5 - tw / 2 - 8, nameY - 4, 2.6, 0, 2 * Math.PI);
-    g.fill();
-    if (note) {
-      g.font = `500 11px ${FONT}`;
-      g.fillStyle = noteColour;
-      g.fillText(note, x, nameY + 15);
+    const belief = believes?.[b];
+    if (belief) lines.push({ text: belief, font: `400 11px ${FONT}`, colour: `rgba(${WARM},0.62)` });
+    let width = 0;
+    for (const l of lines) {
+      g.font = l.font;
+      width = Math.max(width, g.measureText(l.text).width + (l === lines[0] ? 16 : 0));
     }
+    const [x, y] = pos[b];
+    return { b, x, y, r: bodyRadius(b, cam.zoom), mode, lines, width, above: b === 'moon' };
+  });
+  type Lab = (typeof labels)[number];
+  const LINE = 15;
+  const box = (l: Lab) => {
+    const h = LINE * l.lines.length;
+    const top = l.above ? l.y - l.r - 5 - h : l.y + l.r + 5;
+    return { x0: l.x + 5 - l.width / 2, x1: l.x + 5 + l.width / 2, y0: top, y1: top + h };
+  };
+  const hits = (p: Lab, q: Lab) => {
+    const A = box(p);
+    const B = box(q);
+    return A.x0 < B.x1 && B.x0 < A.x1 && A.y0 < B.y1 && B.y0 < A.y1;
+  };
+  const fromSun = (l: Lab) => Math.hypot(l.x - sx, (l.y - sy) / TILT);
+  // If two labels collide, move the one further from the Sun to the other side of its planet.
+  const flipped = new Set<BodyId>();
+  for (let pass = 0; pass < 3; pass++) {
+    for (let i = 0; i < labels.length; i++) {
+      for (let j = i + 1; j < labels.length; j++) {
+        if (!hits(labels[i], labels[j])) continue;
+        const far = fromSun(labels[i]) > fromSun(labels[j]) ? labels[i] : labels[j];
+        const other = far === labels[i] ? labels[j] : labels[i];
+        const move = flipped.has(far.b) ? other : far;
+        if (flipped.has(move.b)) continue;
+        move.above = !move.above;
+        flipped.add(move.b);
+      }
+    }
+  }
+  g.textAlign = 'center';
+  for (const l of labels) {
+    const top = box(l).y0;
+    l.lines.forEach((line, i) => {
+      const base = top + LINE * i + 12;
+      g.font = line.font;
+      g.fillStyle = line.colour;
+      g.fillText(line.text, l.x + 5, base);
+      if (i === 0) {
+        const tw = g.measureText(line.text).width;
+        g.fillStyle = STATE[l.mode];
+        g.beginPath();
+        g.arc(l.x + 5 - tw / 2 - 8, base - 4, 2.6, 0, 2 * Math.PI);
+        g.fill();
+      }
+    });
   }
 }
 
 interface Props {
   getWorld: () => World;
   getNow: () => number;
+  /** The visitor trade being followed, or null. */
+  getFollowing: () => number | null;
+  /** One extra line under each planet's name (what that desk believes the bank holds), or null. */
+  getBelieves: () => PerBody<string | null> | null;
   selected: BodyId | null;
   onSelect: (b: BodyId | null) => void;
   onToggleLink: (a: BodyId, b: BodyId) => void;
+  /** Pause the simulation and say whether it was running. */
+  onPause: () => boolean;
+  onResume: () => void;
 }
 
-/** Interactive solar system for one world: scroll to zoom, drag to pan, click a planet or a link. Redraws every frame. */
-export function SolarView({ getWorld, getNow, selected, onSelect, onToggleLink }: Props) {
+/**
+ * Interactive solar system for one world: scroll to zoom, drag to pan, click a planet, a message or a link.
+ * Hovering a message describes it; clicking one pauses and pins the description. Redraws every frame.
+ */
+export function SolarView({ getWorld, getNow, getFollowing, getBelieves, selected, onSelect, onToggleLink, onPause, onResume }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
+  const tip = useRef<HTMLDivElement>(null);
   const cam = useRef<Camera>({ cx: 0, cy: 0, zoom: 200, tcx: 0, tcy: 0, tzoom: 200, fit: 200, touched: false });
-  const live = useRef({ selected, onSelect, onToggleLink });
-  live.current = { selected, onSelect, onToggleLink };
+  const [showNews, setShowNews] = useState(false);
+  const live = useRef({ selected, onSelect, onToggleLink, onPause, onResume, showNews });
+  live.current = { selected, onSelect, onToggleLink, onPause, onResume, showNews };
+  /** The pinned message (by envelope id), and whether the simulation was running when it was pinned. */
+  const pin = useRef<{ id: number; wasRunning: boolean } | null>(null);
 
   const resetView = useCallback(() => {
     const c = cam.current;
@@ -391,13 +485,22 @@ export function SolarView({ getWorld, getNow, selected, onSelect, onToggleLink }
     c.touched = false;
   }, []);
 
+  const unpin = useCallback(() => {
+    const p = pin.current;
+    if (!p) return;
+    pin.current = null;
+    if (p.wasRunning) live.current.onResume();
+  }, []);
+
   useEffect(() => {
     const el = canvas.current!;
     const box = wrap.current!;
+    const tipEl = tip.current!;
     const g = el.getContext('2d')!;
     const c = cam.current;
     const stars = makeStars(260);
     const fx: DropFx[] = [];
+    const shown: Shown[] = [];
     const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let W = 0;
     let H = 0;
@@ -405,6 +508,8 @@ export function SolarView({ getWorld, getNow, selected, onSelect, onToggleLink }
     let seenDrop = 0;
     let first = true;
     let hoverLink: string | null = null;
+    let hoverMsg: number | null = null;
+    let tipKey = '';
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -446,6 +551,19 @@ export function SolarView({ getWorld, getNow, selected, onSelect, onToggleLink }
       }
       return best;
     };
+    /** The message whose head is nearest the pointer, within 10px, as drawn in the latest frame. */
+    const hitMsg = (mx: number, my: number): number | null => {
+      let best: number | null = null;
+      let bestD = 10;
+      for (const s of shown) {
+        const d = Math.hypot(mx - s.x, my - s.y);
+        if (d <= bestD) {
+          best = s.env.id;
+          bestD = d;
+        }
+      }
+      return best;
+    };
     /**
      * The link under the pointer: the nearest within 8px, ignoring the ends where the planets sit.
      * Earth to Mars and Moon to Mars nearly coincide, so Earth to Mars wins a near tie.
@@ -481,9 +599,11 @@ export function SolarView({ getWorld, getNow, selected, onSelect, onToggleLink }
     const move = (e: PointerEvent) => {
       const [mx, my] = local(e);
       if (!drag) {
-        const link = hit(mx, my) ? null : hitLink(mx, my);
+        const body = hit(mx, my);
+        hoverMsg = body ? null : hitMsg(mx, my);
+        const link = body || hoverMsg !== null ? null : hitLink(mx, my);
         hoverLink = link ? `${link[0]}-${link[1]}` : null;
-        el.style.cursor = hit(mx, my) || link ? 'pointer' : 'grab';
+        el.style.cursor = body || hoverMsg !== null || link ? 'pointer' : 'grab';
         return;
       }
       const dx = e.clientX - drag.x;
@@ -501,15 +621,25 @@ export function SolarView({ getWorld, getNow, selected, onSelect, onToggleLink }
     };
     const leave = () => {
       hoverLink = null;
+      hoverMsg = null;
     };
+    // Click priority: planet, then message, then link, then empty space.
     const up = (e: PointerEvent) => {
       if (drag && drag.moved < 4) {
         const [mx, my] = local(e);
         const body = hit(mx, my);
-        const link = body ? null : hitLink(mx, my);
-        // A click on a link cuts or restores it and leaves the selected planet alone.
-        if (link) live.current.onToggleLink(link[0], link[1]);
-        else live.current.onSelect(body);
+        const msg = body ? null : hitMsg(mx, my);
+        const link = body || msg !== null ? null : hitLink(mx, my);
+        if (body) live.current.onSelect(body);
+        else if (msg !== null) {
+          // Pin it: pause, and remember whether we were running so that unpinning can restart.
+          const wasRunning = pin.current ? pin.current.wasRunning : live.current.onPause();
+          pin.current = { id: msg, wasRunning };
+        } else if (link) live.current.onToggleLink(link[0], link[1]);
+        else {
+          unpin();
+          live.current.onSelect(null);
+        }
       }
       drag = null;
       el.style.cursor = 'grab';
@@ -524,6 +654,9 @@ export function SolarView({ getWorld, getNow, selected, onSelect, onToggleLink }
       c.tcy = wy + (my - H / 2 + LIFT) / (c.tzoom * TILT);
       c.touched = true;
     };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && pin.current) unpin();
+    };
     el.addEventListener('pointerdown', down);
     el.addEventListener('pointermove', move);
     el.addEventListener('pointerup', up);
@@ -531,6 +664,42 @@ export function SolarView({ getWorld, getNow, selected, onSelect, onToggleLink }
     el.addEventListener('pointerleave', leave);
     el.addEventListener('wheel', wheel, { passive: false });
     el.addEventListener('dblclick', resetView);
+    window.addEventListener('keydown', key);
+
+    /** Show the pinned or hovered message's description beside it, or hide the tooltip. */
+    const updateTip = (w: World, now: number) => {
+      const id = pin.current?.id ?? hoverMsg;
+      const s = id === null ? undefined : shown.find((m) => m.env.id === id);
+      if (!s) {
+        // The message has landed or the bank was replaced: let go of it.
+        if (pin.current && !w.net.inFlight.some((e) => e.id === pin.current!.id)) pin.current = null;
+        if (!tipEl.hidden) tipEl.hidden = true;
+        tipKey = '';
+        return;
+      }
+      const d = describeEnvelope(s.env, now, w.strategy);
+      const pinned = pin.current?.id === s.env.id;
+      const k = `${pinned}|${d.title}|${d.lines.join('|')}`;
+      if (k !== tipKey) {
+        tipKey = k;
+        tipEl.querySelector('b')!.textContent = d.title;
+        const list = tipEl.querySelector('ul')!;
+        list.replaceChildren(
+          ...d.lines.map((t) => {
+            const li = document.createElement('li');
+            li.textContent = t;
+            return li;
+          }),
+        );
+        tipEl.querySelector('button')!.hidden = !pinned;
+      }
+      tipEl.hidden = false;
+      const tw = tipEl.offsetWidth;
+      const th = tipEl.offsetHeight;
+      const left = s.x + 16 + tw > W - 8 ? s.x - 16 - tw : s.x + 16;
+      tipEl.style.left = `${clamp(left, 8, Math.max(8, W - tw - 8))}px`;
+      tipEl.style.top = `${clamp(s.y - th / 2, 8, Math.max(8, H - th - 8))}px`;
+    };
 
     let id = 0;
     let last = performance.now();
@@ -555,7 +724,26 @@ export function SolarView({ getWorld, getNow, selected, onSelect, onToggleLink }
       }
 
       if (W > 0 && H > 0) {
-        draw({ g, W, H, cam: c, w, now: getNow(), tReal: t, selected: live.current.selected, fx, stars, still, hoverLink });
+        const now = getNow();
+        draw({
+          g,
+          W,
+          H,
+          cam: c,
+          w,
+          now,
+          tReal: t,
+          selected: live.current.selected,
+          fx,
+          stars,
+          still,
+          hoverLink,
+          showNews: live.current.showNews,
+          following: getFollowing(),
+          believes: getBelieves(),
+          shown,
+        });
+        updateTip(w, now);
       }
       id = requestAnimationFrame(frame);
     };
@@ -571,15 +759,28 @@ export function SolarView({ getWorld, getNow, selected, onSelect, onToggleLink }
       el.removeEventListener('pointerleave', leave);
       el.removeEventListener('wheel', wheel);
       el.removeEventListener('dblclick', resetView);
+      window.removeEventListener('keydown', key);
     };
-  }, [getWorld, getNow, resetView]);
+  }, [getWorld, getNow, getFollowing, getBelieves, resetView, unpin]);
 
   return (
     <div className="solar" ref={wrap}>
       <canvas ref={canvas} role="img" aria-label="Earth, the Moon and Mars around the Sun, with messages travelling between their desks" />
-      <button className="quiet resetView" onClick={resetView}>
-        Reset view
-      </button>
+      <div className="msgTip glass" ref={tip} hidden role="status">
+        <b />
+        <ul />
+        <button className="quiet" onClick={unpin}>
+          Resume
+        </button>
+      </div>
+      <div className="viewControls">
+        <button className="quiet" onClick={resetView}>
+          Reset view
+        </button>
+        <button className="quiet" aria-pressed={showNews} onClick={() => setShowNews(!showNews)}>
+          {showNews ? 'Hide market news' : 'Show market news'}
+        </button>
+      </div>
     </div>
   );
 }

@@ -32,6 +32,10 @@ export const STRATEGY: Record<StrategyId, { name: string; blurb: string }> = {
 export const FONT =
   '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, "Helvetica Neue", Arial, sans-serif';
 
+/** Simulated minutes as hours and minutes, "02:14". */
+export const clock = (min: number) =>
+  `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(Math.floor(min % 60)).padStart(2, '0')}`;
+
 /** Signed number with a real minus sign. */
 export function signed(n: number, digits = 0): string {
   const s = Math.abs(n).toFixed(digits);

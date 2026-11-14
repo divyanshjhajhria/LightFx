@@ -265,6 +265,7 @@ export class LeasedDesk extends BaseDesk {
       ctx.send(p, {
         kind: 'gossip',
         handover,
+        openOffer: this.isOpen(p) ? this.myOffer[p].amount : undefined,
         from: this.id,
         seq: this.seq,
         sentAt: ctx.now,

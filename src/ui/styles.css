@@ -357,11 +357,62 @@ button {
   touch-action: none;
 }
 
-.resetView {
+.viewControls {
   position: absolute;
-  left: 18px;
+  left: 8px;
   bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.viewControls button {
   font-size: 12px;
+}
+
+.viewControls button[aria-pressed='true'] {
+  color: var(--text);
+}
+
+/* Description of a message on the canvas, beside its head. Pinned when clicked. */
+.msgTip {
+  position: absolute;
+  z-index: 5;
+  max-width: 280px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.msgTip b {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.msgTip ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-2);
+}
+
+.msgTip li + li {
+  margin-top: 2px;
+}
+
+.msgTip li:last-child {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--hair);
+  color: var(--text-3);
+}
+
+.msgTip button {
+  pointer-events: auto;
+  margin: 8px 0 0 -10px;
+  color: var(--text);
 }
 
 .hint {

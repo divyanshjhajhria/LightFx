@@ -9,17 +9,22 @@ import type { BodyId, StrategyId } from '../sim/types';
 import { Arena } from '../sim/world';
 import { Intel } from './Intel';
 import { SolarView } from './SolarView';
-import { BODY_LABEL, MODE_LABEL, STATE, STRATEGY, signed } from './theme';
+import { BODY_LABEL, MODE_LABEL, STATE, STRATEGY, clock, signed } from './theme';
 
-const SPEEDS = [1, 4, 16, 60];
+/** Simulated minutes per real second, with their button labels. */
+const SPEEDS: { value: number; label: string }[] = [
+  { value: 0.25, label: '¼×' },
+  { value: 0.5, label: '½×' },
+  { value: 1, label: '1×' },
+  { value: 4, label: '4×' },
+  { value: 16, label: '16×' },
+  { value: 60, label: '60×' },
+];
 const PRESETS = [
   { label: 'Close approach', deg: 0 },
   { label: 'Far side', deg: 150 },
   { label: 'Behind the Sun', deg: 180 },
 ];
-
-const clock = (min: number) =>
-  `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(Math.floor(min % 60)).padStart(2, '0')}`;
 
 function Inspector({
   arena,
@@ -258,7 +263,7 @@ function Timeline({ director, onJump }: { director: Director; onJump: (min: numb
 export function App() {
   const [seed, setSeed] = useState(42);
   const [running, setRunning] = useState(true);
-  const [speed, setSpeed] = useState(4);
+  const [speed, setSpeed] = useState(1);
   const [view, setView] = useState<StrategyId>('leased');
   const [selected, setSelected] = useState<BodyId | null>(null);
   const [scenarioId, setScenarioId] = useState<string | null>(null);
@@ -361,6 +366,18 @@ export function App() {
 
   const getWorld = useCallback(() => arena.current!.worlds[live.current.view], []);
   const getNow = useCallback(() => arena.current!.now + partial.current, []);
+  const getFollowing = useCallback(() => null, []);
+  const getBelieves = useCallback(() => null, []);
+  const pause = useCallback(() => {
+    const was = live.current.running;
+    live.current.running = false;
+    setRunning(false);
+    return was;
+  }, []);
+  const resume = useCallback(() => {
+    live.current.running = true;
+    setRunning(true);
+  }, []);
 
   const a = arena.current;
   const lead = a.worlds.leased;
@@ -466,6 +483,10 @@ export function App() {
           selected={selected}
           onSelect={setSelected}
           onToggleLink={toggleLink}
+          getFollowing={getFollowing}
+          getBelieves={getBelieves}
+          onPause={pause}
+          onResume={resume}
         />
         <p className="hint">Scroll to zoom, drag to pan. Click a planet to open its desk, or a link to cut it.</p>
         {selected && (
@@ -484,8 +505,8 @@ export function App() {
           </button>
           <div className="seg" role="group" aria-label="Simulated minutes per second">
             {SPEEDS.map((s) => (
-              <button key={s} aria-pressed={s === speed} onClick={() => setSpeed(s)}>
-                {s}×
+              <button key={s.value} aria-pressed={s.value === speed} onClick={() => setSpeed(s.value)}>
+                {s.label}
               </button>
             ))}
           </div>

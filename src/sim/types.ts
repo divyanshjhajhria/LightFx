@@ -36,6 +36,8 @@ export interface GossipMsg {
   sentRow: PerBody<number>;
   /** Units this desk handed to the receiver since its last update. A label for the view only; the protocol never reads it. */
   handover?: number;
+  /** Size of the sender's open offer to absorb the receiver's long position. A label for the view only. */
+  openOffer?: number;
   /**
    * Netting state (leased strategy only). Full tables, sent every time, so a lost message is repaired by the next.
    * A receiver reads only the entries keyed by its own id; epochs make stale and repeated copies harmless.
@@ -74,6 +76,8 @@ export interface Envelope {
   sentAt: number;
   deliverAt: number;
   payload: Payload;
+  /** The visitor trade whose news this message carries, if any. Set by World for the story; desks never see it. */
+  trade?: number;
 }
 
 // ---- Market ---------------------------------------------------------------
