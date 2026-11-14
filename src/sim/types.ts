@@ -34,6 +34,8 @@ export interface GossipMsg {
   free: number;
   /** Cumulative budget this desk has granted to each peer. Merged with max(), so repeats and losses are harmless. */
   sentRow: PerBody<number>;
+  /** Units this desk handed to the receiver since its last update. A label for the view only; the protocol never reads it. */
+  handover?: number;
   /**
    * Netting state (leased strategy only). Full tables, sent every time, so a lost message is repaired by the next.
    * A receiver reads only the entries keyed by its own id; epochs make stale and repeated copies harmless.

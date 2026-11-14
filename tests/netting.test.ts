@@ -140,6 +140,38 @@ describe('netting', () => {
     expect(vol(true)).toBeGreaterThan(vol(false));
   });
 
+  it('labels exactly one outgoing message per non-zero hand-over', () => {
+    const sellProb = { earth: 0.7, moon: 0.5, mars: 0.3 };
+    const w = new World({ strategy: 'leased', seed: 4, separationDeg: 60, cfg: { ...DEFAULT_CONFIG, sellProb } });
+    const labels = new Map<string, number>();
+    const handovers = new Map<string, Set<number>>();
+    let labelledUnits = 0;
+    const send = w.net.send.bind(w.net);
+    w.net.send = (from, to, p, now) => {
+      if (p.kind === 'gossip') {
+        const key = `${from}>${to}`;
+        if (p.handover !== undefined) {
+          expect(p.handover).toBeGreaterThan(0);
+          labels.set(key, (labels.get(key) ?? 0) + 1);
+          labelledUnits += p.handover;
+        }
+        const r = p.netting?.replies[to];
+        if (r && r.given > 0) handovers.set(key, (handovers.get(key) ?? new Set()).add(r.epoch));
+      }
+      return send(from, to, p, now);
+    };
+    for (let i = 0; i < ticks(w, 400); i++) {
+      w.step();
+      // A blackout in the middle drops some labelled messages; that must change nothing.
+      w.blackout = w.now >= 150 && w.now < 200;
+    }
+    expect(labels.size).toBeGreaterThan(0);
+    for (const [key, epochs] of handovers) expect(labels.get(key) ?? 0).toBe(epochs.size);
+    for (const key of labels.keys()) expect(handovers.has(key)).toBe(true);
+    const out = BODIES.reduce((s, b) => s + w.desks[b].netting().outUnits, 0);
+    expect(labelledUnits).toBe(out);
+  });
+
   it('does nothing when switched off', () => {
     const w = new World({ strategy: 'leased', seed: 7, cfg: { ...DEFAULT_CONFIG, netting: false }, separationDeg: 60 });
     for (let i = 0; i < ticks(w, 300); i++) {

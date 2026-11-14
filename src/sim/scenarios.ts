@@ -1,12 +1,12 @@
 // The named scenarios in the menu. Notes are written to be read aloud.
-import type { Scenario, ScenarioEvent } from './scenario';
+import type { Scenario } from './scenario';
 
-const flapping: ScenarioEvent[] = [{ at: 0, kind: 'note', text: 'Close approach, but the Earth to Mars link keeps dropping.' }];
-for (let t = 20; t <= 170; t += 30) {
-  flapping.push({ at: t, kind: 'cut', a: 'earth', b: 'mars', on: true });
-  flapping.push({ at: t + 15, kind: 'cut', a: 'earth', b: 'mars', on: false });
-}
-flapping.push({ at: 200, kind: 'note', text: 'The link settles.' });
+/**
+ * When the first LABELLED hand-over from Earth after the links return lands at Mars in Trade winds (seed 11):
+ * 21 units, applied at 185.5. Measured with this seed, rounded up. An earlier, unlabelled 4 units lands at 161.5:
+ * Earth answered that offer during the outage, so the one message carrying its label was dropped.
+ */
+const HANDOVER_LANDS = 186;
 
 export const SCENARIOS: Scenario[] = [
   {
@@ -33,15 +33,20 @@ export const SCENARIOS: Scenario[] = [
     summary: 'Earth and Mars drift in opposite directions, then cancel out when links return.',
     seed: 11,
     separationDeg: 60,
-    durationMin: 480,
+    durationMin: 240,
     events: [
       { at: 0, kind: 'flow', body: 'earth', sellProb: 0.65 },
       { at: 0, kind: 'flow', body: 'mars', sellProb: 0.35 },
       { at: 0, kind: 'note', text: "Earth's customers mostly sell Mars credits. Mars's mostly buy." },
       { at: 120, kind: 'blackout', on: true },
-      { at: 120, kind: 'note', text: 'Links go down. Each desk carries on with its own budget.' },
-      { at: 300, kind: 'blackout', on: false },
-      { at: 300, kind: 'note', text: 'Links return. The desks cancel their opposite positions.' },
+      { at: 120, kind: 'flow', body: 'earth', sellProb: 0.8 },
+      { at: 120, kind: 'flow', body: 'mars', sellProb: 0.2 },
+      { at: 120, kind: 'note', text: 'Links go down. Each desk carries on alone, inside its own allowance.' },
+      { at: 150, kind: 'blackout', on: false },
+      { at: 150, kind: 'flow', body: 'earth', sellProb: 0.65 },
+      { at: 150, kind: 'flow', body: 'mars', sellProb: 0.35 },
+      { at: 150, kind: 'note', text: 'Links return. Watch Earth hand its surplus to Mars.' },
+      { at: HANDOVER_LANDS, kind: 'note', text: 'Earth and Mars have cancelled their opposite positions.' },
     ],
   },
   {
@@ -60,12 +65,19 @@ export const SCENARIOS: Scenario[] = [
     ],
   },
   {
-    id: 'flapping-link',
-    name: 'Flapping link',
-    summary: 'The Earth to Mars link keeps dropping, but Mars stays in touch with the Moon.',
+    id: 'one-link-down',
+    name: 'One link down',
+    summary: 'Earth and Mars lose their direct line for two hours; Mars keeps trading through it.',
     seed: 3,
     separationDeg: 0,
-    durationMin: 240,
-    events: flapping,
+    durationMin: 210,
+    events: [
+      { at: 0, kind: 'note', text: 'Close approach. Everything is talking.' },
+      { at: 30, kind: 'cut', a: 'earth', b: 'mars', on: true },
+      { at: 30, kind: 'note', text: 'Earth and Mars lose their direct line. Mars can still reach the Moon.' },
+      { at: 95, kind: 'note', text: 'An hour without Earth. Mars is marked degraded, and keeps trading.' },
+      { at: 150, kind: 'cut', a: 'earth', b: 'mars', on: false },
+      { at: 150, kind: 'note', text: 'The line is back.' },
+    ],
   },
 ];

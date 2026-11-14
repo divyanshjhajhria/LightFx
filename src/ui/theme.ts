@@ -20,6 +20,8 @@ export const MODE_LABEL: Record<Mode, string> = {
 };
 
 export const BODY_LABEL: Record<BodyId, string> = { earth: 'Earth', moon: 'Moon', mars: 'Mars' };
+/** The body as a word in a sentence: "the Moon", not "Moon". */
+export const BODY_NAME: Record<BodyId, string> = { earth: 'Earth', moon: 'the Moon', mars: 'Mars' };
 
 export const STRATEGY: Record<StrategyId, { name: string; blurb: string }> = {
   leased: { name: 'Leased budgets', blurb: 'Each desk spends only its own slice of the limit.' },

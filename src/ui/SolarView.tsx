@@ -3,7 +3,7 @@ import { position } from '../sim/orbits';
 import type { Vec } from '../sim/orbits';
 import type { BodyId } from '../sim/types';
 import type { World } from '../sim/world';
-import { ALERT_RGB, BODY_LABEL, FONT, MODE_LABEL, STATE, WARM } from './theme';
+import { ALERT_RGB, BODY_LABEL, BODY_NAME, FONT, MODE_LABEL, STATE, WARM } from './theme';
 
 /** The view looks down on the orbital plane at an angle: vertical distances are squashed by this factor. */
 const TILT = 0.42;
@@ -216,6 +216,24 @@ function draw({ g, W, H, cam, w, now, tReal, selected, fx, stars, still, hoverLi
     if (env.payload.kind === 'news') {
       g.fillStyle = `rgba(${WARM},0.3)`;
       g.fillRect(x - 0.75, y - 0.75, 1.5, 1.5);
+      continue;
+    }
+    const handover = env.payload.kind === 'gossip' ? env.payload.handover : undefined;
+    if (handover) {
+      // A hand-over of position between desks: larger, and labelled for as long as it is in flight.
+      g.fillStyle = `rgba(${WARM},0.18)`;
+      g.beginPath();
+      g.arc(x, y, 9, 0, 2 * Math.PI);
+      g.fill();
+      g.fillStyle = '#fffcf5';
+      g.beginPath();
+      g.arc(x, y, 5, 0, 2 * Math.PI);
+      g.fill();
+      g.font = `500 11.5px ${FONT}`;
+      g.textAlign = 'center';
+      g.fillStyle = `rgba(${WARM},0.92)`;
+      const side = ny > 0 ? -1 : 1;
+      g.fillText(`${handover} handed to ${BODY_NAME[env.to]}`, x + nx * 18 * side, y + ny * 18 * side + 4);
       continue;
     }
     if (env.from === 'moon' || env.to === 'moon') {

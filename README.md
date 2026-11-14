@@ -51,9 +51,9 @@ has come, so a scenario plays the same way every time, headless or in the browse
 | Scenario | What it shows |
 |---|---|
 | Solar storm | A storm and a panic together: the naive bank breaches, ours goes reduce-only and holds, central barely trades. |
-| Trade winds | Earth's customers mostly sell and Mars's mostly buy, so the two desks drift apart; a blackout, then netting when links return. |
+| Trade winds | Earth's customers mostly sell and Mars's mostly buy, so the two desks drift apart. A 30-minute blackout (short enough that no desk starts playing safe), then Earth visibly hands its surplus to Mars: hand-overs are drawn as large labelled messages. |
 | Behind the Sun | No storm: Mars passes behind the Sun and geometry alone cuts the Earth to Mars link. |
-| Flapping link | The Earth to Mars link drops for 15 minutes at a time; Mars keeps talking to the Moon throughout. |
+| One link down | Earth and Mars lose their direct line for two hours. After an hour Mars is marked degraded, but it keeps trading because it can still reach the Moon. |
 
 To add one, append a `Scenario` to `src/sim/scenarios.ts` (events sorted by time, a unique hyphenated id)
 and run `npm test`: the scenario tests check every preset is well formed and never breaches the limit.

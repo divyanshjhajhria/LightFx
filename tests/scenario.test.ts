@@ -137,21 +137,32 @@ describe('presets', () => {
     expect(leased.metrics.volFilled).toBeGreaterThan(central.metrics.volFilled);
   });
 
-  it('reconnect shows the merge: Mars nets nothing while cut off, then nets after the links return', () => {
+  it('reconnect shows the merge: Mars nets nothing while links are down, then nets after they return', () => {
     const s = preset('reconnect');
     const run = startScenario(s);
     const w = run.arena.worlds.leased;
-    playTo(run, 125);
-    const at125 = marsNetted(w);
-    playTo(run, 300);
-    const at300 = marsNetted(w);
-    playTo(run, 420);
-    const at420 = marsNetted(w);
-    expect(at300).toBe(at125);
-    expect(at420).toBeGreaterThan(at300);
+    playTo(run, 120);
+    const down = marsNetted(w);
+    playTo(run, 150);
+    const reconnected = marsNetted(w);
+    playTo(run, s.durationMin);
+    const end = marsNetted(w);
+    expect(reconnected).toBe(down);
+    expect(end).toBeGreaterThan(reconnected);
 
-    const off = runScenario(s, 420, { ...DEFAULT_CONFIG, netting: false } as SimConfig).arena.worlds.leased;
+    const off = runScenario(s, s.durationMin, { ...DEFAULT_CONFIG, netting: false } as SimConfig).arena.worlds.leased;
     expect(gross(w)).toBeLessThan(gross(off));
+  });
+
+  it('reconnect: the leased Mars desk never plays safe, so it still has something to cancel', () => {
+    const s = preset('reconnect');
+    const run = startScenario(s);
+    const mars = run.arena.worlds.leased.desks.mars;
+    while (run.arena.now < s.durationMin) {
+      run.arena.step();
+      run.director.advance();
+      expect(mars.mode(run.arena.now)).not.toBe('reduce-only');
+    }
   });
 
   it('behind-the-sun: the Earth to Mars link is blocked while Mars is at 180 degrees, with no storm', () => {
@@ -170,15 +181,20 @@ describe('presets', () => {
     expect(checked).toBeGreaterThan(0);
   });
 
-  it('flapping-link: the leased Mars desk never goes reduce-only', () => {
-    const s = preset('flapping-link');
+  it('one-link-down: Mars is degraded but never reduce-only, and normal again by the end', () => {
+    const s = preset('one-link-down');
     const run = startScenario(s);
     const mars = run.arena.worlds.leased.desks.mars;
+    let at140 = '';
     while (run.arena.now < s.durationMin) {
       run.arena.step();
       run.director.advance();
-      expect(mars.mode(run.arena.now)).not.toBe('reduce-only');
+      const mode = mars.mode(run.arena.now);
+      expect(mode).not.toBe('reduce-only');
+      if (run.arena.now === 140) at140 = mode;
     }
+    expect(at140).toBe('degraded');
+    expect(mars.mode(run.arena.now)).toBe('normal');
   });
 });
 

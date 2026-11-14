@@ -124,6 +124,8 @@ export class LeasedDesk extends BaseDesk {
     given: 0,
     price: 0,
   }));
+  /** Units handed to each peer and not yet labelled on an outgoing message. For drawing only: never read by the protocol. */
+  private readonly handoverLabel: PerBody<number> = perBody(() => 0);
   private nettedOutUnits = 0;
   private nettedOutCash = 0;
   private nettedInUnits = 0;
@@ -216,6 +218,7 @@ export class LeasedDesk extends BaseDesk {
     this.pos -= given;
     this.cash += given * ctx.fair;
     this.myReply[peer] = { epoch: offer.epoch, given, price: ctx.fair };
+    this.handoverLabel[peer] += given;
     this.nettedOutUnits += given;
     this.nettedOutCash += given * ctx.fair;
   }
@@ -256,8 +259,12 @@ export class LeasedDesk extends BaseDesk {
     }
     this.seq++;
     for (const p of this.peers) {
+      // Label the first update after a hand-over so the view can show it. The reply table carries the real state.
+      const handover = this.handoverLabel[p] > 0 ? this.handoverLabel[p] : undefined;
+      this.handoverLabel[p] = 0;
       ctx.send(p, {
         kind: 'gossip',
+        handover,
         from: this.id,
         seq: this.seq,
         sentAt: ctx.now,
