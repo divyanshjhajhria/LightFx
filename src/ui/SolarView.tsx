@@ -604,6 +604,8 @@ export function SolarView({
     let hoverLink: string | null = null;
     let hoverMsg: number | null = null;
     let tipKey = '';
+    /** Draws the current frame again at once; set once the drawing code below exists. */
+    let paintNow: (() => void) | null = null;
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -618,6 +620,9 @@ export function SolarView({
         c.zoom = c.fit;
         first = false;
       }
+      // Resizing the canvas clears it: draw straight away, so the stage never shows a blank frame while the bottom
+      // panel's height animates.
+      paintNow?.();
     };
     const observer = new ResizeObserver(resize);
     observer.observe(box);
@@ -840,6 +845,10 @@ export function SolarView({
         if (d.kind !== 'news' && fx.length < 40) fx.push({ from: d.from, to: d.to, start: t, progress: d.progress });
       }
 
+      paint(w, t);
+      id = requestAnimationFrame(frame);
+    };
+    const paint = (w: World, t: number) => {
       if (W > 0 && H > 0) {
         const now = getNow();
         draw({
@@ -864,8 +873,8 @@ export function SolarView({
         updateTip(w, now);
         placeBubbles(w);
       }
-      id = requestAnimationFrame(frame);
     };
+    paintNow = () => paint(getWorld(), performance.now());
     id = requestAnimationFrame(frame);
 
     return () => {

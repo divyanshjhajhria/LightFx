@@ -148,7 +148,7 @@ export function AgentsPanel({
     return (
       <div className="agentsPanel">
         <p className="agentsEmpty">
-          Our desks are running on their rules. Choose who runs them under "Our desks run by" at the top.
+          Our desks are running on their rules. Choose who runs them under "More", in "Our desks run by".
         </p>
       </div>
     );

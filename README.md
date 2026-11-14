@@ -301,6 +301,8 @@ src/sim/directive.ts the Directive: the only way model output enters the simulat
 src/agents/llm.ts    the optional language model (Anthropic or Gemini), plain fetch, JSON output
 src/agents/runner.ts AgentRunner: when each desk thinks, checks on answers, replay; prompt.ts, standIn.ts
 src/ui/AgentsPanel.tsx "The agents" tab
+src/ui/Overview.tsx  the Overview: bank cards (gauge.ts) and the evidence; activity.ts is the feed on the stage
+src/ui/MorePanel.tsx the More panel; Tip.tsx the dock's tooltips and small menus
 src/ui/modelVoice.ts when to ask the model, and keeping its answers; voiceCheck.ts checks them
 src/ui/SurvivalMap.tsx the survival map view; sweepSummary.ts computes its headline figures
 src/ui/theme.ts      colours, labels and number formatting shared by the above
@@ -313,26 +315,40 @@ tests/               orbits, network, market feed, safety property, demo scenari
 
 ## Using the view
 
+The screen has three parts: a top bar, the solar system, and a bottom panel.
+
+- **The top bar** says four things about the bank on the canvas: what it holds (red when over its limit), the room
+  it has left before its limit ("None" in red at or over it), how long a message takes from Earth to Mars one way
+  ("No signal" in red when the link is down), and the time. Then the scenario menu, and **More**, which holds
+  everything else: the Earth and Mars prices, the seed and Restart (it asks once before throwing the run away),
+  "Show market news", "Show all desk voices", "Reset view", who runs our desks (AI agents live or replay,
+  scripted stand-in, or rules, with why any is unavailable), "Open the survival map", and the keys.
+- **The dock** under the solar system: play or pause; the speed (one button, a menu of six); **Place a trade**,
+  the one filled button, which opens the selected desk (Mars if none) with its ticket ready; Solar storm and Market
+  panic; and where Mars is ("Mars: far side"), which opens the three positions and a slider. Each control explains
+  itself in one sentence when you hover it or reach it with the keyboard.
+- **What has happened** is listed at the top left of the stage: the latest six events (storms, panics, a desk
+  starting to play safe or getting back in touch, your trades, hand-overs of 10 or more, and any bank going over its
+  limit or coming back inside), oldest at the top. Before anything happens it shows how to start instead. It is
+  hidden in the guided demo and on narrow screens.
+- **Overview**, the bottom panel's first tab: a card per bank with its status in a word ("Safe", "Over its limit",
+  "Was over its limit", "Offices frozen"), what it holds against its limit of 100 either way, a gauge on one scale
+  for all three (the red ends are past the limit), its verdict and the customers it served. Click a card to put that
+  bank on the canvas. The last card is the evidence from the survival map: how many simulated storms, how many times
+  our bank went over its limit, and how often the bank that trusts old news did. If our bank ever had, that figure
+  would be in red. A chip beside our bank's name says when agents, rather than rules, run its desks.
+- **Your trade** tells the followed trade's story at each bank, with a live row for anything still on its way; the
+  column for the bank that asks Earth has "Give up waiting". **The banks** has the chart and a column per bank,
+  unchanged. **The agents** (see "A multi-agent system") follows each of our desks' agents. The Overview is shorter
+  than the other tabs, so the solar system is larger while it shows; switching animates the change.
 - Scroll to zoom, drag to pan, double-click or "Reset view" to return.
-- Click a planet, or a desk row in the bottom panel, to open that desk. Its panel starts with a trade ticket:
-  buy or sell, a size from 1 to 20, and one button. Placing a trade follows it: the speed drops to 1x (and goes
-  back when you press "Done"), other messages fade, the trade's own messages are drawn larger with a countdown,
-  each planet shows what its desk believes the bank holds, and the top bar shows what the bank really holds.
-- The bottom panel has two tabs, always the same height so the canvas never jumps. "Your trade" tells the
-  followed trade's story at each bank, with a live row for anything still on its way; the column for the bank
-  that asks Earth has "Give up waiting".
-- "The banks" opens with one chart: what each bank really holds over time, all three on the same scale, against
-  the bank's limit (the labelled lines; the pale band between them is safe). A strip along the top marks the solar
-  storm and the panic, and a diamond marks each of your trades. Wherever a bank goes past its limit the line turns
-  red and the gap between it and the limit is filled red: the wider the shape, the longer the breach; the taller,
-  the further. Labels at the end of each line give each bank's total now; click one, or a line, to show that bank
-  on the canvas. Hover the chart for the figures at any minute (not in the guided demo). In a scenario or the
-  guided demo the chart runs left to right and never rescales; in free play it shows the last four hours.
-- Under the chart, a column per bank: its name, a one-line verdict ("Over its limit now. 71 min so far.",
-  "Inside its limit. Mars is playing safe."), the share of customers it has served, and its three desks with what
-  each holds (and, for our bank, out of what allowance) and how many customers it has served.
+- Click a planet, or a desk row under "The banks", to open that desk. Its panel starts with a trade ticket: buy or
+  sell, a size from 1 to 20, and one button. Placing a trade follows it: the speed drops to 1x (and goes back when
+  you press "Done"), other messages fade, the trade's own messages are drawn larger with a countdown, and each
+  planet shows what its desk believes the bank holds. That line also shows when the bank that trusts old news is
+  on the canvas, and in the guided demo's panic step; otherwise it is hidden.
 - Hover a message to read it in plain words; click it to pause with the description pinned, and press "Resume",
-  Escape, or click empty space to carry on. "Show market news" draws the price news too.
+  Escape, or click empty space to carry on.
 - On the canvas a click picks, in order: a planet, a message, a link, or empty space (which closes the desk).
 - Click a link between two planets to cut it, and again to restore it. A hand-cut link is dashed with a
   cross at its middle. The desk panel has the same switches under "Links", for keyboard and touch.
@@ -341,13 +357,14 @@ tests/               orbits, network, market feed, safety property, demo scenari
   track to jump there (arrow keys jump 10 minutes). A jump replays the script from the start, so changes
   you made by hand are lost, visitor trades included (following stops). When a scenario ends, the play button
   plays it again from the start; placing a trade after the end carries on in free play.
-- The storm, panic and Mars controls always show the simulation's real state, including changes a
-  scenario makes.
-- Click a strategy's name to watch its message traffic on the canvas.
+- The storm, panic and Mars controls always show the simulation's real state, including changes a scenario makes.
 - Bright dots with trails are desks talking; a large labelled dot is position being handed from one desk to
   another; a red cross is a message sent into a dead link.
-- Space bar plays and pauses.
-- Green, amber and red only ever mean a desk's state (normal, degraded, reduce-only or halted) or a breach.
+- Keys: Space plays and pauses (in the guided demo it moves on), G starts the guided demo, M mutes its voice, and
+  Escape leaves the demo or closes a panel.
+- Green, amber and red only ever mean a desk's state (normal, degraded, playing safe or halted), a dead link, or
+  a breach, and always come with words. Text uses one scale of seven sizes, and cards are lighter surfaces with
+  no borders.
 
 ## How the market works
 
