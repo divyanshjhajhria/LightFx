@@ -18,6 +18,9 @@ import type { LlmClient } from './llm';
 import { ModelVoice, systemPrompt } from './modelVoice';
 import { acceptable } from './voiceCheck';
 import { Intel } from './Intel';
+import { SurvivalMap } from './SurvivalMap';
+import { cellScenario } from '../sim/sweep';
+import type { CellParams } from '../sim/sweep';
 import { useSteadyText } from './steadyText';
 import { CaptionBar, PresenterHint, ResultsCard, readResults } from './Presenter';
 import type { Results } from './Presenter';
@@ -311,11 +314,13 @@ function ScenarioMenu({
   presenting,
   onChoose,
   onDemo,
+  onMap,
 }: {
   current: Scenario | null;
   presenting: boolean;
   onChoose: (s: Scenario | null) => void;
   onDemo: () => void;
+  onMap: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -384,6 +389,15 @@ function ScenarioMenu({
               <span>{s.summary}</span>
             </button>
           ))}
+          <button
+            onClick={() => {
+              setOpen(false);
+              onMap();
+            }}
+          >
+            <b>Survival map</b>
+            <span>Thousands of storms: where each bank holds and where it breaks.</span>
+          </button>
         </div>
       )}
     </div>
@@ -463,6 +477,9 @@ export function App() {
   const [view, setView] = useState<StrategyId>('leased');
   const [selected, setSelected] = useState<BodyId | null>(null);
   const [scenarioId, setScenarioId] = useState<string | null>(null);
+  /** A scenario that is not a preset: one square of the survival map, played. */
+  const [customScenario, setCustomScenario] = useState<Scenario | null>(null);
+  const [mapOpen, setMapOpen] = useState(() => new URLSearchParams(window.location.search).has('map'));
   const [followed, setFollowed] = useState<FollowedTrade | null>(null);
   const [tab, setTab] = useState<'trade' | 'banks'>('banks');
   /** The speed to go back to when following ends, if following slowed things down. */
@@ -654,7 +671,9 @@ export function App() {
   const a = arena.current;
   const lead = a.worlds.leased;
   const dir = director.current;
-  const scenario = scenarioId ? (SCENARIOS.find((s) => s.id === scenarioId) ?? null) : null;
+  const scenario = scenarioId
+    ? (SCENARIOS.find((s) => s.id === scenarioId) ?? (customScenario?.id === scenarioId ? customScenario : null))
+    : null;
   // Read the controls' state from the simulation, so a scenario changing them is shown truthfully.
   const blackout = lead.blackout;
   const panic = lead.panic;
@@ -698,6 +717,7 @@ export function App() {
       return;
     }
     setSeed(s.seed);
+    if (!SCENARIOS.some((x) => x.id === s.id)) setCustomScenario(s);
     setScenarioId(s.id);
     setSelected(null);
     swapIn(startScenario(s, undefined, series.current));
@@ -869,11 +889,29 @@ export function App() {
   });
   const marsLink = lead.links().find((l) => l.a === 'earth' && l.b === 'mars')!;
 
+  /** "Play this storm": one square of the survival map, seed 1, at 16x, with the bank that did worst on the canvas. */
+  const playStorm = (p: CellParams, worst: StrategyId) => {
+    setMapOpen(false);
+    chooseScenario(cellScenario(p, 1));
+    setSpeed(16);
+    setView(worst);
+  };
+
+  // Escape leaves the survival map.
+  useEffect(() => {
+    if (!mapOpen) return;
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMapOpen(false);
+    };
+    window.addEventListener('keydown', key);
+    return () => window.removeEventListener('keydown', key);
+  }, [mapOpen]);
+
   return (
-    <div className={`app${dir && !presenting ? ' hasTimeline' : ''}${presenting ? ' presenting' : ''}`}>
+    <div className={`app${dir && !presenting && !mapOpen ? ' hasTimeline' : ''}${presenting ? ' presenting' : ''}${mapOpen ? ' mapOpen' : ''}`}>
       <header className="top">
         <h1>Lightspeed FX</h1>
-        <div className="readouts">
+        <div className="readouts" hidden={mapOpen}>
           <div>
             <span>Elapsed</span>
             <b>{clock(a.now)}</b>
@@ -897,7 +935,7 @@ export function App() {
             </b>
           </div>
         </div>
-        {(followed || presenting) && (
+        {(followed || presenting) && !mapOpen && (
           <div className="readouts holds">
             <div>
               <span>The bank really holds</span>
@@ -913,6 +951,10 @@ export function App() {
             chooseScenario(s);
           }}
           onDemo={startDemo}
+          onMap={() => {
+            if (presenting) leaveDemo();
+            setMapOpen(true);
+          }}
         />
         <div className="session">
           <label>
@@ -925,168 +967,174 @@ export function App() {
         </div>
       </header>
 
-      {dir && !presenting && <Timeline director={dir} onJump={jump} />}
+      {mapOpen ? (
+        <SurvivalMap onBack={() => setMapOpen(false)} onPlay={playStorm} />
+      ) : (
+        <>
+          {dir && !presenting && <Timeline director={dir} onJump={jump} />}
 
-      <main className="stage">
-        <SolarView
-          getWorld={getWorld}
-          getNow={getNow}
-          selected={selected}
-          onSelect={setSelected}
-          onToggleLink={toggleLink}
-          getFollowing={getFollowing}
-          getBelieves={getBelieves}
-          onPause={pause}
-          onResume={resume}
-          canPin={canPin}
-          voices={voices}
-          bubbleBodies={bubbleBodies}
-          allVoices={presenting ? null : { on: allVoices, toggle: () => setAllVoices(!allVoices) }}
-          holdMs={holdMs}
-        />
-        {!presenting && (
-          <p className="hint">Click a planet to trade with its desk. Hover a message to read it. Click a link to cut it.</p>
-        )}
-        {selected && (
-          <Inspector
-            key={`${selected}-${demoRun}`}
-            arena={a}
-            view={view}
-            body={selected}
-            voice={voices[selected]}
-            holdMs={holdMs}
-            onClose={() => setSelected(null)}
-            onToggleLink={toggleLink}
-            onTrade={(side, size) => placeTrade(selected, side, size)}
-          />
-        )}
-
-        {presenting && g && (
-          <>
-            <CaptionBar text={caption} />
-            <PresenterHint guide={g} muted={muted} />
-            {results && <ResultsCard r={results} />}
-          </>
-        )}
-        {!presenting && (
-          <div className="dock glass" role="toolbar" aria-label="Simulation controls">
-            <button
-              className="play"
-              onClick={play}
-              aria-label={running ? 'Pause' : dir?.done ? 'Play again from the start' : 'Play'}
-            >
-              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-                {running ? <path d="M3 2h3.5v12H3zM9.5 2H13v12H9.5z" /> : <path d="M4 2l10 6-10 6z" />}
-              </svg>
-            </button>
-            <div className="seg" role="group" aria-label="Simulated minutes per second">
-              {SPEEDS.map((s) => (
-                <button key={s.value} aria-pressed={s.value === speed} onClick={() => setSpeed(s.value)}>
-                  {s.label}
-                </button>
-              ))}
-            </div>
-            <span className="rule" />
-            <div className="seg" role="group" aria-label="Where Mars is">
-              {PRESETS.map((p) => (
-                <button key={p.deg} aria-pressed={p.deg === sep} onClick={() => a.setSeparation(p.deg)}>
-                  {p.label}
-                </button>
-              ))}
-            </div>
-            <label className="angle">
-              <input
-                type="range"
-                min={0}
-                max={180}
-                value={sep}
-                aria-label="Angle between Earth and Mars"
-                onChange={(e) => {
-                  a.setSeparation(Number(e.target.value));
-                  repaint();
-                }}
-              />
-              <output>{sep}°</output>
-            </label>
-            <span className="rule" />
-            <button
-              className="event"
-              aria-pressed={blackout}
-              onClick={() => {
-                a.setBlackout(!blackout);
-                repaint();
-              }}
-            >
-              <i className="dot" />
-              Solar storm
-            </button>
-            <button
-              className="event"
-              aria-pressed={panic}
-              onClick={() => {
-                a.setPanic(!panic);
-                repaint();
-              }}
-            >
-              <i className="dot" />
-              Market panic
-            </button>
-          </div>
-        )}
-      </main>
-
-      <div
-        className="bottom"
-        ref={bottom}
-        style={tab === 'trade' && banksHeight.current > 0 ? { height: banksHeight.current } : undefined}
-      >
-        <div className="tabs" role="tablist" aria-label="Bottom panel">
-          {(
-            [
-              ['trade', 'Your trade'],
-              ['banks', 'The banks'],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              role="tab"
-              id={`tab-${id}`}
-              aria-selected={tab === id}
-              aria-controls="bottom-panel"
-              onClick={() => {
-                if (tab === 'banks' && bottom.current) banksHeight.current = bottom.current.offsetHeight;
-                setTab(id);
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <div id="bottom-panel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="tabPanel">
-          {tab === 'banks' ? (
-            <Intel
-              arena={a}
-              view={view}
+          <main className="stage">
+            <SolarView
+              getWorld={getWorld}
+              getNow={getNow}
               selected={selected}
-              mode={
-                presenting
-                  ? { kind: 'guided', startMin: GUIDE_WARMUP }
-                  : scenario
-                    ? { kind: 'scenario', durationMin: scenario.durationMin }
-                    : { kind: 'free' }
-              }
-              hover={!presenting}
-              onView={setView}
-              onSelect={(s, b) => {
-                setView(s);
-                setSelected(b);
-              }}
+              onSelect={setSelected}
+              onToggleLink={toggleLink}
+              getFollowing={getFollowing}
+              getBelieves={getBelieves}
+              onPause={pause}
+              onResume={resume}
+              canPin={canPin}
+              voices={voices}
+              bubbleBodies={bubbleBodies}
+              allVoices={presenting ? null : { on: allVoices, toggle: () => setAllVoices(!allVoices) }}
+              holdMs={holdMs}
             />
-          ) : (
-            <Story arena={a} followed={followed} view={view} onView={setView} onDone={endFollow} />
-          )}
-        </div>
-      </div>
+            {!presenting && (
+              <p className="hint">Click a planet to trade with its desk. Hover a message to read it. Click a link to cut it.</p>
+            )}
+            {selected && (
+              <Inspector
+                key={`${selected}-${demoRun}`}
+                arena={a}
+                view={view}
+                body={selected}
+                voice={voices[selected]}
+                holdMs={holdMs}
+                onClose={() => setSelected(null)}
+                onToggleLink={toggleLink}
+                onTrade={(side, size) => placeTrade(selected, side, size)}
+              />
+            )}
+
+            {presenting && g && (
+              <>
+                <CaptionBar text={caption} />
+                <PresenterHint guide={g} muted={muted} />
+                {results && <ResultsCard r={results} />}
+              </>
+            )}
+            {!presenting && (
+              <div className="dock glass" role="toolbar" aria-label="Simulation controls">
+                <button
+                  className="play"
+                  onClick={play}
+                  aria-label={running ? 'Pause' : dir?.done ? 'Play again from the start' : 'Play'}
+                >
+                  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+                    {running ? <path d="M3 2h3.5v12H3zM9.5 2H13v12H9.5z" /> : <path d="M4 2l10 6-10 6z" />}
+                  </svg>
+                </button>
+                <div className="seg" role="group" aria-label="Simulated minutes per second">
+                  {SPEEDS.map((s) => (
+                    <button key={s.value} aria-pressed={s.value === speed} onClick={() => setSpeed(s.value)}>
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+                <span className="rule" />
+                <div className="seg" role="group" aria-label="Where Mars is">
+                  {PRESETS.map((p) => (
+                    <button key={p.deg} aria-pressed={p.deg === sep} onClick={() => a.setSeparation(p.deg)}>
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+                <label className="angle">
+                  <input
+                    type="range"
+                    min={0}
+                    max={180}
+                    value={sep}
+                    aria-label="Angle between Earth and Mars"
+                    onChange={(e) => {
+                      a.setSeparation(Number(e.target.value));
+                      repaint();
+                    }}
+                  />
+                  <output>{sep}°</output>
+                </label>
+                <span className="rule" />
+                <button
+                  className="event"
+                  aria-pressed={blackout}
+                  onClick={() => {
+                    a.setBlackout(!blackout);
+                    repaint();
+                  }}
+                >
+                  <i className="dot" />
+                  Solar storm
+                </button>
+                <button
+                  className="event"
+                  aria-pressed={panic}
+                  onClick={() => {
+                    a.setPanic(!panic);
+                    repaint();
+                  }}
+                >
+                  <i className="dot" />
+                  Market panic
+                </button>
+              </div>
+            )}
+          </main>
+
+          <div
+            className="bottom"
+            ref={bottom}
+            style={tab === 'trade' && banksHeight.current > 0 ? { height: banksHeight.current } : undefined}
+          >
+            <div className="tabs" role="tablist" aria-label="Bottom panel">
+              {(
+                [
+                  ['trade', 'Your trade'],
+                  ['banks', 'The banks'],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  role="tab"
+                  id={`tab-${id}`}
+                  aria-selected={tab === id}
+                  aria-controls="bottom-panel"
+                  onClick={() => {
+                    if (tab === 'banks' && bottom.current) banksHeight.current = bottom.current.offsetHeight;
+                    setTab(id);
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div id="bottom-panel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="tabPanel">
+              {tab === 'banks' ? (
+                <Intel
+                  arena={a}
+                  view={view}
+                  selected={selected}
+                  mode={
+                    presenting
+                      ? { kind: 'guided', startMin: GUIDE_WARMUP }
+                      : scenario
+                        ? { kind: 'scenario', durationMin: scenario.durationMin }
+                        : { kind: 'free' }
+                  }
+                  hover={!presenting}
+                  onView={setView}
+                  onSelect={(s, b) => {
+                    setView(s);
+                    setSelected(b);
+                  }}
+                />
+              ) : (
+                <Story arena={a} followed={followed} view={view} onView={setView} onDone={endFollow} />
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
