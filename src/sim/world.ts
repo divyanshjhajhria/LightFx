@@ -58,6 +58,8 @@ export class World {
   panic = false;
   /** Links cut by hand, as keys from linkKey(). */
   readonly cuts = new Set<string>();
+  /** Probability that a customer at each body sells Mars credits, outside a panic. Starts as a copy of cfg.sellProb. */
+  readonly flow: PerBody<number>;
 
   private tickCount = 0;
   private readonly ticksPerMin: number;
@@ -80,6 +82,7 @@ export class World {
     this.rngMarket = Rng.stream(opts.seed, 1);
     this.rngCust = Rng.stream(opts.seed, 2);
     this.info = perBody(() => ({ earth: { at: 0, value: 0 }, mars: { at: 0, value: 0 } }));
+    this.flow = { ...this.cfg.sellProb };
     this.desks = perBody((b) => makeDesk(this.strategy, b, this.cfg));
     this.net = new DelayNetwork(
       (a, b) => this.linkOpen(a, b),
@@ -96,6 +99,11 @@ export class World {
   setCut(a: BodyId, b: BodyId, cut: boolean): void {
     if (cut) this.cuts.add(linkKey(a, b));
     else this.cuts.delete(linkKey(a, b));
+  }
+
+  /** Set the calm-market probability that a customer at `b` sells Mars credits. Clamped to [0, 1]. */
+  setFlow(b: BodyId, sellProb: number): void {
+    this.flow[b] = Math.max(0, Math.min(1, sellProb));
   }
 
   linkOpen(a: BodyId, b: BodyId): boolean {
@@ -189,8 +197,8 @@ export class World {
     }
 
     // 4. Customers. Every customer is fully drawn before any desk sees it, so all strategies face the same stream.
-    const sellProb = this.panic ? c.panicSellProb : 0.5;
     for (const b of BODIES) {
+      const sellProb = this.panic ? c.panicSellProb : this.flow[b];
       const n = this.rngCust.poisson(c.customerRate * c.dt);
       for (let i = 0; i < n; i++) {
         this.handleCustomer({
@@ -355,5 +363,9 @@ export class Arena {
 
   setCut(a: BodyId, b: BodyId, cut: boolean): void {
     for (const s of STRATEGIES) this.worlds[s].setCut(a, b, cut);
+  }
+
+  setFlow(b: BodyId, sellProb: number): void {
+    for (const s of STRATEGIES) this.worlds[s].setFlow(b, sellProb);
   }
 }

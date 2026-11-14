@@ -37,6 +37,8 @@ export interface SimConfig {
   tolMean: number;
   /** Mean customer patience in minutes (exponential). Only matters for the central strategy. */
   patienceMean: number;
+  /** Probability that a customer at this desk sells Mars credits, outside a panic. */
+  sellProb: PerBody<number>;
 
   /** Volatility of the Earth-sourced component, per sqrt(minute), when using the synthetic feed. */
   sigmaEarth: number;
@@ -72,6 +74,7 @@ export const DEFAULT_CONFIG: SimConfig = {
   sizeMax: 5,
   tolMean: 0.0012,
   patienceMean: 3,
+  sellProb: { earth: 0.5, moon: 0.5, mars: 0.5 },
 
   sigmaEarth: 0.00012,
   sigmaMars: 0.00015,

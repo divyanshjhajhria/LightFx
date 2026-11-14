@@ -105,10 +105,8 @@ describe('netting', () => {
     );
   });
 
-  // nettingMin is 1 here so Mars can split its 10 units as 8 to Earth and 2 to the Moon in one round.
-  // With the default of 3 the Moon's share (2) is too small to offer: see the next test.
   it('never promises the same units to two long peers', () => {
-    const w = leasedWorld({ earth: 8, moon: 6, mars: -10 }, { ...QUIET, nettingMin: 1 });
+    const w = leasedWorld({ earth: 8, moon: 6, mars: -10 });
     for (let i = 0; i < ticks(w, 120); i++) {
       w.step();
       expect(w.desks.mars.netting().reserved).toBeLessThanOrEqual(10);
@@ -117,15 +115,29 @@ describe('netting', () => {
     expect(w.desks.earth.pos + w.desks.moon.pos).toBe(4);
   });
 
-  it('leaves a remainder smaller than nettingMin un-netted', () => {
-    const w = leasedWorld({ earth: 8, moon: 6, mars: -10 });
+  it('still applies the minimum when an offer would not flatten the desk', () => {
+    const w = leasedWorld({ earth: 2, mars: -10 });
     for (let i = 0; i < ticks(w, 120); i++) {
       w.step();
-      expect(w.desks.mars.netting().reserved).toBeLessThanOrEqual(10);
-      expect(w.totalPosition()).toBe(4);
+      expect(w.desks.mars.netting().reserved).toBe(0);
     }
-    expect(w.desks.mars.pos).toBe(-2);
-    expect(w.desks.earth.pos + w.desks.moon.pos).toBe(6);
+    expect(w.metrics.nettedUnits).toBe(0);
+    expect(w.desks.mars.pos).toBe(-10);
+    expect(w.desks.earth.pos).toBe(2);
+  });
+
+  it('under sustained opposite flow, netting fills more', () => {
+    const sellProb = { earth: 0.65, moon: 0.5, mars: 0.35 };
+    const vol = (netting: boolean) => {
+      let total = 0;
+      for (let seed = 1; seed <= 10; seed++) {
+        const w = new World({ strategy: 'leased', seed, separationDeg: 60, cfg: { ...DEFAULT_CONFIG, netting, sellProb } });
+        for (let i = 0; i < ticks(w, 600); i++) w.step();
+        total += w.metrics.volFilled;
+      }
+      return total;
+    };
+    expect(vol(true)).toBeGreaterThan(vol(false));
   });
 
   it('does nothing when switched off', () => {

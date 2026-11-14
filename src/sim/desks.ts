@@ -238,8 +238,11 @@ export class LeasedDesk extends BaseDesk {
       if (now - info.sentAt > this.cfg.leaseDuration) continue;
       if (this.isOpen(p) || info.pos <= 0) continue;
       // reserved() is recomputed per peer, so two offers never promise the same units. pos + reserved stays <= 0.
-      const amount = Math.floor(Math.min(-this.pos - this.reserved(), info.pos));
-      if (amount < this.cfg.nettingMin) continue;
+      const open = -this.pos - this.reserved();
+      const amount = Math.floor(Math.min(open, info.pos));
+      // Small offers are not worth a round trip, unless this one would flatten me completely.
+      const closesOut = amount >= 1 && amount === open;
+      if (amount < this.cfg.nettingMin && !closesOut) continue;
       this.myOffer[p] = { epoch: this.myOffer[p].epoch + 1, amount };
     }
   }

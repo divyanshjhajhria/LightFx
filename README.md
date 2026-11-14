@@ -36,6 +36,7 @@ message, so a lost message is repaired by the next one and a repeated one is ign
 its position plus the room it is holding exceed its budget, so units on their way between desks are
 always covered by the receiver's budget, and the limit holds even if a link dies half-way through.
 Only the short desk ever asks, so two desks can never swap a position back and forth.
+Offers below `nettingMin` units are not worth a round trip, except one that would flatten the desk completely.
 `tests/netting.test.ts` checks this, including links failing in the middle of an exchange.
 
 ## Where things are
