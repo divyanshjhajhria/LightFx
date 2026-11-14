@@ -38,6 +38,10 @@ export interface GossipMsg {
   handover?: number;
   /** Size of the sender's open offer to absorb the receiver's long position. A label for the view only. */
   openOffer?: number;
+  /** A note from the sender's agent to the receiver's agent. Sent once; if this message is lost, so is the note. */
+  note?: string;
+  /** Units of allowance the sender's agent asks of the receiver. Advisory: the protocol never reads it. */
+  asks?: number;
   /**
    * Netting state (leased strategy only). Full tables, sent every time, so a lost message is repaired by the next.
    * A receiver reads only the entries keyed by its own id; epochs make stale and repeated copies harmless.

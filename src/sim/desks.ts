@@ -1,5 +1,5 @@
 import type { SimConfig } from './config';
-import type { DeskEventDetail, PeerView } from './deskEvents';
+import type { DeskEventDetail, InboxItem, PeerView } from './deskEvents';
 import { PRICING_MULT, plain, units } from './directive';
 import type { Directive } from './directive';
 import type { RefusalReason, TraceDetail } from './trace';
@@ -180,6 +180,8 @@ export class LeasedDesk extends BaseDesk {
   /** A note and an ask for each peer, waiting for the next desk update to that peer. Sent once, never re-sent. */
   private readonly outNote: Partial<PerBody<string>> = {};
   private readonly outAsk: Partial<PerBody<number>> = {};
+  /** The last notes and asks that reached this desk, oldest first. */
+  private readonly inboxItems: InboxItem[] = [];
 
   constructor(id: BodyId, cfg: SimConfig) {
     super(id, cfg);
@@ -272,6 +274,19 @@ export class LeasedDesk extends BaseDesk {
     return this.controller === 'agent' && this.directive !== null && now - this.directiveAt < this.cfg.agentStaleMinutes;
   }
 
+  /** Notes and asks received, oldest first (the last 5). */
+  inbox(): readonly InboxItem[] {
+    return this.inboxItems;
+  }
+
+  /** Each peer's spare allowance as it last reported it, and when it said so. Null for a peer never heard from. */
+  peerSpare(now: number): { body: BodyId; spare: number | null; ageMin: number | null }[] {
+    return this.peers.map((body) => {
+      const i = this.peerInfo[body];
+      return i.seq > 0 ? { body, spare: Math.max(0, Math.floor(i.free)), ageMin: now - i.sentAt } : { body, spare: null, ageMin: null };
+    });
+  }
+
   /** The directive in force and when it arrived, or null. Read-only, for views and briefings. */
   lastDirective(): { directive: Directive; at: number } | null {
     return this.directive ? { directive: this.directive, at: this.directiveAt } : null;
@@ -340,6 +355,10 @@ export class LeasedDesk extends BaseDesk {
 
   onMessage(p: Payload, ctx: DeskCtx): void {
     if (p.kind !== 'gossip') return;
+    if (p.note !== undefined || p.asks !== undefined) {
+      this.inboxItems.push({ from: p.from, text: p.note ?? '', asks: p.asks ?? null, sentAt: p.sentAt, receivedAt: ctx.now });
+      if (this.inboxItems.length > 5) this.inboxItems.shift();
+    }
     const info = this.peerInfo[p.from];
     if (p.seq > info.seq) {
       info.seq = p.seq;
@@ -412,7 +431,14 @@ export class LeasedDesk extends BaseDesk {
       // Label the first update after a hand-over so the view can show it. The reply table carries the real state.
       const handover = this.handoverLabel[p] > 0 ? this.handoverLabel[p] : undefined;
       this.handoverLabel[p] = 0;
+      // A waiting note or ask rides on this update, once. The desk never learns whether it arrived.
+      const note = this.outNote[p];
+      const asks = this.outAsk[p];
+      delete this.outNote[p];
+      delete this.outAsk[p];
       ctx.send(p, {
+        ...(note !== undefined ? { note } : {}),
+        ...(asks !== undefined ? { asks } : {}),
         kind: 'gossip',
         handover,
         openOffer: this.isOpen(p) ? this.myOffer[p].amount : undefined,

@@ -36,6 +36,8 @@ export function describeEnvelope(env: Envelope, now: number, strategy?: Strategy
         if (p.openOffer) lines.push(`Offers to take up to ${p.openOffer} off ${toName}'s hands`);
         if (p.handover) lines.push(`Hands ${p.handover} to ${toName}`);
       }
+      if (p.note) lines.push(`Note for ${toName}: "${p.note}"`);
+      if (p.asks) lines.push(`Asks ${toName} for ${p.asks} of its allowance`);
       break;
     }
     case 'rfq':
