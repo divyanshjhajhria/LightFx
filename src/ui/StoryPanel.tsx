@@ -22,8 +22,8 @@ function inFlight(tr: readonly TraceEvent[], now: number, asker: BodyId): { to: 
     else if (e.kind === 'earth-approved') to = asker;
     else return;
     if (e.landsAt <= now) return;
-    // A request or answer that was never delivered is not on its way anywhere.
-    if (tr.slice(i + 1).some((x) => x.kind === 'not-delivered' && x.to === to)) return;
+    // A message that was never delivered, or was destroyed on the way, is not on its way anywhere.
+    if (tr.slice(i + 1).some((x) => (x.kind === 'not-delivered' || x.kind === 'destroyed') && x.to === to)) return;
     out.push({ to, from: e.t, lands: e.landsAt });
   });
   return out;

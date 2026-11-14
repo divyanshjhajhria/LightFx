@@ -176,4 +176,43 @@ describe('visitor trades', () => {
     expect(w.trace(3).length).toBeGreaterThan(0);
     expect(w.trace(12).length).toBeGreaterThan(0);
   });
+
+  it('leased, far side: a storm destroys the news in flight; it is sent again and heard after', () => {
+    const w = world('leased', 150);
+    runFor(w, 5);
+    w.placeTrade('mars', 'sell', 5, 1);
+    runFor(w, 10);
+    w.blackout = true;
+    runFor(w, 40);
+    const during = [...w.trace(1)];
+    expect(kinds(during)).toEqual(['placed', 'filled', 'told', 'told', 'destroyed', 'destroyed']);
+    expect(during.filter((e) => e.kind === 'destroyed').map((e) => e.kind === 'destroyed' && e.to)).toEqual(['earth', 'moon']);
+    // Destroyed once, and no "link is down" on top of it for the same outage.
+    expect(during.some((e) => e.kind === 'not-delivered')).toBe(false);
+    w.blackout = false;
+    runFor(w, 40);
+    const after = w.trace(1).slice(during.length);
+    for (const peer of ['earth', 'moon'] as const) {
+      const told = after.findIndex((e) => e.kind === 'told' && e.to === peer);
+      const heard = after.findIndex((e) => e.kind === 'heard' && e.body === peer);
+      expect(told).toBeGreaterThanOrEqual(0);
+      expect(heard).toBeGreaterThan(told);
+    }
+  });
+
+  it('central, far side: a storm destroys the request on its way; nothing is approved', () => {
+    const w = world('central', 150);
+    runFor(w, 5);
+    w.placeTrade('mars', 'sell', 5, 1);
+    runFor(w, 10);
+    w.blackout = true;
+    runFor(w, 40);
+    expect(kinds(w.trace(1))).toEqual(['placed', 'asked-earth', 'destroyed']);
+    expect(w.trace(1)[2]).toMatchObject({ body: 'mars', to: 'earth' });
+    expect(w.totalPosition()).toBe(0);
+    expect(w.desks.earth.believedTotal()).toEqual({ low: 0, high: 0 });
+    // The visitor still walks away after their patience runs out.
+    runFor(w, 30);
+    expect(kinds(w.trace(1))).toEqual(['placed', 'asked-earth', 'destroyed', 'gave-up']);
+  });
 });

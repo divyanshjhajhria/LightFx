@@ -11,6 +11,10 @@ export interface Drop {
   to: BodyId;
   at: number;
   kind: Payload['kind'];
+  /** Destroyed while travelling (its link closed under it), rather than refused at the sender. */
+  inFlight?: true;
+  /** How far along the link it had got, 0 to 1. Only for in-flight losses. */
+  progress?: number;
 }
 
 export class DelayNetwork {
@@ -44,6 +48,25 @@ export class DelayNetwork {
       trade,
     });
     return true;
+  }
+
+  /**
+   * Destroy matching messages that are still travelling: each counts as dropped, and is recorded as a drop with how
+   * far it had got. Returns what was removed. Senders are not told.
+   */
+  purge(match: (e: Envelope) => boolean, now: number): Envelope[] {
+    const gone: Envelope[] = [];
+    const rest: Envelope[] = [];
+    for (const e of this.inFlight) (match(e) ? gone : rest).push(e);
+    this.inFlight = rest;
+    for (const e of gone) {
+      this.dropped++;
+      const span = e.deliverAt - e.sentAt;
+      const progress = span > 0 ? Math.max(0, Math.min(1, (now - e.sentAt) / span)) : 1;
+      this.drops.push({ id: this.dropped, from: e.from, to: e.to, at: now, kind: e.payload.kind, inFlight: true, progress });
+    }
+    while (this.drops.length > 64) this.drops.shift();
+    return gone;
   }
 
   /** Remove and return everything due by `now`, in arrival order. */

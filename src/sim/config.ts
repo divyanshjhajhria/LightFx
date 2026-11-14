@@ -41,6 +41,8 @@ export interface SimConfig {
   sellProb: PerBody<number>;
   /** Minutes a visitor (a person using the app) will wait for an answer before walking away. */
   visitorPatience: number;
+  /** When a link closes (storm, hand cut, the Sun), destroy the messages already travelling on it. */
+  closedLinkDestroysInFlight: boolean;
 
   /** Volatility of the Earth-sourced component, per sqrt(minute), when using the synthetic feed. */
   sigmaEarth: number;
@@ -78,6 +80,7 @@ export const DEFAULT_CONFIG: SimConfig = {
   patienceMean: 3,
   sellProb: { earth: 0.5, moon: 0.5, mars: 0.5 },
   visitorPatience: 60,
+  closedLinkDestroysInFlight: true,
 
   sigmaEarth: 0.00012,
   sigmaMars: 0.00015,

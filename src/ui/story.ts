@@ -69,6 +69,14 @@ export function tell(e: TraceEvent, strategy: StrategyId, _now: number, asker?: 
       }
       return `${B} tried to tell ${name(e.to)}, but the link is down. It will keep trying.`;
 
+    case 'destroyed':
+      if (strategy === 'central') {
+        return e.to === 'earth'
+          ? `Your request was destroyed on its way to Earth. ${B} has no way of knowing.`
+          : "Earth's answer was destroyed on its way back.";
+      }
+      return `The message to ${name(e.to)} was destroyed on the way. ${B} will keep trying.`;
+
     case 'heard':
       return strategy === 'naive' ? `${B} now knows. Until this moment its total was out of date.` : `${B} now knows.`;
 

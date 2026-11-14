@@ -35,6 +35,8 @@ interface DropFx {
   from: BodyId;
   to: BodyId;
   start: number;
+  /** For a message destroyed in flight: how far along the link it was, 0 to 1. */
+  progress?: number;
 }
 
 interface Star {
@@ -336,7 +338,8 @@ function draw(f: Frame): void {
     const dx = b[0] - a[0];
     const dy = b[1] - a[1];
     const len = Math.hypot(dx, dy) || 1;
-    const reach = Math.min(0.12, 70 / len) * (1 - (1 - p) ** 2) + 18 / len;
+    // Refused at the sender: it leaves the desk and dies. Destroyed in flight: it dies where it was.
+    const reach = e.progress ?? Math.min(0.12, 70 / len) * (1 - (1 - p) ** 2) + 18 / len;
     const x = a[0] + dx * reach - (dy / len) * 3;
     const y = a[1] + dy * reach + (dx / len) * 3;
     cross(g, x, y, (1 - p) * 0.9);
@@ -724,7 +727,7 @@ export function SolarView({ getWorld, getNow, getFollowing, getBelieves, selecte
       for (const d of drops) {
         if (d.id <= seenDrop) continue;
         seenDrop = d.id;
-        if (d.kind !== 'news' && fx.length < 40) fx.push({ from: d.from, to: d.to, start: t });
+        if (d.kind !== 'news' && fx.length < 40) fx.push({ from: d.from, to: d.to, start: t, progress: d.progress });
       }
 
       if (W > 0 && H > 0) {

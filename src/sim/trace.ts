@@ -22,6 +22,8 @@ export type TraceDetail =
   | { kind: 'gave-up'; waited: number }
   | { kind: 'told'; to: BodyId; landsAt: number }
   | { kind: 'not-delivered'; to: BodyId }
+  /** A message carrying the trade's news was travelling when its link closed, and was lost in space. */
+  | { kind: 'destroyed'; to: BodyId }
   | { kind: 'heard'; from: BodyId };
 
 export type TraceEvent = { t: number; body: BodyId } & TraceDetail;

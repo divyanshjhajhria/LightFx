@@ -10,7 +10,7 @@ import type { OrbitState } from './orbits';
 import { Rng } from './rng';
 import type { TraceDetail, TraceEvent } from './trace';
 import { BODIES, STRATEGIES, perBody } from './types';
-import type { BodyId, Customer, DeskView, LinkView, Metrics, Payload, PerBody, StrategyId } from './types';
+import type { BodyId, Customer, DeskView, Envelope, LinkView, Metrics, Payload, PerBody, StrategyId } from './types';
 
 export interface WorldOptions {
   strategy: StrategyId;
@@ -32,6 +32,11 @@ const SOURCES = ['earth', 'mars'] as const;
 type Source = (typeof SOURCES)[number];
 
 const linkKey = (a: BodyId, b: BodyId) => (a < b ? `${a}-${b}` : `${b}-${a}`);
+const LINKS: [BodyId, BodyId][] = [
+  ['earth', 'moon'],
+  ['earth', 'mars'],
+  ['moon', 'mars'],
+];
 
 /** How many visitor trades keep their story. */
 const TRACE_KEEP = 10;
@@ -91,6 +96,8 @@ export class World {
   /** The story of each recent visitor trade, oldest trade first. */
   private readonly traces = new Map<number, TraceEvent[]>();
   private readonly spreading = new Map<number, Spreading>();
+  /** Whether each link was open at the end of the previous step, by linkKey. */
+  private readonly wasOpen = new Map<string, boolean>();
 
   constructor(opts: WorldOptions) {
     this.cfg = opts.cfg ?? DEFAULT_CONFIG;
@@ -107,6 +114,7 @@ export class World {
       (a, b) => this.linkOpen(a, b),
       (a, b) => lightDelayMin(this.orbit, a, b),
     );
+    for (const [a, b] of LINKS) this.wasOpen.set(linkKey(a, b), this.linkOpen(a, b));
   }
 
   // ---- Controls -----------------------------------------------------------
@@ -210,6 +218,36 @@ export class World {
     }
   }
 
+  /**
+   * A link that has just closed (storm, hand cut or the Sun) takes the messages travelling on it with it.
+   * Runs at the start of a step, before anything is sent or delivered.
+   */
+  private destroyOnClosedLinks(): void {
+    for (const [a, b] of LINKS) {
+      const key = linkKey(a, b);
+      const open = this.linkOpen(a, b);
+      const closing = this.wasOpen.get(key) && !open;
+      this.wasOpen.set(key, open);
+      if (!closing || !this.cfg.closedLinkDestroysInFlight) continue;
+      const on = (e: Envelope) => (e.from === a && e.to === b) || (e.from === b && e.to === a);
+      for (const e of this.net.purge(on, this.now)) {
+        if (e.trade === undefined) continue;
+        const p = e.payload;
+        if (p.kind === 'gossip') {
+          this.record(e.trade, e.from, { kind: 'destroyed', to: e.to });
+          // The news has not reached that peer after all: the next update that gets out carries it again. Marking the
+          // peer as already failed keeps the story from also saying "the link is down" for the same outage.
+          const s = this.spreading.get(e.trade) ?? { body: e.from, waiting: new Set<BodyId>(), failed: new Set<BodyId>() };
+          s.waiting.add(e.to);
+          s.failed.add(e.to);
+          this.spreading.set(e.trade, s);
+        } else if (p.kind === 'rfq' || p.kind === 'approve') {
+          this.record(e.trade, e.from, { kind: 'destroyed', to: e.to });
+        }
+      }
+    }
+  }
+
   /** A desk's own account of a step. World stamps it, and fills in landing times the desk cannot know. */
   private report(b: BodyId, trade: number, e: TraceDetail): void {
     if (e.kind === 'asked-earth') e = { ...e, landsAt: this.now + lightDelayMin(this.orbit, b, 'earth') };
@@ -266,6 +304,7 @@ export class World {
     this.tickCount++;
     this.now = this.tickCount * c.dt;
     advanceOrbit(this.orbit, c.dt);
+    this.destroyOnClosedLinks();
 
     // 1. Market moves. Always draw the same number of randoms so runs stay comparable.
     const z1 = this.rngMarket.normal();
