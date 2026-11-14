@@ -56,15 +56,19 @@ export interface RfqMsg {
   from: BodyId;
   id: string;
   delta: number;
+  /** The visitor trade this request is for, so the story can follow it. */
+  trade?: number;
 }
 export interface ApproveMsg {
   kind: 'approve';
   id: string;
+  trade?: number;
 }
 export interface ConfirmMsg {
   kind: 'confirm';
   id: string;
   filled: boolean;
+  trade?: number;
 }
 
 export type Payload = NewsMsg | GossipMsg | RfqMsg | ApproveMsg | ConfirmMsg;
@@ -93,6 +97,10 @@ export interface Customer {
   /** Minutes the customer will wait for a fill. */
   patience: number;
   arrivedAt: number;
+  /** A person using the app, not the background stream. */
+  visitor?: true;
+  /** The visitor trade this customer represents. */
+  trade?: number;
 }
 
 export interface Quote {
@@ -116,6 +124,8 @@ export interface DeskView {
   leaseLeft: number | null;
   /** Units this desk has netted with its peers, handed over plus taken in. Always 0 for strategies without netting. */
   netted: number;
+  /** What this desk believes the bank holds in total, as a range; null if it keeps no such figure. */
+  believed: { low: number; high: number } | null;
 }
 
 export interface LinkView {

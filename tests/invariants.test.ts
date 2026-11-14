@@ -7,15 +7,21 @@ import { Arena } from '../src/sim/world';
 /** Something the operator (or a judge) does to the system part-way through a run. */
 const event = fc.record({
   afterTicks: fc.integer({ min: 1, max: 400 }),
-  kind: fc.constantFrom('blackout', 'panic', 'separation', 'cutEarthMoon', 'cutEarthMars', 'cutMoonMars', 'flow'),
+  kind: fc.constantFrom('blackout', 'panic', 'separation', 'cutEarthMoon', 'cutEarthMars', 'cutMoonMars', 'flow', 'trade'),
   on: fc.boolean(),
   deg: fc.integer({ min: 0, max: 180 }),
   body: fc.constantFrom(...BODIES),
   sellProb: fc.constantFrom(0.2, 0.5, 0.8),
+  side: fc.constantFrom('buy' as const, 'sell' as const),
+  size: fc.integer({ min: 1, max: 20 }),
 });
 
-function apply(arena: Arena, e: { kind: string; on: boolean; deg: number; body?: BodyId; sellProb?: number }): void {
-  if (e.kind === 'flow') arena.setFlow(e.body!, e.sellProb!);
+function apply(
+  arena: Arena,
+  e: { kind: string; on: boolean; deg: number; body?: BodyId; sellProb?: number; side?: 'buy' | 'sell'; size?: number },
+): void {
+  if (e.kind === 'trade') arena.placeTrade(e.body!, e.side!, e.size!);
+  else if (e.kind === 'flow') arena.setFlow(e.body!, e.sellProb!);
   else if (e.kind === 'blackout') arena.setBlackout(e.on);
   else if (e.kind === 'panic') arena.setPanic(e.on);
   else if (e.kind === 'separation') arena.setSeparation(e.deg);
@@ -49,6 +55,10 @@ describe('safety', () => {
             if (budgets > limit + 1e-9) return false;
             if (Math.abs(leased.totalPosition()) > limit + 1e-9) return false;
             if (Math.abs(central.totalPosition()) > limit + 1e-9) return false;
+            // Head office's bounds always contain the central bank's true position.
+            const bounds = central.desks.earth.believedTotal()!;
+            const truth = central.totalPosition();
+            if (bounds.low > truth + 1e-9 || truth > bounds.high + 1e-9) return false;
           }
           apply(arena, e);
         }

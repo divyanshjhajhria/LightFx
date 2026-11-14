@@ -1,4 +1,5 @@
 import type { SimConfig } from './config';
+import type { RefusalReason, TraceDetail } from './trace';
 import { BODIES, perBody } from './types';
 import type { BodyId, Customer, Mode, Payload, PerBody, Quote, StrategyId } from './types';
 
@@ -10,6 +11,11 @@ export interface DeskCtx {
   /** Variance of the price move the desk cannot see yet: sum over remote components of sigma^2 * info age. */
   gapVar: number;
   send(to: BodyId, p: Payload): void;
+  /**
+   * Tell the story of a visitor trade (World stamps the time and place). Only for customers with a `trade` id.
+   * Returns nothing, and a desk must never let what it reports change what it decides.
+   */
+  report?(trade: number, e: TraceDetail): void;
 }
 
 export interface Desk {
@@ -36,6 +42,12 @@ export interface Desk {
   heardAgo(now: number): number | null;
   /** Netting read-out: units held back for open offers, and cumulative units and cash handed out and taken in. */
   netting(): NettingStats;
+  /** Why maxFill would turn down a trade in direction `dir`. Only for explaining; never used to decide. */
+  refusalReason(dir: 1 | -1, ctx: DeskCtx): RefusalReason;
+  /** What this desk believes the bank holds in total, or null if it keeps no such figure. */
+  believedTotal(): { low: number; high: number } | null;
+  /** A visitor has walked away. Only a desk still holding that customer does anything. */
+  cancelVisitor?(trade: number, ctx: DeskCtx): void;
 }
 
 export interface NettingStats {
@@ -77,6 +89,12 @@ abstract class BaseDesk implements Desk {
   netting(): NettingStats {
     return { reserved: 0, outUnits: 0, outCash: 0, inUnits: 0, inCash: 0 };
   }
+
+  refusalReason(_dir: 1 | -1, _ctx: DeskCtx): RefusalReason {
+    return 'limit';
+  }
+
+  abstract believedTotal(): { low: number; high: number } | null;
 
   /** Two-way price around `fair`, shifted against inventory so the desk attracts trades that flatten it. */
   protected makeQuote(fair: number, halfSpread: number, skewScale: number): Quote {
@@ -171,6 +189,17 @@ export class LeasedDesk extends BaseDesk {
 
   heardAgo(now: number): number {
     return Math.min(...this.peers.map((p) => now - this.peerInfo[p].sentAt));
+  }
+
+  refusalReason(_dir: 1 | -1, ctx: DeskCtx): RefusalReason {
+    return this.mode(ctx.now) === 'reduce-only' ? 'playing-safe' : 'allowance';
+  }
+
+  /** My position plus the last positions my peers reported. Kept for display: this desk never relies on it. */
+  believedTotal(): { low: number; high: number } {
+    let t = this.pos;
+    for (const p of this.peers) t += this.peerInfo[p].pos;
+    return { low: t, high: t };
   }
 
   mode(now: number): Mode {
@@ -319,6 +348,13 @@ export class NaiveDesk extends BaseDesk {
     return 'normal';
   }
 
+  /** My position plus the last positions I heard. This is the figure I trade against. */
+  believedTotal(): { low: number; high: number } {
+    let t = this.pos;
+    for (const p of this.peers) t += this.peerPos[p].pos;
+    return { low: t, high: t };
+  }
+
   quote(ctx: DeskCtx): Quote {
     return this.makeQuote(ctx.fair, this.cfg.baseHalfSpread, this.cfg.limit / BODIES.length);
   }
@@ -367,7 +403,8 @@ export class CentralDesk extends BaseDesk {
   // Head office: the bank's true position is always within [lower, upper].
   private upper = 0;
   private lower = 0;
-  private readonly approved = new Map<string, number>();
+  /** Approved and not yet confirmed: the amount, and the visitor trade it belongs to if any. */
+  private readonly approved = new Map<string, { delta: number; trade?: number }>();
   // Remote desk: customers waiting on an approval.
   private readonly waiting = new Map<string, Customer>();
   private lastRfqAt = 0;
@@ -384,6 +421,11 @@ export class CentralDesk extends BaseDesk {
 
   mode(): Mode {
     return !this.isHq && this.lastRfqAt - this.lastApproveAt > 30 ? 'halted' : 'normal';
+  }
+
+  /** Head office knows the bank's position lies within its bounds. Remote desks keep no figure. */
+  believedTotal(): { low: number; high: number } | null {
+    return this.isHq ? { low: this.lower, high: this.upper } : null;
   }
 
   quote(ctx: DeskCtx): Quote {
@@ -409,18 +451,34 @@ export class CentralDesk extends BaseDesk {
     const id = `${this.id}-${c.id}`;
     this.waiting.set(id, c);
     this.lastRfqAt = ctx.now;
-    ctx.send('earth', { kind: 'rfq', from: this.id, id, delta: c.side === 'sell' ? c.size : -c.size });
+    // World fills in when the request lands; the desk does not know the delay.
+    if (c.trade !== undefined) ctx.report?.(c.trade, { kind: 'asked-earth', landsAt: 0 });
+    ctx.send('earth', { kind: 'rfq', from: this.id, id, delta: c.side === 'sell' ? c.size : -c.size, trade: c.trade });
     return true;
+  }
+
+  cancelVisitor(trade: number, ctx: DeskCtx): void {
+    for (const [id, c] of this.waiting) {
+      if (c.trade !== trade) continue;
+      // Dropping the customer means a later approval is answered "not filled", which releases Earth's bound.
+      this.waiting.delete(id);
+      ctx.report?.(trade, { kind: 'gave-up', waited: ctx.now - c.arrivedAt });
+    }
   }
 
   onMessage(p: Payload, ctx: DeskCtx): void {
     if (p.kind === 'rfq' && this.isHq) {
       const ok = p.delta > 0 ? this.upper + p.delta <= this.cfg.limit : this.lower + p.delta >= -this.cfg.limit;
-      if (!ok) return;
+      if (!ok) {
+        // A refusal sends nothing: the remote desk simply never hears back.
+        if (p.trade !== undefined) ctx.report?.(p.trade, { kind: 'earth-declined' });
+        return;
+      }
       if (p.delta > 0) this.upper += p.delta;
       else this.lower += p.delta;
-      this.approved.set(p.id, p.delta);
-      ctx.send(p.from, { kind: 'approve', id: p.id });
+      this.approved.set(p.id, { delta: p.delta, trade: p.trade });
+      if (p.trade !== undefined) ctx.report?.(p.trade, { kind: 'earth-approved', landsAt: 0 });
+      ctx.send(p.from, { kind: 'approve', id: p.id, trade: p.trade });
     } else if (p.kind === 'approve' && !this.isHq) {
       this.lastApproveAt = ctx.now;
       const c = this.waiting.get(p.id);
@@ -430,10 +488,18 @@ export class CentralDesk extends BaseDesk {
       const edge = c?.side === 'sell' ? (ctx.fair - price) / ctx.fair : (price - ctx.fair) / ctx.fair;
       const filled = !!c && ctx.now - c.arrivedAt <= c.patience && edge <= c.tol;
       if (c && filled) this.applyFill(c.side === 'sell' ? c.size : -c.size, price);
-      ctx.send('earth', { kind: 'confirm', id: p.id, filled });
+      if (c?.trade !== undefined) {
+        const waited = ctx.now - c.arrivedAt;
+        ctx.report?.(
+          c.trade,
+          filled ? { kind: 'filled', units: c.size, of: c.size, price, allowanceLeft: null, waited } : { kind: 'too-late', waited },
+        );
+      }
+      ctx.send('earth', { kind: 'confirm', id: p.id, filled, trade: p.trade });
     } else if (p.kind === 'confirm' && this.isHq) {
-      const delta = this.approved.get(p.id);
-      if (delta === undefined) return;
+      const entry = this.approved.get(p.id);
+      if (entry === undefined) return;
+      const delta = entry.delta;
       this.approved.delete(p.id);
       // Approval moved one bound. A fill moves the other to match; a miss moves the first one back.
       if (p.filled) {

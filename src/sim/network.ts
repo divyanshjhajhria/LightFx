@@ -26,7 +26,8 @@ export class DelayNetwork {
     private readonly delayMin: (a: BodyId, b: BodyId) => number,
   ) {}
 
-  send(from: BodyId, to: BodyId, payload: Payload, now: number): boolean {
+  /** `trade` tags the envelope with the visitor trade whose news it carries; it changes nothing about delivery. */
+  send(from: BodyId, to: BodyId, payload: Payload, now: number, trade?: number): boolean {
     if (!this.linkOpen(from, to)) {
       this.dropped++;
       this.drops.push({ id: this.dropped, from, to, at: now, kind: payload.kind });
@@ -40,6 +41,7 @@ export class DelayNetwork {
       sentAt: now,
       deliverAt: now + this.delayMin(from, to),
       payload,
+      trade,
     });
     return true;
   }

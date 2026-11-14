@@ -39,6 +39,8 @@ export interface SimConfig {
   patienceMean: number;
   /** Probability that a customer at this desk sells Mars credits, outside a panic. */
   sellProb: PerBody<number>;
+  /** Minutes a visitor (a person using the app) will wait for an answer before walking away. */
+  visitorPatience: number;
 
   /** Volatility of the Earth-sourced component, per sqrt(minute), when using the synthetic feed. */
   sigmaEarth: number;
@@ -75,6 +77,7 @@ export const DEFAULT_CONFIG: SimConfig = {
   tolMean: 0.0012,
   patienceMean: 3,
   sellProb: { earth: 0.5, moon: 0.5, mars: 0.5 },
+  visitorPatience: 60,
 
   sigmaEarth: 0.00012,
   sigmaMars: 0.00015,
