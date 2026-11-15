@@ -37,6 +37,8 @@ export interface RunResult {
   over: boolean;
   allowanceShared: number;
   unitsCancelled: number;
+  /** Mark-to-market value at the end of the run. */
+  profit: number;
 }
 
 export interface Side {
@@ -140,6 +142,7 @@ export function runOurs(sq: Square, seed: number, cfg: SimConfig): RunResult {
     over: w.metrics.breachTicks > 0,
     allowanceShared: w.allowanceShared(),
     unitsCancelled: w.metrics.nettedUnits,
+    profit: w.pnl(),
   };
 }
 

@@ -14,7 +14,8 @@
     "package": "tsx scripts/package.ts",
     "facts": "tsx scripts/facts.ts",
     "together": "tsx scripts/together.ts",
-    "grants": "tsx scripts/grant-study.ts"
+    "grants": "tsx scripts/grant-study.ts",
+    "tune": "tsx scripts/tune.ts"
   },
   "dependencies": {
     "react": "^19.3.1",

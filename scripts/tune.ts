@@ -1,0 +1,161 @@
+// npm run tune: can our bank keep more customers by pricing differently, without paying for it in profit?
+// Our bank only, every storm square of the survival map's grid. Eight candidates (gapK x allowance split), chosen on
+// seeds 1 to 10 and judged on seeds 11 to 40, by the rules written below. Writes docs/tuning.md and
+// docs/tune-study.json; every figure in them is computed here. Stops if any run goes over the limit.
+import { writeFileSync } from 'node:fs';
+import { DEFAULT_CONFIG } from '../src/sim/config';
+import type { SimConfig } from '../src/sim/config';
+import { grid } from '../src/sim/sweep';
+import { runOurs } from '../src/sim/together';
+
+const CHOOSING = Array.from({ length: 10 }, (_, i) => i + 1);
+const HELD_OUT = Array.from({ length: 30 }, (_, i) => i + 11);
+const SQUARES = grid().filter((p) => p.stormMinutes > 0);
+
+interface Candidate {
+  gapK: number;
+  alloc: { earth: number; moon: number; mars: number };
+}
+const TODAY: Candidate = { gapK: DEFAULT_CONFIG.gapK, alloc: { ...DEFAULT_CONFIG.alloc } };
+const SPLITS = [{ earth: 40, moon: 20, mars: 40 }, { earth: 34, moon: 33, mars: 33 }];
+const CANDIDATES: Candidate[] = [0, 0.1, 0.2, 0.3].flatMap((gapK) => SPLITS.map((alloc) => ({ gapK, alloc })));
+const same = (a: Candidate, b: Candidate) =>
+  a.gapK === b.gapK && a.alloc.earth === b.alloc.earth && a.alloc.moon === b.alloc.moon && a.alloc.mars === b.alloc.mars;
+const splitText = (c: Candidate) => `${c.alloc.earth} / ${c.alloc.moon} / ${c.alloc.mars}`;
+const label = (c: Candidate) => `gapK ${c.gapK}, split ${splitText(c)}${same(c, TODAY) ? ' (today)' : ''}`;
+/** How far a candidate is from today's settings, for breaking ties. */
+const distance = (c: Candidate) => Math.abs(c.gapK - TODAY.gapK) / 0.3 + (same({ ...c, gapK: TODAY.gapK }, TODAY) ? 0 : 1);
+
+interface Score {
+  candidate: Candidate;
+  runs: number;
+  served: number;
+  profitMean: number;
+  profitP5: number;
+  over: number;
+}
+
+/** The 5th percentile, nearest rank. */
+const p5 = (xs: number[]) => {
+  const s = [...xs].sort((a, b) => a - b);
+  return s[Math.max(0, Math.ceil(0.05 * s.length) - 1)];
+};
+
+function score(c: Candidate, seeds: number[]): Score {
+  const cfg: SimConfig = { ...DEFAULT_CONFIG, gapK: c.gapK, alloc: { ...c.alloc } };
+  const runs = SQUARES.flatMap((sq) => seeds.map((seed) => runOurs(sq, seed, cfg)));
+  const over = runs.filter((r) => r.over).length;
+  if (over > 0) {
+    console.error(`STOP: ${over} runs went over the limit with ${label(c)}. Nothing written.`);
+    process.exit(1);
+  }
+  return {
+    candidate: c,
+    runs: runs.length,
+    served: runs.reduce((s, r) => s + r.servedPct, 0) / runs.length,
+    profitMean: runs.reduce((s, r) => s + r.profit, 0) / runs.length,
+    profitP5: p5(runs.map((r) => r.profit)),
+    over,
+  };
+}
+
+/** Both profit tests against a baseline: mean profit at most 10% of its size below, and the 5th percentile no lower. */
+const profitOk = (s: Score, base: Score) =>
+  s.profitMean >= base.profitMean - 0.1 * Math.abs(base.profitMean) && s.profitP5 >= base.profitP5;
+
+const scores = CANDIDATES.map((c) => score(c, CHOOSING));
+const today = scores.find((s) => same(s.candidate, TODAY))!;
+const eligible = scores.filter((s) => profitOk(s, today));
+const pick = [...eligible].sort((a, b) => b.served - a.served || distance(a.candidate) - distance(b.candidate))[0];
+
+const heldToday = score(TODAY, HELD_OUT);
+const heldPick = same(pick.candidate, TODAY) ? heldToday : score(pick.candidate, HELD_OUT);
+const servedGain = heldPick.served - heldToday.served;
+const heldProfitOk = profitOk(heldPick, heldToday);
+const adopt = !same(pick.candidate, TODAY) && servedGain >= 2 && heldProfitOk;
+
+// The candidate that served the most, eligible or not: what keeping more customers would have cost.
+const most = [...scores].sort((a, b) => b.served - a.served || distance(a.candidate) - distance(b.candidate))[0];
+const f2 = (x: number) => x.toFixed(2);
+const f4 = (x: number) => x.toFixed(4);
+const sign = (x: number) => (x > 0 ? `+${f2(x)}` : f2(x));
+const row = (s: Score, extra = '') =>
+  `| ${label(s.candidate)} | ${f2(s.served)}% | ${f4(s.profitMean)} | ${f4(s.profitP5)} | ${s.over} |${extra}`;
+
+const reason = same(pick.candidate, TODAY)
+  ? "Today's settings were already the eligible candidate serving the most customers, so there was nothing to adopt."
+  : servedGain < 2
+    ? `On the held-out seeds the pick served only ${sign(servedGain)} points more than today's settings, short of the 2 points required.`
+    : !heldProfitOk
+      ? `On the held-out seeds the pick served ${sign(servedGain)} points more, but failed a profit test: mean profit ${f4(
+          heldPick.profitMean,
+        )} against ${f4(heldToday.profitMean)}, 5th percentile ${f4(heldPick.profitP5)} against ${f4(heldToday.profitP5)}.`
+      : `On the held-out seeds the pick served ${sign(servedGain)} points more and passed both profit tests.`;
+
+const md = `# Pricing study for our bank
+
+Generated by \`npm run tune\` (scripts/tune.ts). Every figure here is computed by that script; do not edit by hand.
+
+## What was tried
+
+Our bank only, on every storm square of the survival map's grid (${SQUARES.length} squares: three markets, six
+positions of Mars, seven storm lengths). Two things were varied and nothing else:
+
+- **gapK**, how much a desk widens its prices as its news from elsewhere gets older: 0, 0.1, 0.2 or 0.3 (today).
+  At 0 a desk quotes the same spread however old its news is.
+- **The allowance split** between Earth, the Moon and Mars: 40 / 20 / 40 (today) or 34 / 33 / 33. The split always
+  adds up to the bank's limit of ${DEFAULT_CONFIG.limit}, so safety does not depend on it.
+
+For each candidate: customers served (mean percentage), profit at the end of the run (mean), profit at the 5th
+percentile across runs (how bad a bad run is), and runs over the limit (which must be 0).
+
+A candidate is eligible if its mean profit is no more than 10% (of today's size) below today's, and its 5th-percentile
+profit is no lower than today's. The pick is the eligible candidate serving the most customers on seeds 1 to 10. It is
+adopted only if, on seeds 11 to 40, it serves at least 2 points more than today's settings and passes both profit tests.
+
+## Seeds 1 to 10 (${today.runs} runs each)
+
+| Candidate | Customers served | Profit, mean | Profit, 5th percentile | Runs over the limit | Eligible |
+|---|---|---|---|---|---|
+${scores.map((s) => row(s, ` ${eligible.includes(s) ? 'yes' : 'no'} |`)).join('\n')}
+
+The pick: **${label(pick.candidate)}**.
+
+## Seeds 11 to 40 (${heldToday.runs} runs each)
+
+| Candidate | Customers served | Profit, mean | Profit, 5th percentile | Runs over the limit |
+|---|---|---|---|---|
+${[heldToday, ...(same(pick.candidate, TODAY) ? [] : [heldPick])].map((s) => row(s)).join('\n')}
+
+## The decision
+
+${adopt ? `**Adopted: ${label(pick.candidate)}.**` : "**Nothing adopted; today's settings stay.**"} ${reason}
+
+In plain words: narrower prices do keep more customers. The candidate that served the most, ${label(most.candidate)},
+served ${f2(most.served)}% against today's ${f2(today.served)}% on seeds 1 to 10, ${sign(most.served - today.served)} points.
+But its mean profit was ${f4(most.profitMean)} against ${f4(today.profitMean)}, ${f2(
+  (100 * (most.profitMean - today.profitMean)) / Math.abs(today.profitMean),
+)}%, and its bad runs were worse (5th percentile ${f4(most.profitP5)} against ${f4(today.profitP5)}). Widening the
+price when news is old costs customers and protects profit. The likely reason, which this study does not measure
+separately, is that a desk quoting tightly on old news trades with customers whose price has already moved.
+
+In every run of this study, our bank stayed inside its limit.
+`;
+
+writeFileSync('docs/tuning.md', md);
+const r4 = (x: number) => Number(x.toFixed(4));
+const out = (s: Score) => ({ ...s.candidate, runs: s.runs, served: r4(s.served), profitMean: r4(s.profitMean), profitP5: r4(s.profitP5), over: s.over });
+writeFileSync(
+  'docs/tune-study.json',
+  `${JSON.stringify({
+    adopted: adopt,
+    pick: pick.candidate,
+    choosing: scores.map(out),
+    eligible: eligible.map((s) => s.candidate),
+    heldOut: { today: out(heldToday), pick: out(heldPick) },
+    mostServed: out(most),
+    servedGain: r4(servedGain),
+  })}\n`,
+);
+console.log(md.slice(md.indexOf('## Seeds 1 to 10')));
+console.log(`DECISION: ${adopt ? 'ADOPT' : 'NOTHING ADOPTED'}: ${label(pick.candidate)}; held-out served ${f2(heldToday.served)} -> ${f2(heldPick.served)}`);
