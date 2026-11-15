@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { LlmClient } from '../src/agents/llm';
-import { AgentRunner, extractJson } from '../src/agents/runner';
+import { AgentRunner, LIVE_CALL_BUDGET, extractJson, resetLiveBudget } from '../src/agents/runner';
 import type { LeasedDesk } from '../src/sim/desks';
 import { startScenario } from '../src/sim/scenario';
 import { SCENARIOS } from '../src/sim/scenarios';
@@ -82,7 +82,7 @@ describe('the agent runner', () => {
     expect(r.status('earth')).toMatchObject({ state: 'decided', sinceRealSeconds: 2 });
   });
 
-  it('accepts fenced JSON, and refuses prose around JSON or garbage, applying nothing', async () => {
+  it('accepts fenced JSON; refuses prose around JSON or garbage, and the stand-in decides instead', async () => {
     expect(extractJson('```json\n{"pricing":"keen"}\n```')).toEqual({ pricing: 'keen' });
     expect(extractJson('```\n{"pricing":"keen"}\n```')).toEqual({ pricing: 'keen' });
     expect(() => extractJson('Sure! {"pricing":"keen"}')).toThrow();
@@ -99,9 +99,28 @@ describe('the agent runner', () => {
     await flush();
     expect(r.status('earth').state).toBe('decided');
     for (const b of ['moon', 'mars'] as const) {
-      expect(r.status(b)).toMatchObject({ state: 'rejected', calls: 1, rejected: 1 });
-      expect((arena.worlds.leased.desks[b] as LeasedDesk).lastDirective()).toBe(null);
-      expect(arena.worlds.leased.runBy(b)).toBe('rules (agent silent)');
+      expect(r.status(b)).toMatchObject({ state: 'decided', calls: 1, rejected: 1 });
+      // The refused answer is logged as refused; nothing of it is applied. The stand-in's decision is applied instead.
+      const mine = r.log().filter((e) => e.body === b);
+      expect(mine.map((e) => e.directive?.source ?? null)).toEqual([null, 'stand-in']);
+      expect((arena.worlds.leased.desks[b] as LeasedDesk).lastDirective()!.directive.source).toBe('stand-in');
+      expect(arena.worlds.leased.runBy(b)).toBe('stand-in');
+    }
+    expect(r.fallbacks).toBe(2);
+  });
+
+  it('after the live call budget, asks no model and lets the stand-in decide', async () => {
+    resetLiveBudget(LIVE_CALL_BUDGET);
+    try {
+      const { arena, clock } = setup();
+      const { client, calls } = fakeClient();
+      const r = new AgentRunner(arena, { mode: 'live', client, clock });
+      r.tick();
+      expect(calls.length).toBe(0);
+      expect(r.budgetSpent).toBe(true);
+      for (const b of BODIES) expect(arena.worlds.leased.runBy(b)).toBe('stand-in');
+    } finally {
+      resetLiveBudget();
     }
   });
 
@@ -165,29 +184,28 @@ describe('the agent runner', () => {
     expect(r.status('earth').state).toBe('thinking');
   });
 
-  it('on timeout applies nothing; 30 simulated minutes later the desk is silent and runs exactly as rules', async () => {
-    const run = async (agents: boolean) => {
-      const { arena, clock, advance } = setup(21);
-      const { client } = fakeClient(); // never answers
-      const r = agents ? new AgentRunner(arena, { mode: 'live', client, clock }) : null;
-      const frames: string[] = [];
-      for (let i = 0; i < 40 * 4; i++) {
-        arena.step();
-        advance(0.5);
-        r?.tick();
-        frames.push(JSON.stringify(arena.worlds.leased.deskViews().map((v) => [v.pos, v.budget, v.bid, v.ask, v.mode])));
-      }
-      return { r, frames, arena };
-    };
-    const agent = await run(true);
-    const rules = await run(false);
-    expect(agent.frames).toEqual(rules.frames);
-    for (const b of BODIES) {
-      expect(agent.r!.status(b).state).toBe('silent');
-      expect((agent.arena.worlds.leased.desks[b] as LeasedDesk).lastDirective()).toBe(null);
-      expect(agent.arena.worlds.leased.runBy(b)).toBe('rules (agent silent)');
+  it('on timeout the answer is abandoned and the stand-in decides that one instead', async () => {
+    const { arena, clock, advance } = setup(21);
+    const { client, calls } = fakeClient(); // never answers
+    const r = new AgentRunner(arena, { mode: 'live', client, clock });
+    r.tick();
+    expect(calls.length).toBe(3);
+    for (let i = 0; i < 17; i++) {
+      arena.step();
+      advance(0.5);
+      r.tick();
     }
-    expect(agent.r!.log().some((e) => e.checks.error === 'timeout')).toBe(true);
+    // Over eight real seconds have passed: every desk's call is given up and the stand-in has decided.
+    for (const b of BODIES) {
+      expect(arena.worlds.leased.runBy(b)).toBe('stand-in');
+      expect(r.log().filter((e) => e.body === b).slice(0, 2).map((e) => e.checks.error ?? e.directive?.source)).toEqual(['timeout', 'stand-in']);
+    }
+    expect(r.fallbacks).toBe(3);
+    // A late answer to an abandoned call is ignored.
+    const logged = r.log().length;
+    calls[0].resolve(GOOD);
+    await flush();
+    expect(r.log().length).toBe(logged);
   });
 
   it('replays a recorded stand-in session to the same result on the same seed', () => {
@@ -211,7 +229,8 @@ describe('the agent runner', () => {
     expect(w2.metrics).toEqual(w1.metrics);
     expect(w2.pnl()).toBe(w1.pnl());
     expect(BODIES.map((b) => w2.desks[b].budget())).toEqual(BODIES.map((b) => w1.desks[b].budget()));
-    expect(rep.r.log().every((e) => e.directive === null || e.directive.source === 'replay')).toBe(true);
+    // A recorded stand-in decision replays as the stand-in's, never as a model's.
+    expect(rep.r.log().every((e) => e.directive === null || e.directive.source === 'stand-in')).toBe(true);
   });
 
   it("three stand-ins through 'solar-storm': no breach; notes delivered before, lost during, gives after", () => {

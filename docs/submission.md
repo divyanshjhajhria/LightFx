@@ -34,14 +34,12 @@ office on Earth for approval.
 desk knows, decides its pricing, caution and allowance, and sends notes at light speed. Its answer passes through a
 guard that clamps every field, so no answer can break the limit; a test throws hostile answers at it to prove it.
 
-[IF A REAL MODEL SESSION HAS BEEN RECORDED]
-Three language-model agents ran our desks in this recorded session, making `agents.session.decisions` decisions (the
-figure from docs/facts.md).
-[/IF]
-[IF NOT]
-The desks can be run by language-model agents behind a guard; so far we have exercised that path with a scripted
-stand-in and with random and hostile inputs, not with a live model.
-[/IF]
+A real model, Claude Haiku 5.5, ran our three desks through the guided demo and two storms: 123 calls, a typical
+answer in 3.1 seconds (4.8 seconds for the slowest one in twenty), 120 decisions applied, and the bank never past its
+limit (0.93 of it at most). Total cost: $0.0563. The models do get things wrong, and the guard and checks catch it:
+one asked to give away allowance it could not spare and the guard gave nothing, 31 notes failed our truth check and
+were not sent (208 were), and 2 replies came back cut off and the scripted stand-in decided instead. A recording of
+the guided demo, with the model's 39 decisions, replays with no key and no network.
 
 Prices are simulated.
 
@@ -66,7 +64,7 @@ side, in 30/30 runs each, never over the limit.
 
 ## How we built it
 
-TypeScript, React and a canvas, on a seeded simulation so every bank faces the same customers, prices and storms. 324
+TypeScript, React and a canvas, on a seeded simulation so every bank faces the same customers, prices and storms. 325
 automated tests, including property tests that fail if any storm, failure or answer pushes our bank past its limit.
 The survival map is a headless sweep of the same simulation.
 
@@ -77,7 +75,7 @@ losses too.
 
 ## What we would do next
 
-Record a session with a live model; let allowance follow the flow of customers, where working together pays most.
+Fewer notes failing our truth check, through a better prompt; let allowance follow the flow of customers, where working together pays most.
 
 ## The challenges
 

@@ -10,7 +10,7 @@ import { BODY_LABEL, BODY_NAME, clock } from './theme';
 
 /** Who is deciding, in the words the interface uses. Only a real model, live or recorded, is ever called AI. */
 export interface Decider {
-  /** "AI agents (live)", "AI agents (replay)", "Scripted stand-in", "Scripted stand-in (replay)" or "Rules". */
+  /** "Live models", "Recorded models", "Stand-in" or "Rules". */
   label: string;
   /** True only for a language model, live or recorded. */
   ai: boolean;
@@ -18,8 +18,7 @@ export interface Decider {
 
 /** The chip beside our bank's name: who decides, or nothing when it runs on rules. */
 export function runByChip(label: string): string | null {
-  if (label === 'Rules') return null;
-  return label.replace(/ \((live|replay)\)$/, ', $1');
+  return label === 'Rules' ? null : label;
 }
 
 const PRICING = { keen: 'Pricing keenly', steady: 'Pricing steadily', cautious: 'Pricing cautiously' } as const;
@@ -163,6 +162,7 @@ export function AgentsPanel({
           Each of our desks is run by its own {decider.ai ? 'AI agent' : 'scripted stand-in'}, which sees only what its desk
           knows. Notes travel at light speed on the desks' own messages, and can be lost.
         </p>
+        {runByChip(decider.label) && <span className="chip">{runByChip(decider.label)}</span>}
         {onSave && (
           <button className="quiet" onClick={onSave}>
             Save this session

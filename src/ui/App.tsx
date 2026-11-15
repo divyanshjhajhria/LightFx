@@ -133,16 +133,14 @@ function initialAgentMode(): AgentMode {
   return LLM && (AGENTS_PARAM === null || AGENTS_PARAM === 'live') ? 'live' : 'off';
 }
 
-/** What the interface calls each mode. Only a real model, live or recorded, is ever called AI. */
-function deciderFor(mode: AgentMode, session: SessionFile | null): Decider {
-  if (mode === 'live') return { label: 'AI agents (live)', ai: true };
+/** What the interface calls each mode: "Live models", "Recorded models" or "Stand-in". Only a real model is called AI. */
+function deciderFor(mode: AgentMode, session: SessionFile | null, budgetSpent = false): Decider {
+  if (mode === 'live') return LLM && !budgetSpent ? { label: 'Live models', ai: true } : budgetSpent ? { label: 'Stand-in', ai: false } : { label: 'Rules', ai: false };
   if (mode === 'replay') {
     // A session recorded from the stand-in says so; only a real model's recording is called AI.
-    return session?.recordedWith === 'stand-in'
-      ? { label: 'Scripted stand-in (replay)', ai: false }
-      : { label: 'AI agents (replay)', ai: session !== null };
+    return session?.recordedWith === 'live' ? { label: 'Recorded models', ai: true } : { label: 'Stand-in', ai: false };
   }
-  if (mode === 'stand-in') return { label: 'Scripted stand-in', ai: false };
+  if (mode === 'stand-in') return { label: 'Stand-in', ai: false };
   return { label: 'Rules', ai: false };
 }
 
@@ -639,8 +637,17 @@ export function App() {
     agentMode: 'off' as AgentMode,
     session: null as SessionFile | null,
   });
-  // The guided demo stays on rules (so the pitch cannot be derailed), unless opened with ?demo&agents=replay.
-  const effMode: AgentMode = presenting ? (AGENTS_PARAM === 'replay' && session ? 'replay' : 'off') : agentMode;
+  // The guided demo stays on rules (so the pitch cannot be derailed), unless opened with ?demo&agents=live, replay or
+  // stand-in.
+  const effMode: AgentMode = presenting
+    ? AGENTS_PARAM === 'replay' && session
+      ? 'replay'
+      : AGENTS_PARAM === 'live' && LLM
+        ? 'live'
+        : AGENTS_PARAM === 'stand-in'
+          ? 'stand-in'
+          : 'off'
+    : agentMode;
   live.current = { ...live.current, running, speed, view, presenting, agentMode: effMode, session };
 
   useEffect(() => {
@@ -1124,7 +1131,7 @@ export function App() {
   // Desk words hold for 4 real seconds, or 30 simulated minutes at the current speed if that is shorter.
   const holdMs = Math.min(4000, (30 / (g ? g.speed : speed)) * 1000);
   const shown = new Set<BodyId>([...bubbleBodies, ...(selected ? [selected] : [])]);
-  const decider = deciderFor(effMode, session);
+  const decider = deciderFor(effMode, session, runner.current?.budgetSpent ?? false);
   const r = runner.current && runner.current.arena === a ? runner.current : null;
   const voices = perBody((b): Words => {
     const brief = deskBriefing(a.worlds[view], b);

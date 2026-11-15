@@ -94,7 +94,7 @@ interface IntelProps {
   mode: TimeMode;
   /** The chart's hover read-out (off in presenter mode). */
   hover: boolean;
-  /** Who runs our bank's desks, in the interface's words ("AI agents (live)", "Scripted stand-in", "Rules"). */
+  /** Who runs our bank's desks, in the interface's words ("Live models", "Recorded models", "Stand-in", "Rules"). */
   runBy?: string;
   onView: (s: StrategyId) => void;
   onSelect: (s: StrategyId, b: BodyId) => void;

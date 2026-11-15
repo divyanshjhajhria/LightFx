@@ -26,8 +26,8 @@ Reply with ONE JSON object and nothing else:
  "caution": "normal" | "play-safe",
  "give": {"<desk>": whole units of your SPARE allowance to hand over now},
  "ask": {"<desk>": whole units of allowance you want from them},
- "noteTo": {"<desk>": "at most 140 characters, plain words"},
- "thought": "one or two sentences, first person, on what you decided and why"}
+ "noteTo": {"<desk>": "one or two short sentences, under 140 characters, plain words"},
+ "thought": "one or two sentences, under 200 characters, first person, on what you decided and why"}
 
 Guidance. Price keenly when you hold little and your news is fresh; cautiously
 when your news is old or customers are all going one way. Ask for allowance

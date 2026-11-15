@@ -35,14 +35,17 @@ Above about 8x a desk cannot think often enough to keep its directive fresh, so 
 the tab says so ("following rules").
 
 **Who is deciding, honestly.** The top bar says "Our desks run by" one of:
-- **AI agents (live):** a model answers each desk now. Needs a key (below).
-- **AI agents (replay):** decisions a model made earlier, from `public/agents/session.json`, applied at the same
+- **Live models:** a model answers each desk now. Needs a key (below). An answer slower than 8 seconds, an error or an
+  answer that will not parse is dropped and the stand-in decides that one; after 400 calls in one page load the
+  stand-in decides everything and the label says "Stand-in".
+- **Recorded models:** decisions a model made earlier, from `public/agents/session.json`, applied at the same
   simulated moments through the same guard, with no network. A recorded thought is shown only if it is still true.
 - **Scripted stand-in:** a small fixed function (`src/agents/standIn.ts`) for building and testing without a key. It
-  is not AI and is never labelled AI. A session recorded from it replays as "Scripted stand-in (replay)".
+  is not AI and is never labelled AI, labelled "Stand-in". A session recorded from it replays as "Stand-in".
 - **Rules:** the desks' built-in behaviour, exactly as before agents existed.
 
-The guided demo always runs on rules unless opened with `?demo&agents=replay`. **The survival map is measured on
+The guided demo runs on rules unless opened with `?demo&agents=replay`, `?demo&agents=live` or
+`?demo&agents=stand-in`. **The survival map is measured on
 rules**, not agents: the sweep never runs a model.
 
 **Adding a key and recording a session.** Put this in `.env.local` (git-ignored), then `npm run dev`:
@@ -58,10 +61,18 @@ file to `public/agents/session.json`, and `?agents=replay` plays it back on any 
 **Never deploy a build made with a key:** the key would be in the page for anyone to read. Build for deployment with
 `VITE_LLM_KEY` unset.
 
-As of this step **no real model has run**: there was no key on the machine it was built on. Everything was verified
-with the scripted stand-in and a fake model client. On the same storm the stand-in served fewer customers than the
-rules (50.0% against 56.4% over ten seeds, Far side, a 90-minute storm), with no breach either way; it gives
-allowance only when asked, while the rules rebalance on their own.
+**What happened with a real model (step 14).** Claude Haiku 5.5 ran our three desks through the guided demo and two
+presets (solar storm and rush on Mars, at 8x), all in real time: 123 calls, a typical answer in 3.1 seconds and the
+slowest one in twenty in 4.8, 120 decisions applied, never over the limit and at most 0.93 of it, for $0.0563 in
+all (`npm run facts`, from `docs/live/runs.json`; `scripts/live-agents.ts --runs` repeats it with a key). The models
+got things wrong: one tried to give away allowance it could not spare and the guard gave nothing; 31 notes failed the
+truth check and were not sent (208 were); 2 replies came back cut off and the stand-in decided instead. A first run
+had most notes refused for running past three sentences; the prompt now asks for one or two
+(`docs/live/runs-before-prompt-fix.json`). The guided-demo run is recorded in `public/agents/session.json`.
+
+On the same storm the stand-in served fewer customers than the rules (50.0% against 56.4% over ten seeds, Far side, a
+90-minute storm), with no breach either way; it gives allowance only when asked, while the rules rebalance on their
+own.
 
 ## Running the demo
 
@@ -339,7 +350,7 @@ The screen has three parts: a top bar, the solar system, and a bottom panel.
   it has left before its limit ("None" in red at or over it), how long a message takes from Earth to Mars one way
   ("No signal" in red when the link is down), and the time. Then the scenario menu, and **More**, which holds
   everything else: the Earth and Mars prices, the seed and Restart (it asks once before throwing the run away),
-  "Show market news", "Show all desk voices", "Reset view", who runs our desks (AI agents live or replay,
+  "Show market news", "Show all desk voices", "Reset view", who runs our desks (live or recorded models,
   scripted stand-in, or rules, with why any is unavailable), "Open the survival map", and the keys.
 - **The dock** under the solar system: play or pause; the speed (one button, a menu of six); **Place a trade**,
   the one filled button, which opens the selected desk (Mars if none) with its ticket ready; Solar storm and Market

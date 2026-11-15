@@ -78,17 +78,12 @@ drones or satellites. We would love your questions."
    Narrower prices would have kept more (68.51% served against 58.86% in our pricing study) but cost half the
    profit (-50.53%), so we kept them.
 
-2. **Is this a real multi-agent LLM system?**
-   [IF A REAL MODEL SESSION HAS BEEN RECORDED]
-   Yes: in our recorded session three language-model agents ran our desks, making `agents.session.decisions`
-   decisions (the figure from docs/facts.md). Each sees only its own desk and talks to the others by notes that travel
-   at light speed and can be lost.
-   [/IF]
-   [IF NOT]
-   The desks can be run by language-model agents behind a guard, each seeing only its own desk and sending notes at
-   light speed. So far we have exercised that path with a scripted stand-in and with random and hostile inputs, not
-   with a live model.
-   [/IF]
+2. **Is this a real multi-agent LLM system?** Yes. A real model (Claude Haiku 5.5) ran each of our three desks through
+   the guided demo and two storms: 123 calls, a typical answer in 3.1 seconds, 120 decisions applied through the guard,
+   and the bank never passed its limit (0.93 of it at most). Each desk sees only its own data and sends notes at light
+   speed. The models do get things wrong: one tried to give away allowance it could not spare and the guard gave
+   nothing, 31 notes failed our truth check and were never sent, and 2 replies came back cut off, so the scripted
+   stand-in decided those instead. Our recorded demo replays the model's 39 decisions with no network.
 
 3. **What stops a model breaking the limit?** Its answer reaches the bank only through a guard that clamps every field:
    it can give away only spare allowance, through a counter that only goes up. A property test fires random and hostile
@@ -113,7 +108,7 @@ drones or satellites. We would love your questions."
    sits idle. Moving spare allowance when desks can talk, and netting opposite positions, lets more customers trade:
    netting alone raised volume by 12.02% with Mars close, in 30/30 runs.
 
-9. **How do you know it holds?** 324 automated tests, including property tests that try random storms, cuts, trades and
+9. **How do you know it holds?** 325 automated tests, including property tests that try random storms, cuts, trades and
    hostile agent answers. And the survival map: 5,040 storms, 23.8 million simulation steps, 0 breaches for our bank.
 
 10. **What happens when the storm ends?** The desks catch up: positions, allowance and notes flow again. Earth finally

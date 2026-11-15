@@ -17,6 +17,7 @@ import type { StrategyId } from '../src/sim/types';
 import { Arena } from '../src/sim/world';
 import { readResults } from '../src/ui/Presenter';
 import { summarise } from '../src/ui/sweepSummary';
+import { loadLiveRuns, summariseRun } from './live-report';
 import type { Figures } from '../src/ui/sweepSummary';
 import { FLOW, MINUTES, SEEDS, nettingStudy } from './nettingStudy';
 
@@ -269,6 +270,40 @@ if (existsSync(session)) {
   fact('agents.session.recordedwith', f.recordedWith);
   fact('agents.session.decisions', f.entries.filter((e) => e.directive).length);
   fact('agents.session.refused', f.entries.filter((e) => !e.directive).length);
+  const fs = f as unknown as { model?: string; entries: { directive: { source?: string } | null }[] };
+  fact('agents.session.model', fs.model ?? 'none');
+  fact('agents.session.modeldecisions', fs.entries.filter((e) => e.directive?.source === 'model').length);
+  fact('agents.session.standindecisions', fs.entries.filter((e) => e.directive?.source === 'stand-in').length);
+}
+
+// The live runs of step 14 (scripts/live-agents.ts --runs), if recorded: the guided demo and two presets.
+const liveRuns = loadLiveRuns();
+if (liveRuns) {
+  const all = liveRuns.map(summariseRun);
+  const lat = all.flatMap((s) => s.lat).sort((a, b) => a - b);
+  const at = (p: number) => lat[Math.max(0, Math.ceil(p * lat.length) - 1)];
+  const sum = (k: 'calls' | 'answered' | 'parseFail' | 'timeouts' | 'httpErrors' | 'modelDecisions' | 'fallbacks' | 'inTok' | 'outTok' | 'breachTicks') =>
+    all.reduce((a, s) => a + s[k], 0);
+  fact('live.runs', all.map((s) => s.name).join(', '));
+  fact('live.calls', sum('calls'));
+  fact('live.answered', sum('answered'));
+  fact('live.latency.median.seconds', (at(0.5) / 1000).toFixed(1));
+  fact('live.latency.p95.seconds', (at(0.95) / 1000).toFixed(1));
+  fact('live.latency.over4s', lat.filter((x) => x > 4000).length);
+  fact('live.timeouts', sum('timeouts'));
+  fact('live.httperrors', sum('httpErrors'));
+  fact('live.parsefailures', sum('parseFail'));
+  fact('live.modeldecisions', sum('modelDecisions'));
+  fact('live.standinfallbacks', sum('fallbacks'));
+  const reasons: Record<string, number> = {};
+  for (const s of all) for (const [k, v] of Object.entries(s.reasons)) reasons[k] = (reasons[k] ?? 0) + v;
+  for (const [k, v] of Object.entries(reasons).sort()) fact(`live.changed.${k.replace(/[^a-z0-9]+/gi, '-').replace(/-+$/, '').toLowerCase()}`, v);
+  fact('live.notes.sent', all.reduce((a, s) => a + s.notes.length, 0));
+  fact('live.tokens.in', sum('inTok'));
+  fact('live.tokens.out', sum('outTok'));
+  fact('live.cost.dollars', all.reduce((a, s) => a + s.cost, 0).toFixed(4));
+  fact('live.breachticks', sum('breachTicks'));
+  fact('live.peak.limit.multiple', Math.max(...all.map((s) => s.peak)).toFixed(2));
 }
 
 writeFileSync('docs/facts.md', `${lines.join('\n')}\n`);

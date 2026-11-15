@@ -1,0 +1,5140 @@
+{
+ "version": 1,
+ "recordedWith": "live",
+ "model": "anthropic claude-haiku-5-5",
+ "seed": 42,
+ "separationDeg": 150,
+ "scenarioId": null,
+ "controls": [],
+ "entries": [
+  {
+   "body": "moon",
+   "simTime": 62,
+   "realSeconds": 2.071134792,
+   "briefing": {
+    "body": "moon",
+    "strategy": "leased",
+    "now": 60,
+    "mode": "normal",
+    "holds": 0,
+    "allowance": 32,
+    "allowanceSpare": 29,
+    "bid": 0.9997107756238067,
+    "ask": 1.0007296692782475,
+    "localPrice": 1.000220222451027,
+    "remoteNewsAgeMin": 21,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 1.75,
+      "lastKnownHolds": 3
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 21.75,
+      "lastKnownHolds": -8
+     }
+    ],
+    "thinksBankHolds": {
+     "low": -5,
+     "high": -5
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 58.25,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 12.5,
+      "kind": "handed-over",
+      "to": "earth",
+      "units": 3
+     },
+     {
+      "t": 16.5,
+      "kind": "allowance-received",
+      "from": "earth",
+      "units": 2
+     },
+     {
+      "t": 20.75,
+      "kind": "allowance-received",
+      "from": "mars",
+      "units": 5
+     },
+     {
+      "t": 28.5,
+      "kind": "handed-over",
+      "to": "earth",
+      "units": 4
+     },
+     {
+      "t": 38.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     },
+     {
+      "t": 46.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     }
+    ],
+    "inbox": [],
+    "lastDirective": null,
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 28,
+      "ageMin": 1.75
+     },
+     {
+      "body": "mars",
+      "spare": 27,
+      "ageMin": 21.75
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"earth\": 0, \"mars\": 0}, \"ask\": {\"earth\": 0, \"mars\": 0}, \"noteTo\": {\"earth\": \"Moon holds 0 of 32 allowance, 29 spare. Earth news is fresh; we can keep trading steadily. Tell us if you need spare allowance.\", \"mars\": \"Moon holds 0 of 32 allowance, 29 spare. Your last word is 22 minutes old. We are trading steadily and will keep within our allowance.\"}, \"thought\": \"I hold nothing and have plenty of spare allowance, so I can quote near the mid price. Earth's news is fresh, Mars's is 22 minutes old, so I stay steady and move nothing until someone asks.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Moon holds 0 of 32 allowance, 29 spare. Earth news is fresh; we can keep trading steadily. Tell us if you need spare allowance.",
+     "mars": "Moon holds 0 of 32 allowance, 29 spare. Your last word is 22 minutes old. We are trading steadily and will keep within our allowance."
+    },
+    "thought": "I hold nothing and have plenty of spare allowance, so I can quote near the mid price. Earth's news is fresh, Mars's is 22 minutes old, so I stay steady and move nothing until someone asks.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "mars",
+   "simTime": 62,
+   "realSeconds": 2.0742475419999997,
+   "briefing": {
+    "body": "mars",
+    "strategy": "leased",
+    "now": 60,
+    "mode": "normal",
+    "holds": -4,
+    "allowance": 35,
+    "allowanceSpare": 31,
+    "bid": 0.9996793833193431,
+    "ask": 1.000609463075075,
+    "localPrice": 1.0001178501959438,
+    "remoteNewsAgeMin": 21,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 21.75,
+      "lastKnownHolds": 0
+     },
+     {
+      "body": "moon",
+      "heardMinAgo": 21.75,
+      "lastKnownHolds": -1
+     }
+    ],
+    "thinksBankHolds": {
+     "low": -5,
+     "high": -5
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 38.25,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 0.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 5
+     }
+    ],
+    "inbox": [],
+    "lastDirective": null,
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 31,
+      "ageMin": 21.75
+     },
+     {
+      "body": "moon",
+      "spare": 31,
+      "ageMin": 21.75
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"earth\": 0, \"moon\": 0}, \"ask\": {\"earth\": 0, \"moon\": 0}, \"noteTo\": {\"earth\": \"Mars holds -4 of 35 allowance, 31 spare. News is 21 min old. Mars is steady and will trade inside own allowance.\", \"moon\": \"Mars holds -4 of 35 allowance, 31 spare. Gave you 5 earlier. Mars is steady and will trade inside own allowance.\"}, \"thought\": \"I hold -4 with 31 spare, so I am not short and need no allowance. News is 21 minutes old, so I will price steadily and keep trading normally until the peers report again.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Mars holds -4 of 35 allowance, 31 spare. News is 21 min old. Mars is steady and will trade inside own allowance.",
+     "moon": "Mars holds -4 of 35 allowance, 31 spare. Gave you 5 earlier. Mars is steady and will trade inside own allowance."
+    },
+    "thought": "I hold -4 with 31 spare, so I am not short and need no allowance. News is 21 minutes old, so I will price steadily and keep trading normally until the peers report again.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "earth",
+   "simTime": 62,
+   "realSeconds": 2.1379524589999996,
+   "briefing": {
+    "body": "earth",
+    "strategy": "leased",
+    "now": 60,
+    "mode": "normal",
+    "holds": 3,
+    "allowance": 33,
+    "allowanceSpare": 28,
+    "bid": 0.9995897346438708,
+    "ask": 1.0006022636490066,
+    "localPrice": 1.0001190116987972,
+    "remoteNewsAgeMin": 21,
+    "peers": [
+     {
+      "body": "moon",
+      "heardMinAgo": 1.75,
+      "lastKnownHolds": 0
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 21.75,
+      "lastKnownHolds": -8
+     }
+    ],
+    "thinksBankHolds": {
+     "low": -5,
+     "high": -5
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 58.25,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 8.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 14.5,
+      "kind": "took-on",
+      "from": "moon",
+      "units": 3
+     },
+     {
+      "t": 16.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 2
+     },
+     {
+      "t": 30.5,
+      "kind": "took-on",
+      "from": "moon",
+      "units": 4
+     },
+     {
+      "t": 36.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 44.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     }
+    ],
+    "inbox": [],
+    "lastDirective": null,
+    "spareByLastWord": [
+     {
+      "body": "moon",
+      "spare": 29,
+      "ageMin": 1.75
+     },
+     {
+      "body": "mars",
+      "spare": 27,
+      "ageMin": 21.75
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"moon\": 0, \"mars\": 0}, \"ask\": {\"moon\": 0, \"mars\": 0}, \"noteTo\": {\"moon\": \"Earth holds 3, allowance 33 with 28 spare. Price steady near parity. Will give spare if you ask.\", \"mars\": \"Earth holds 3, 28 spare allowance. Mars news is 21 min old; I am pricing steady and will give if you ask.\"}, \"thought\": \"I hold 3 with 28 spare and fresh Moon news, so I can serve customers at steady prices without asking anyone for allowance. Mars news is old, so I stay cautious on size and keep my spare ready for any desk that asks.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "moon": "Earth holds 3, allowance 33 with 28 spare. Price steady near parity. Will give spare if you ask.",
+     "mars": "Earth holds 3, 28 spare allowance. Mars news is 21 min old; I am pricing steady and will give if you ask."
+    },
+    "thought": "I hold 3 with 28 spare and fresh Moon news, so I can serve customers at steady prices without asking anyone for allowance. Mars news is old, so I stay cautious on size and keep my spare ready for any desk that asks.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "earth",
+   "simTime": 65.5,
+   "realSeconds": 5.760874959,
+   "briefing": {
+    "body": "earth",
+    "strategy": "leased",
+    "now": 64,
+    "mode": "normal",
+    "holds": 5,
+    "allowance": 33,
+    "allowanceSpare": 26,
+    "bid": 0.9992838291732743,
+    "ask": 1.0002960483131214,
+    "localPrice": 0.9998282818477291,
+    "remoteNewsAgeMin": 21,
+    "peers": [
+     {
+      "body": "moon",
+      "heardMinAgo": 1.75,
+      "lastKnownHolds": 3
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 21.75,
+      "lastKnownHolds": -8
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 0,
+     "high": 0
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 58.25,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 8.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 14.5,
+      "kind": "took-on",
+      "from": "moon",
+      "units": 3
+     },
+     {
+      "t": 16.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 2
+     },
+     {
+      "t": 30.5,
+      "kind": "took-on",
+      "from": "moon",
+      "units": 4
+     },
+     {
+      "t": 36.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 44.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     }
+    ],
+    "inbox": [
+     {
+      "from": "moon",
+      "text": "Moon holds 0 of 32 allowance, 29 spare. Earth news is fresh; we can keep trading steadily. Tell us if you need spare allowance.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 1.5
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold 3 with 28 spare and fresh Moon news, so I can serve customers at steady prices without asking anyone for allowance. Mars news is old, so I stay cautious on size and keep my spare ready for any desk that asks.",
+     "minAgo": 2
+    },
+    "spareByLastWord": [
+     {
+      "body": "moon",
+      "spare": 26,
+      "ageMin": 1.75
+     },
+     {
+      "body": "mars",
+      "spare": 27,
+      "ageMin": 21.75
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"moon\": 0, \"mars\": 0}, \"ask\": {\"moon\": 0, \"mars\": 0}, \"noteTo\": {\"moon\": \"Earth holds 5 of 33 allowance, 26 spare. Trading steadily now. Ask if you need spare allowance; I can give it.\", \"mars\": \"Earth holds 5 of 33 allowance, 26 spare. Mars news is 21 minutes old. Playing steady; tell us if you need allowance.\"}, \"thought\": \"I hold 5 with 26 spare and fresh Moon news, so steady pricing serves customers without asking anyone for allowance. Mars news is old, so I keep my spare ready for any desk that asks.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "moon": "Earth holds 5 of 33 allowance, 26 spare. Trading steadily now. Ask if you need spare allowance; I can give it.",
+     "mars": "Earth holds 5 of 33 allowance, 26 spare. Mars news is 21 minutes old. Playing steady; tell us if you need allowance."
+    },
+    "thought": "I hold 5 with 26 spare and fresh Moon news, so steady pricing serves customers without asking anyone for allowance. Mars news is old, so I keep my spare ready for any desk that asks.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "moon",
+   "simTime": 67.5,
+   "realSeconds": 7.696661459,
+   "briefing": {
+    "body": "moon",
+    "strategy": "leased",
+    "now": 64,
+    "mode": "normal",
+    "holds": 0,
+    "allowance": 32,
+    "allowanceSpare": 29,
+    "bid": 0.999261971444113,
+    "ask": 1.0002804076825271,
+    "localPrice": 0.99977118956332,
+    "remoteNewsAgeMin": 21,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 1.75,
+      "lastKnownHolds": 3
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 21.75,
+      "lastKnownHolds": -8
+     }
+    ],
+    "thinksBankHolds": {
+     "low": -5,
+     "high": -5
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 58.25,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 12.5,
+      "kind": "handed-over",
+      "to": "earth",
+      "units": 3
+     },
+     {
+      "t": 16.5,
+      "kind": "allowance-received",
+      "from": "earth",
+      "units": 2
+     },
+     {
+      "t": 20.75,
+      "kind": "allowance-received",
+      "from": "mars",
+      "units": 5
+     },
+     {
+      "t": 28.5,
+      "kind": "handed-over",
+      "to": "earth",
+      "units": 4
+     },
+     {
+      "t": 38.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     },
+     {
+      "t": 46.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     }
+    ],
+    "inbox": [
+     {
+      "from": "earth",
+      "text": "Earth holds 3, allowance 33 with 28 spare. Price steady near parity. Will give spare if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 1.5
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold nothing and have plenty of spare allowance, so I can quote near the mid price. Earth's news is fresh, Mars's is 22 minutes old, so I stay steady and move nothing until someone asks.",
+     "minAgo": 2
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 28,
+      "ageMin": 1.75
+     },
+     {
+      "body": "mars",
+      "spare": 27,
+      "ageMin": 21.75
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"steady\",\"caution\":\"normal\",\"give\":{\"earth\":0,\"mars\":0},\"ask\":{\"earth\":0,\"mars\":0},\"noteTo\":{\"earth\":\"Moon holds 0, allowance 32 with 29 spare. Quoting steady near parity. I can give spare allowance if you ask.\",\"mars\":\"Moon holds 0, with 29 spare allowance. Your news is 22 min old. Tell us what you hold and need, and we will help.\"},\"thought\":\"I hold nothing and have 29 spare, so steady pricing near mid is safe. Earth's news is fresh, but Mars is 22 minutes stale, so I will move nothing until someone asks.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Moon holds 0, allowance 32 with 29 spare. Quoting steady near parity. I can give spare allowance if you ask.",
+     "mars": "Moon holds 0, with 29 spare allowance. Your news is 22 min old. Tell us what you hold and need, and we will help."
+    },
+    "thought": "I hold nothing and have 29 spare, so steady pricing near mid is safe. Earth's news is fresh, but Mars is 22 minutes stale, so I will move nothing until someone asks.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "moon",
+   "simTime": 69.75,
+   "realSeconds": 9.847565584,
+   "briefing": {
+    "body": "moon",
+    "strategy": "leased",
+    "now": 68,
+    "mode": "normal",
+    "holds": 0,
+    "allowance": 32,
+    "allowanceSpare": 29,
+    "bid": 0.9986551631346531,
+    "ask": 0.9996729809210598,
+    "localPrice": 0.9991640720278564,
+    "remoteNewsAgeMin": 21,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 1.75,
+      "lastKnownHolds": 11
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 21.75,
+      "lastKnownHolds": -5
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 6,
+     "high": 6
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 58.25,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 12.5,
+      "kind": "handed-over",
+      "to": "earth",
+      "units": 3
+     },
+     {
+      "t": 16.5,
+      "kind": "allowance-received",
+      "from": "earth",
+      "units": 2
+     },
+     {
+      "t": 20.75,
+      "kind": "allowance-received",
+      "from": "mars",
+      "units": 5
+     },
+     {
+      "t": 28.5,
+      "kind": "handed-over",
+      "to": "earth",
+      "units": 4
+     },
+     {
+      "t": 38.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     },
+     {
+      "t": 46.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     }
+    ],
+    "inbox": [
+     {
+      "from": "earth",
+      "text": "Earth holds 5 of 33 allowance, 26 spare. Trading steadily now. Ask if you need spare allowance; I can give it.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 1.5
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 3, allowance 33 with 28 spare. Price steady near parity. Will give spare if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 5.5
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold nothing and have 29 spare, so steady pricing near mid is safe. Earth's news is fresh, but Mars is 22 minutes stale, so I will move nothing until someone asks.",
+     "minAgo": 0.5
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 20,
+      "ageMin": 1.75
+     },
+     {
+      "body": "mars",
+      "spare": 30,
+      "ageMin": 21.75
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"earth\": 0, \"mars\": 0}, \"ask\": {\"earth\": 0, \"mars\": 0}, \"noteTo\": {\"earth\": \"Moon holds 0 of 32 allowance, 29 spare. Trading steadily near parity. Will ask if my spare runs low.\", \"mars\": \"Moon holds 0 of 32 allowance, 29 spare. Trading steadily. Please send news when you can; I plan to hold my spare for customers.\"}, \"thought\": \"I hold nothing and have 29 spare, so steady pricing near parity serves customers safely. Earth's news is fresh, Mars is 21 minutes stale, so I will move nothing until someone asks.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Moon holds 0 of 32 allowance, 29 spare. Trading steadily near parity. Will ask if my spare runs low.",
+     "mars": "Moon holds 0 of 32 allowance, 29 spare. Trading steadily. Please send news when you can; I plan to hold my spare for customers."
+    },
+    "thought": "I hold nothing and have 29 spare, so steady pricing near parity serves customers safely. Earth's news is fresh, Mars is 21 minutes stale, so I will move nothing until someone asks.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "earth",
+   "simTime": 70.5,
+   "realSeconds": 10.512344459,
+   "briefing": {
+    "body": "earth",
+    "strategy": "leased",
+    "now": 68.5,
+    "mode": "normal",
+    "holds": 16,
+    "allowance": 33,
+    "allowanceSpare": 15,
+    "bid": 0.9984926915154061,
+    "ask": 0.9994991722556971,
+    "localPrice": 0.9991179444512504,
+    "remoteNewsAgeMin": 20.5,
+    "peers": [
+     {
+      "body": "moon",
+      "heardMinAgo": 0.25,
+      "lastKnownHolds": 0
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 22.25,
+      "lastKnownHolds": -5
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 11,
+     "high": 11
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.75,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 8.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 14.5,
+      "kind": "took-on",
+      "from": "moon",
+      "units": 3
+     },
+     {
+      "t": 16.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 2
+     },
+     {
+      "t": 30.5,
+      "kind": "took-on",
+      "from": "moon",
+      "units": 4
+     },
+     {
+      "t": 36.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 44.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     }
+    ],
+    "inbox": [
+     {
+      "from": "moon",
+      "text": "Moon holds 0, allowance 32 with 29 spare. Quoting steady near parity. I can give spare allowance if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 0
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 0 of 32 allowance, 29 spare. Earth news is fresh; we can keep trading steadily. Tell us if you need spare allowance.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 6
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold 5 with 26 spare and fresh Moon news, so steady pricing serves customers without asking anyone for allowance. Mars news is old, so I keep my spare ready for any desk that asks.",
+     "minAgo": 3
+    },
+    "spareByLastWord": [
+     {
+      "body": "moon",
+      "spare": 29,
+      "ageMin": 0.25
+     },
+     {
+      "body": "mars",
+      "spare": 30,
+      "ageMin": 22.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"moon\": 0, \"mars\": 0}, \"ask\": {\"moon\": 0, \"mars\": 0}, \"noteTo\": {\"moon\": \"Earth holds 16 of 33 allowance, 15 spare. Trading steadily near parity. I will give spare if you ask.\", \"mars\": \"Earth holds 16 of 33, 15 spare. Moon holds 0 with 29 spare. Plan: keep steady, ready to give if you ask.\"}, \"thought\": \"I hold 16 with 15 spare, which is under a fifth of my allowance, so I am not asking yet. Moon news is fresh and it has 29 spare, so steady pricing serves customers while Mars news is old.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "moon": "Earth holds 16 of 33 allowance, 15 spare. Trading steadily near parity. I will give spare if you ask.",
+     "mars": "Earth holds 16 of 33, 15 spare. Moon holds 0 with 29 spare. Plan: keep steady, ready to give if you ask."
+    },
+    "thought": "I hold 16 with 15 spare, which is under a fifth of my allowance, so I am not asking yet. Moon news is fresh and it has 29 spare, so steady pricing serves customers while Mars news is old.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "mars",
+   "simTime": 71.25,
+   "realSeconds": 11.473296834000001,
+   "briefing": {
+    "body": "mars",
+    "strategy": "leased",
+    "now": 68,
+    "mode": "normal",
+    "holds": -3,
+    "allowance": 35,
+    "allowanceSpare": 32,
+    "bid": 0.9994415761566856,
+    "ask": 1.000371434661853,
+    "localPrice": 0.9998865802669293,
+    "remoteNewsAgeMin": 21,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 21.75,
+      "lastKnownHolds": 2
+     },
+     {
+      "body": "moon",
+      "heardMinAgo": 21.75,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": -5,
+     "high": -5
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 38.25,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 0.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 5
+     },
+     {
+      "t": 68,
+      "kind": "visitor-trade",
+      "side": "sell",
+      "units": 5,
+      "filled": 5
+     }
+    ],
+    "inbox": [],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold -4 with 31 spare, so I am not short and need no allowance. News is 21 minutes old, so I will price steadily and keep trading normally until the peers report again.",
+     "minAgo": 6
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 29,
+      "ageMin": 21.75
+     },
+     {
+      "body": "moon",
+      "spare": 28,
+      "ageMin": 21.75
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"earth\": 0, \"moon\": 0}, \"ask\": {\"earth\": 0, \"moon\": 0}, \"noteTo\": {\"earth\": \"Mars holds -3 with 32 spare of 35 allowance. No need now. Mars trading steadily; will send spare if you ask.\", \"moon\": \"Mars holds -3 with 32 spare of 35 allowance. No need now. Mars trading steadily; will send spare if you ask.\"}, \"thought\": \"I hold -3 with 32 spare, so I am not short and need no allowance. News is about 22 minutes old, so I will price steadily and keep trading normally until the peers report again.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Mars holds -3 with 32 spare of 35 allowance. No need now. Mars trading steadily; will send spare if you ask.",
+     "moon": "Mars holds -3 with 32 spare of 35 allowance. No need now. Mars trading steadily; will send spare if you ask."
+    },
+    "thought": "I hold -3 with 32 spare, so I am not short and need no allowance. News is about 22 minutes old, so I will price steadily and keep trading normally until the peers report again.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "moon",
+   "simTime": 74.25,
+   "realSeconds": 14.346527709,
+   "briefing": {
+    "body": "moon",
+    "strategy": "leased",
+    "now": 72.5,
+    "mode": "normal",
+    "holds": 3,
+    "allowance": 32,
+    "allowanceSpare": 26,
+    "bid": 0.998608604111344,
+    "ask": 0.9996183685907418,
+    "localPrice": 0.9991371532666354,
+    "remoteNewsAgeMin": 20.5,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 0.25,
+      "lastKnownHolds": 16
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 22.25,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 15,
+     "high": 15
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.75,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 12.5,
+      "kind": "handed-over",
+      "to": "earth",
+      "units": 3
+     },
+     {
+      "t": 16.5,
+      "kind": "allowance-received",
+      "from": "earth",
+      "units": 2
+     },
+     {
+      "t": 20.75,
+      "kind": "allowance-received",
+      "from": "mars",
+      "units": 5
+     },
+     {
+      "t": 28.5,
+      "kind": "handed-over",
+      "to": "earth",
+      "units": 4
+     },
+     {
+      "t": 38.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     },
+     {
+      "t": 46.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     }
+    ],
+    "inbox": [
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steadily near parity. I will give spare if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 0
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 5 of 33 allowance, 26 spare. Trading steadily now. Ask if you need spare allowance; I can give it.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 6
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 3, allowance 33 with 28 spare. Price steady near parity. Will give spare if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 10
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold nothing and have 29 spare, so steady pricing near parity serves customers safely. Earth's news is fresh, Mars is 21 minutes stale, so I will move nothing until someone asks.",
+     "minAgo": 2.75
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 15,
+      "ageMin": 0.25
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 22.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"steady\",\"caution\":\"normal\",\"give\":{\"earth\":0,\"mars\":0},\"ask\":{\"earth\":0,\"mars\":0},\"noteTo\":{\"earth\":\"Moon holds 3 with 26 spare of 32 allowance. Steady near parity. Ask if you need spare; I can give.\",\"mars\":\"Moon holds 3, 26 spare of 32 allowance. Steady near parity. Ask if you need spare; I can give.\"},\"thought\":\"I hold 3 with 26 spare, well above a fifth, so I need nothing. Earth's news is fresh and it is short of nothing, so I will keep steady pricing and move nothing until someone asks.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Moon holds 3 with 26 spare of 32 allowance. Steady near parity. Ask if you need spare; I can give.",
+     "mars": "Moon holds 3, 26 spare of 32 allowance. Steady near parity. Ask if you need spare; I can give."
+    },
+    "thought": "I hold 3 with 26 spare, well above a fifth, so I need nothing. Earth's news is fresh and it is short of nothing, so I will keep steady pricing and move nothing until someone asks.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "earth",
+   "simTime": 75.25,
+   "realSeconds": 15.271673084,
+   "briefing": {
+    "body": "earth",
+    "strategy": "leased",
+    "now": 72.5,
+    "mode": "normal",
+    "holds": 16,
+    "allowance": 33,
+    "allowanceSpare": 15,
+    "bid": 0.998479898387589,
+    "ask": 0.9994863662324057,
+    "localPrice": 0.9991051433124174,
+    "remoteNewsAgeMin": 20.5,
+    "peers": [
+     {
+      "body": "moon",
+      "heardMinAgo": 0.25,
+      "lastKnownHolds": 3
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 22.25,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 15,
+     "high": 15
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.75,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 8.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 14.5,
+      "kind": "took-on",
+      "from": "moon",
+      "units": 3
+     },
+     {
+      "t": 16.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 2
+     },
+     {
+      "t": 30.5,
+      "kind": "took-on",
+      "from": "moon",
+      "units": 4
+     },
+     {
+      "t": 36.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 44.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     }
+    ],
+    "inbox": [
+     {
+      "from": "moon",
+      "text": "Moon holds 0 of 32 allowance, 29 spare. Trading steadily near parity. Will ask if my spare runs low.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 2
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 0, allowance 32 with 29 spare. Quoting steady near parity. I can give spare allowance if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 4
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 0 of 32 allowance, 29 spare. Earth news is fresh; we can keep trading steadily. Tell us if you need spare allowance.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 10
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold 16 with 15 spare, which is under a fifth of my allowance, so I am not asking yet. Moon news is fresh and it has 29 spare, so steady pricing serves customers while Mars news is old.",
+     "minAgo": 2
+    },
+    "spareByLastWord": [
+     {
+      "body": "moon",
+      "spare": 26,
+      "ageMin": 0.25
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 22.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"steady\",\"caution\":\"normal\",\"give\":{\"moon\":0,\"mars\":0},\"ask\":{\"moon\":0,\"mars\":0},\"noteTo\":{\"moon\":\"Earth holds 16 of 33 allowance, 15 spare. Trading steady. I will ask if my spare drops below a fifth.\",\"mars\":\"Earth holds 16 of 33 allowance, 15 spare. Last heard 22 min ago. Trading steady and will not play safe yet.\"},\"thought\":\"I hold 16 with 15 spare, well above a fifth of my allowance, so I need nothing. Moon news is fresh and it has spare, so I keep steady pricing and normal caution while Mars news is old.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "moon": "Earth holds 16 of 33 allowance, 15 spare. Trading steady. I will ask if my spare drops below a fifth.",
+     "mars": "Earth holds 16 of 33 allowance, 15 spare. Last heard 22 min ago. Trading steady and will not play safe yet."
+    },
+    "thought": "I hold 16 with 15 spare, well above a fifth of my allowance, so I need nothing. Moon news is fresh and it has spare, so I keep steady pricing and normal caution while Mars news is old.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "moon",
+   "simTime": 77.75,
+   "realSeconds": 17.971443125,
+   "briefing": {
+    "body": "moon",
+    "strategy": "leased",
+    "now": 76.5,
+    "mode": "normal",
+    "holds": 3,
+    "allowance": 32,
+    "allowanceSpare": 26,
+    "bid": 0.9989349931235953,
+    "ask": 0.9999450876382341,
+    "localPrice": 0.9994637150318915,
+    "remoteNewsAgeMin": 20.5,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 0.25,
+      "lastKnownHolds": 16
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 22.25,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 15,
+     "high": 15
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.75,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 12.5,
+      "kind": "handed-over",
+      "to": "earth",
+      "units": 3
+     },
+     {
+      "t": 16.5,
+      "kind": "allowance-received",
+      "from": "earth",
+      "units": 2
+     },
+     {
+      "t": 20.75,
+      "kind": "allowance-received",
+      "from": "mars",
+      "units": 5
+     },
+     {
+      "t": 28.5,
+      "kind": "handed-over",
+      "to": "earth",
+      "units": 4
+     },
+     {
+      "t": 38.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     },
+     {
+      "t": 46.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     }
+    ],
+    "inbox": [
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steady. I will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 0
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steadily near parity. I will give spare if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 4
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 5 of 33 allowance, 26 spare. Trading steadily now. Ask if you need spare allowance; I can give it.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 10
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 3, allowance 33 with 28 spare. Price steady near parity. Will give spare if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 14
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold 3 with 26 spare, well above a fifth, so I need nothing. Earth's news is fresh and it is short of nothing, so I will keep steady pricing and move nothing until someone asks.",
+     "minAgo": 2.25
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 17,
+      "ageMin": 0.25
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 22.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"earth\": 0, \"mars\": 0}, \"ask\": {\"earth\": 0, \"mars\": 0}, \"noteTo\": {\"earth\": \"Moon holds 3 of 32 allowance, 26 spare. Trading steady near parity. Ask if you need spare; I can give it.\", \"mars\": \"Moon holds 3 of 32 allowance, 26 spare. Trading steady. Ask if you need spare allowance; I can give it.\"}, \"thought\": \"I hold 3 with 26 spare, well above a fifth, so I need nothing and Earth's news is fresh. I'll keep steady pricing and move nothing until someone asks.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Moon holds 3 of 32 allowance, 26 spare. Trading steady near parity. Ask if you need spare; I can give it.",
+     "mars": "Moon holds 3 of 32 allowance, 26 spare. Trading steady. Ask if you need spare allowance; I can give it."
+    },
+    "thought": "I hold 3 with 26 spare, well above a fifth, so I need nothing and Earth's news is fresh. I'll keep steady pricing and move nothing until someone asks.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "earth",
+   "simTime": 79.5,
+   "realSeconds": 19.570557167,
+   "briefing": {
+    "body": "earth",
+    "strategy": "leased",
+    "now": 76.5,
+    "mode": "normal",
+    "holds": 17,
+    "allowance": 33,
+    "allowanceSpare": 16,
+    "bid": 0.9988613506434422,
+    "ask": 0.9998682029921738,
+    "localPrice": 0.9994944640233319,
+    "remoteNewsAgeMin": 20.5,
+    "peers": [
+     {
+      "body": "moon",
+      "heardMinAgo": 0.25,
+      "lastKnownHolds": 3
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 22.25,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 16,
+     "high": 16
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.75,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 8.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 14.5,
+      "kind": "took-on",
+      "from": "moon",
+      "units": 3
+     },
+     {
+      "t": 16.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 2
+     },
+     {
+      "t": 30.5,
+      "kind": "took-on",
+      "from": "moon",
+      "units": 4
+     },
+     {
+      "t": 36.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 44.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     }
+    ],
+    "inbox": [
+     {
+      "from": "moon",
+      "text": "Moon holds 3 with 26 spare of 32 allowance. Steady near parity. Ask if you need spare; I can give.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 0
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 0 of 32 allowance, 29 spare. Trading steadily near parity. Will ask if my spare runs low.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 6
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 0, allowance 32 with 29 spare. Quoting steady near parity. I can give spare allowance if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 8
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 0 of 32 allowance, 29 spare. Earth news is fresh; we can keep trading steadily. Tell us if you need spare allowance.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 14
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold 16 with 15 spare, well above a fifth of my allowance, so I need nothing. Moon news is fresh and it has spare, so I keep steady pricing and normal caution while Mars news is old.",
+     "minAgo": 1.25
+    },
+    "spareByLastWord": [
+     {
+      "body": "moon",
+      "spare": 26,
+      "ageMin": 0.25
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 22.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"moon\": 0, \"mars\": 0}, \"ask\": {\"moon\": 0, \"mars\": 0}, \"noteTo\": {\"moon\": \"Earth holds 17 of 33 allowance, 16 spare. I need nothing now. Keeping steady pricing near parity. Will ask if my spare runs low.\", \"mars\": \"Earth holds 17 with 16 spare of 33 allowance. Your news is old, so I am trading steadily. Ask if you need spare allowance.\"}, \"thought\": \"I hold 17 with 16 spare, nearly half my allowance, so I need nothing and have nothing urgent to give. Moon's news is fresh and steady, Mars's is old, so I keep steady pricing and normal caution.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "mars": "Earth holds 17 with 16 spare of 33 allowance. Your news is old, so I am trading steadily. Ask if you need spare allowance."
+    },
+    "thought": "I hold 17 with 16 spare, nearly half my allowance, so I need nothing and have nothing urgent to give. Moon's news is fresh and steady, Mars's is old, so I keep steady pricing and normal caution.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [
+     "moon"
+    ],
+    "given": {}
+   }
+  },
+  {
+   "body": "earth",
+   "simTime": 84,
+   "realSeconds": 24.1773255,
+   "briefing": {
+    "body": "earth",
+    "strategy": "leased",
+    "now": 80.5,
+    "mode": "normal",
+    "holds": 18,
+    "allowance": 33,
+    "allowanceSpare": 15,
+    "bid": 0.9988071737982707,
+    "ask": 0.9998333832713336,
+    "localPrice": 0.9994602357888314,
+    "remoteNewsAgeMin": 22.5,
+    "peers": [
+     {
+      "body": "moon",
+      "heardMinAgo": 0.25,
+      "lastKnownHolds": 6
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 24.25,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 20,
+     "high": 20
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.75,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 14.5,
+      "kind": "took-on",
+      "from": "moon",
+      "units": 3
+     },
+     {
+      "t": 16.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 2
+     },
+     {
+      "t": 30.5,
+      "kind": "took-on",
+      "from": "moon",
+      "units": 4
+     },
+     {
+      "t": 36.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 44.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 76.75,
+      "kind": "handed-over",
+      "to": "mars",
+      "units": 1
+     }
+    ],
+    "inbox": [
+     {
+      "from": "moon",
+      "text": "Moon holds 3 of 32 allowance, 26 spare. Trading steady near parity. Ask if you need spare; I can give it.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 2
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 3 with 26 spare of 32 allowance. Steady near parity. Ask if you need spare; I can give.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 4
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 0 of 32 allowance, 29 spare. Trading steadily near parity. Will ask if my spare runs low.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 10
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 0, allowance 32 with 29 spare. Quoting steady near parity. I can give spare allowance if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 12
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 0 of 32 allowance, 29 spare. Earth news is fresh; we can keep trading steadily. Tell us if you need spare allowance.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 18
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold 17 with 16 spare, nearly half my allowance, so I need nothing and have nothing urgent to give. Moon's news is fresh and steady, Mars's is old, so I keep steady pricing and normal caution.",
+     "minAgo": 1
+    },
+    "spareByLastWord": [
+     {
+      "body": "moon",
+      "spare": 23,
+      "ageMin": 0.25
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 24.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"moon\": 0, \"mars\": 0}, \"ask\": {\"moon\": 0, \"mars\": 0}, \"noteTo\": {\"moon\": \"Earth holds 18 of 33 allowance, 15 spare. Need nothing now. Keeping steady pricing; will ask if my spare runs low.\", \"mars\": \"Earth holds 18 of 33 allowance, 15 spare. Your news is 24 min old. Need nothing now; playing steady and will ask if we need help.\"}, \"thought\": \"I hold 18 with 15 spare, well above a fifth of my allowance, so I neither ask nor give. Moon's news is fresh and steady, while Mars is 24 minutes old, so I keep steady pricing and normal caution.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "moon": "Earth holds 18 of 33 allowance, 15 spare. Need nothing now. Keeping steady pricing; will ask if my spare runs low.",
+     "mars": "Earth holds 18 of 33 allowance, 15 spare. Your news is 24 min old. Need nothing now; playing steady and will ask if we need help."
+    },
+    "thought": "I hold 18 with 15 spare, well above a fifth of my allowance, so I neither ask nor give. Moon's news is fresh and steady, while Mars is 24 minutes old, so I keep steady pricing and normal caution.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "mars",
+   "simTime": 84.75,
+   "realSeconds": 24.893995375000003,
+   "briefing": {
+    "body": "mars",
+    "strategy": "leased",
+    "now": 83,
+    "mode": "normal",
+    "holds": 9,
+    "allowance": 35,
+    "allowanceSpare": 25,
+    "bid": 0.9983141098842255,
+    "ask": 0.9992729516737734,
+    "localPrice": 0.9988551744126204,
+    "remoteNewsAgeMin": 25,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 26.75,
+      "lastKnownHolds": 3
+     },
+     {
+      "body": "moon",
+      "heardMinAgo": 26.75,
+      "lastKnownHolds": 0
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 12,
+     "high": 12
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 33.25,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 0.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 5
+     },
+     {
+      "t": 68,
+      "kind": "visitor-trade",
+      "side": "sell",
+      "units": 5,
+      "filled": 5
+     }
+    ],
+    "inbox": [],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold -3 with 32 spare, so I am not short and need no allowance. News is about 22 minutes old, so I will price steadily and keep trading normally until the peers report again.",
+     "minAgo": 11.75
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 28,
+      "ageMin": 26.75
+     },
+     {
+      "body": "moon",
+      "spare": 29,
+      "ageMin": 26.75
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"steady\",\"caution\":\"normal\",\"give\":{\"earth\":0,\"moon\":0},\"ask\":{\"earth\":0,\"moon\":0},\"noteTo\":{\"earth\":\"Mars holds 9 with 25 spare of 35 allowance. Not asking for allowance now. Still trading normally, will report when news refreshes.\",\"moon\":\"Mars holds 9 with 25 spare of 35 allowance. Not asking for allowance now. Still trading normally, will report when news refreshes.\"},\"thought\":\"I hold 9 with 25 of 35 allowance spare, so I am not short and need nothing. My peer news is about 27 minutes old, so I will price steadily and keep trading normally until they report again.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Mars holds 9 with 25 spare of 35 allowance. Not asking for allowance now. Still trading normally, will report when news refreshes.",
+     "moon": "Mars holds 9 with 25 spare of 35 allowance. Not asking for allowance now. Still trading normally, will report when news refreshes."
+    },
+    "thought": "I hold 9 with 25 of 35 allowance spare, so I am not short and need nothing. My peer news is about 27 minutes old, so I will price steadily and keep trading normally until they report again.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "moon",
+   "simTime": 85.75,
+   "realSeconds": 25.954541209,
+   "briefing": {
+    "body": "moon",
+    "strategy": "leased",
+    "now": 84.5,
+    "mode": "normal",
+    "holds": 2,
+    "allowance": 32,
+    "allowanceSpare": 27,
+    "bid": 0.9986666031683772,
+    "ask": 0.9997318417311685,
+    "localPrice": 0.9992158670795777,
+    "remoteNewsAgeMin": 26.5,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 0.25,
+      "lastKnownHolds": 20
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 28.25,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 18,
+     "high": 18
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.75,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 12.5,
+      "kind": "handed-over",
+      "to": "earth",
+      "units": 3
+     },
+     {
+      "t": 16.5,
+      "kind": "allowance-received",
+      "from": "earth",
+      "units": 2
+     },
+     {
+      "t": 20.75,
+      "kind": "allowance-received",
+      "from": "mars",
+      "units": 5
+     },
+     {
+      "t": 28.5,
+      "kind": "handed-over",
+      "to": "earth",
+      "units": 4
+     },
+     {
+      "t": 38.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     },
+     {
+      "t": 46.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     }
+    ],
+    "inbox": [
+     {
+      "from": "earth",
+      "text": "Earth holds 18 of 33 allowance, 15 spare. Need nothing now. Keeping steady pricing; will ask if my spare runs low.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 0
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steady. I will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 8
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steadily near parity. I will give spare if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 12
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 5 of 33 allowance, 26 spare. Trading steadily now. Ask if you need spare allowance; I can give it.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 18
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 3, allowance 33 with 28 spare. Price steady near parity. Will give spare if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 22
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold 3 with 26 spare, well above a fifth, so I need nothing and Earth's news is fresh. I'll keep steady pricing and move nothing until someone asks.",
+     "minAgo": 6.75
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 13,
+      "ageMin": 0.25
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 28.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"earth\": 0, \"mars\": 0}, \"ask\": {\"earth\": 0, \"mars\": 0}, \"noteTo\": {\"earth\": \"Moon holds 2 of 32 allowance, 27 spare. Trading steady near parity. Will ask if my spare drops below a fifth.\", \"mars\": \"Moon holds 2 of 32 allowance, 27 spare. Trading steady. Ask if you need spare allowance; I can give it.\"}, \"thought\": \"I hold 2 with 27 spare, well above a fifth, so I need nothing and Earth's news is fresh. I'll keep steady pricing and move nothing until someone asks.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Moon holds 2 of 32 allowance, 27 spare. Trading steady near parity. Will ask if my spare drops below a fifth.",
+     "mars": "Moon holds 2 of 32 allowance, 27 spare. Trading steady. Ask if you need spare allowance; I can give it."
+    },
+    "thought": "I hold 2 with 27 spare, well above a fifth, so I need nothing and Earth's news is fresh. I'll keep steady pricing and move nothing until someone asks.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "earth",
+   "simTime": 118.5,
+   "realSeconds": 29.910987459,
+   "briefing": {
+    "body": "earth",
+    "strategy": "leased",
+    "now": 86.5,
+    "mode": "normal",
+    "holds": 23,
+    "allowance": 33,
+    "allowanceSpare": 10,
+    "bid": 0.9982104792710269,
+    "ask": 0.9992895972480548,
+    "localPrice": 0.9989381017973932,
+    "remoteNewsAgeMin": 28.5,
+    "peers": [
+     {
+      "body": "moon",
+      "heardMinAgo": 0.25,
+      "lastKnownHolds": -1
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 30.25,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 18,
+     "high": 18
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.75,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 14.5,
+      "kind": "took-on",
+      "from": "moon",
+      "units": 3
+     },
+     {
+      "t": 16.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 2
+     },
+     {
+      "t": 30.5,
+      "kind": "took-on",
+      "from": "moon",
+      "units": 4
+     },
+     {
+      "t": 36.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 44.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 76.75,
+      "kind": "handed-over",
+      "to": "mars",
+      "units": 1
+     }
+    ],
+    "inbox": [
+     {
+      "from": "moon",
+      "text": "Moon holds 2 of 32 allowance, 27 spare. Trading steady near parity. Will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 0
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 3 of 32 allowance, 26 spare. Trading steady near parity. Ask if you need spare; I can give it.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 8
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 3 with 26 spare of 32 allowance. Steady near parity. Ask if you need spare; I can give.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 10
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 0 of 32 allowance, 29 spare. Trading steadily near parity. Will ask if my spare runs low.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 16
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 0, allowance 32 with 29 spare. Quoting steady near parity. I can give spare allowance if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 18
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold 18 with 15 spare, well above a fifth of my allowance, so I neither ask nor give. Moon's news is fresh and steady, while Mars is 24 minutes old, so I keep steady pricing and normal caution.",
+     "minAgo": 2.5
+    },
+    "spareByLastWord": [
+     {
+      "body": "moon",
+      "spare": 30,
+      "ageMin": 0.25
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 30.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"steady\",\"caution\":\"normal\",\"give\":{\"moon\":0,\"mars\":0},\"ask\":{\"moon\":0,\"mars\":0},\"noteTo\":{\"moon\":\"Earth holds 23 of 33 allowance, 10 spare, so no ask. Trading steady near parity. Will ask if my spare drops below a seventh.\",\"mars\":\"Earth holds 23 of 33, 10 spare. Steady near parity. Your last word is 30 min old, so I'm not sizing on it. Ask if you need allowance.\"},\"thought\":\"I hold 23 of 33 with 10 spare, about 30 percent, above the fifth that triggers an ask, so I neither ask nor give. Moon's news is fresh and Mars is 30 minutes old, so I keep steady pricing and normal caution.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "moon": "Earth holds 23 of 33 allowance, 10 spare, so no ask. Trading steady near parity. Will ask if my spare drops below a seventh."
+    },
+    "thought": "I hold 23 of 33 with 10 spare, about 30 percent, above the fifth that triggers an ask, so I neither ask nor give. Moon's news is fresh and Mars is 30 minutes old, so I keep steady pricing and normal caution.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [
+     "mars"
+    ],
+    "given": {}
+   }
+  },
+  {
+   "body": "moon",
+   "simTime": 118.75,
+   "realSeconds": 30.323222542,
+   "briefing": {
+    "body": "moon",
+    "strategy": "leased",
+    "now": 117,
+    "mode": "degraded",
+    "holds": -6,
+    "allowance": 32,
+    "allowanceSpare": 26,
+    "bid": 0.9985166557691069,
+    "ask": 0.9998106150862335,
+    "localPrice": 0.9991029847664852,
+    "remoteNewsAgeMin": 59,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 0.75,
+      "lastKnownHolds": 15
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 60.75,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 5,
+     "high": 5
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.25,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 46.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     },
+     {
+      "t": 90.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 3
+     },
+     {
+      "t": 94.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 4
+     },
+     {
+      "t": 98.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     },
+     {
+      "t": 102.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     },
+     {
+      "t": 116.5,
+      "kind": "mode",
+      "from": "normal",
+      "to": "degraded"
+     }
+    ],
+    "inbox": [
+     {
+      "from": "earth",
+      "text": "Earth holds 18 of 33 allowance, 15 spare. Need nothing now. Keeping steady pricing; will ask if my spare runs low.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 32.5
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steady. I will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 40.5
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steadily near parity. I will give spare if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 44.5
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 5 of 33 allowance, 26 spare. Trading steadily now. Ask if you need spare allowance; I can give it.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 50.5
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 3, allowance 33 with 28 spare. Price steady near parity. Will give spare if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 54.5
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold 2 with 27 spare, well above a fifth, so I need nothing and Earth's news is fresh. I'll keep steady pricing and move nothing until someone asks.",
+     "minAgo": 31.25
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 18,
+      "ageMin": 0.75
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 60.75
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"earth\": 0, \"mars\": 0}, \"ask\": {\"earth\": 0, \"mars\": 0}, \"noteTo\": {\"earth\": \"Moon holds -6 of 32 allowance, 26 spare. Need nothing now. Keeping steady pricing; will ask if my spare drops below a fifth.\", \"mars\": \"Moon holds -6 of 32 allowance, 26 spare. Need nothing now. Holding steady; ask if you need spare allowance.\"}, \"thought\": \"I hold -6 with 26 of 32 spare, well above a fifth, and Earth's news is fresh, so I need nothing and will keep steady pricing. Mars is 60 minutes stale, so I'll hold and not move allowance until someone asks.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Moon holds -6 of 32 allowance, 26 spare. Need nothing now. Keeping steady pricing; will ask if my spare drops below a fifth.",
+     "mars": "Moon holds -6 of 32 allowance, 26 spare. Need nothing now. Holding steady; ask if you need spare allowance."
+    },
+    "thought": "I hold -6 with 26 of 32 spare, well above a fifth, and Earth's news is fresh, so I need nothing and will keep steady pricing. Mars is 60 minutes stale, so I'll hold and not move allowance until someone asks.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "mars",
+   "simTime": 118.75,
+   "realSeconds": 30.32358125,
+   "briefing": {
+    "body": "mars",
+    "strategy": "leased",
+    "now": 98,
+    "mode": "normal",
+    "holds": 16,
+    "allowance": 35,
+    "allowanceSpare": 18,
+    "bid": 0.998101506880612,
+    "ask": 0.9991554273918041,
+    "localPrice": 0.9987489297240425,
+    "remoteNewsAgeMin": 40,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 41.75,
+      "lastKnownHolds": 3
+     },
+     {
+      "body": "moon",
+      "heardMinAgo": 41.75,
+      "lastKnownHolds": 0
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 19,
+     "high": 19
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 18.25,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 0.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 5
+     },
+     {
+      "t": 68,
+      "kind": "visitor-trade",
+      "side": "sell",
+      "units": 5,
+      "filled": 5
+     }
+    ],
+    "inbox": [],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold 9 with 25 of 35 allowance spare, so I am not short and need nothing. My peer news is about 27 minutes old, so I will price steadily and keep trading normally until they report again.",
+     "minAgo": 13.25
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 28,
+      "ageMin": 41.75
+     },
+     {
+      "body": "moon",
+      "spare": 29,
+      "ageMin": 41.75
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"cautious\",\"caution\":\"normal\",\"give\":{\"earth\":0,\"moon\":0},\"ask\":{\"earth\":0,\"moon\":0},\"noteTo\":{\"earth\":\"Mars holds 16 of 35 allowance, 18 spare. Pricing cautiously on old news. Will give spare allowance if you ask.\",\"moon\":\"Mars holds 16 of 35 allowance, 18 spare. Pricing cautiously on old news. Will give spare allowance if you ask.\"},\"thought\":\"I hold 16 with 18 spare, well above a fifth of my allowance, so I need nothing and nobody has asked. My peer news is 41 minutes old, so I will price cautiously and keep trading normally.\"}",
+   "directive": {
+    "pricing": "cautious",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Mars holds 16 of 35 allowance, 18 spare. Pricing cautiously on old news. Will give spare allowance if you ask.",
+     "moon": "Mars holds 16 of 35 allowance, 18 spare. Pricing cautiously on old news. Will give spare allowance if you ask."
+    },
+    "thought": "I hold 16 with 18 spare, well above a fifth of my allowance, so I need nothing and nobody has asked. My peer news is 41 minutes old, so I will price cautiously and keep trading normally.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "mars",
+   "simTime": 121.5,
+   "realSeconds": 32.87344816699999,
+   "briefing": {
+    "body": "mars",
+    "strategy": "leased",
+    "now": 119.75,
+    "mode": "reduce-only",
+    "holds": -4,
+    "allowance": 35,
+    "allowanceSpare": 31,
+    "bid": 0.9973253505612155,
+    "ask": 0.9990708762611287,
+    "localPrice": 0.9981482437399153,
+    "remoteNewsAgeMin": 61.75,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 63.5,
+      "lastKnownHolds": 3
+     },
+     {
+      "body": "moon",
+      "heardMinAgo": 63.5,
+      "lastKnownHolds": 0
+     }
+    ],
+    "thinksBankHolds": {
+     "low": -1,
+     "high": -1
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 0,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 0.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 5
+     },
+     {
+      "t": 68,
+      "kind": "visitor-trade",
+      "side": "sell",
+      "units": 5,
+      "filled": 5
+     },
+     {
+      "t": 116.5,
+      "kind": "mode",
+      "from": "normal",
+      "to": "reduce-only"
+     }
+    ],
+    "inbox": [],
+    "lastDirective": {
+     "pricing": "cautious",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold 16 with 18 spare, well above a fifth of my allowance, so I need nothing and nobody has asked. My peer news is 41 minutes old, so I will price cautiously and keep trading normally.",
+     "minAgo": 1
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 28,
+      "ageMin": 63.5
+     },
+     {
+      "body": "moon",
+      "spare": 29,
+      "ageMin": 63.5
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"cautious\", \"caution\": \"play-safe\", \"give\": {\"earth\": 0, \"moon\": 0}, \"ask\": {\"earth\": 0, \"moon\": 0}, \"noteTo\": {\"earth\": \"Mars holds -4 of allowance 35, 31 spare. Mode is reduce-only and I am playing safe. Nothing needed from you now.\", \"moon\": \"Mars holds -4 of allowance 35, 31 spare. Mode is reduce-only and I am playing safe. Nothing needed from you now.\"}, \"thought\": \"I am in reduce-only mode with news 62 minutes old and the bank's limit unclear, so I will play safe and price cautiously. I hold -4 with 31 spare, so I need nothing and can offer help if either desk asks.\"}",
+   "directive": {
+    "pricing": "cautious",
+    "caution": "play-safe",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Mars holds -4 of allowance 35, 31 spare. Mode is reduce-only and I am playing safe. Nothing needed from you now.",
+     "moon": "Mars holds -4 of allowance 35, 31 spare. Mode is reduce-only and I am playing safe. Nothing needed from you now."
+    },
+    "thought": "I am in reduce-only mode with news 62 minutes old and the bank's limit unclear, so I will play safe and price cautiously. I hold -4 with 31 spare, so I need nothing and can offer help if either desk asks.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "earth",
+   "simTime": 122.25,
+   "realSeconds": 33.598269042,
+   "briefing": {
+    "body": "earth",
+    "strategy": "leased",
+    "now": 119,
+    "mode": "degraded",
+    "holds": 12,
+    "allowance": 33,
+    "allowanceSpare": 21,
+    "bid": 0.9986465152104526,
+    "ask": 0.9999485224027519,
+    "localPrice": 0.999415897118426,
+    "remoteNewsAgeMin": 61,
+    "peers": [
+     {
+      "body": "moon",
+      "heardMinAgo": 0.75,
+      "lastKnownHolds": -6
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 62.75,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 2,
+     "high": 2
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.25,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 88.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 3
+     },
+     {
+      "t": 92.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 4
+     },
+     {
+      "t": 96.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 100.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 116.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 3
+     },
+     {
+      "t": 116.5,
+      "kind": "mode",
+      "from": "normal",
+      "to": "degraded"
+     }
+    ],
+    "inbox": [
+     {
+      "from": "moon",
+      "text": "Moon holds 2 of 32 allowance, 27 spare. Trading steady near parity. Will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 32.5
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 3 of 32 allowance, 26 spare. Trading steady near parity. Ask if you need spare; I can give it.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 40.5
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 3 with 26 spare of 32 allowance. Steady near parity. Ask if you need spare; I can give.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 42.5
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 0 of 32 allowance, 29 spare. Trading steadily near parity. Will ask if my spare runs low.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 48.5
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 0, allowance 32 with 29 spare. Quoting steady near parity. I can give spare allowance if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 50.5
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold 23 of 33 with 10 spare, about 30 percent, above the fifth that triggers an ask, so I neither ask nor give. Moon's news is fresh and Mars is 30 minutes old, so I keep steady pricing and normal caution.",
+     "minAgo": 0.5
+    },
+    "spareByLastWord": [
+     {
+      "body": "moon",
+      "spare": 26,
+      "ageMin": 0.75
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 62.75
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"steady\",\"caution\":\"normal\",\"give\":{\"moon\":0,\"mars\":0},\"ask\":{\"moon\":0,\"mars\":0},\"noteTo\":{\"moon\":\"Earth holds 12 of 33 allowance, 21 spare. Steady near parity. I can give spare if you ask; no need now.\",\"mars\":\"Earth holds 12 of 33, 21 spare. Steady near parity. Ask if you need spare; I can give.\"},\"thought\":\"I hold 12 of 33 with 21 spare, well above a fifth, so I neither ask nor give. Moon's news is fresh and Mars is an hour old, so I keep steady pricing and normal caution.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "moon": "Earth holds 12 of 33 allowance, 21 spare. Steady near parity. I can give spare if you ask; no need now.",
+     "mars": "Earth holds 12 of 33, 21 spare. Steady near parity. Ask if you need spare; I can give."
+    },
+    "thought": "I hold 12 of 33 with 21 spare, well above a fifth, so I neither ask nor give. Moon's news is fresh and Mars is an hour old, so I keep steady pricing and normal caution.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "moon",
+   "simTime": 159,
+   "realSeconds": 36.875739417,
+   "briefing": {
+    "body": "moon",
+    "strategy": "leased",
+    "now": 121.25,
+    "mode": "degraded",
+    "holds": -10,
+    "allowance": 32,
+    "allowanceSpare": 22,
+    "bid": 0.9984904356471955,
+    "ask": 0.9998059876858714,
+    "localPrice": 0.9990454447346448,
+    "remoteNewsAgeMin": 63.25,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 1,
+      "lastKnownHolds": 12
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 65,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": -2,
+     "high": -2
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 90.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 3
+     },
+     {
+      "t": 94.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 4
+     },
+     {
+      "t": 98.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     },
+     {
+      "t": 102.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     },
+     {
+      "t": 116.5,
+      "kind": "mode",
+      "from": "normal",
+      "to": "degraded"
+     },
+     {
+      "t": 118.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 3
+     }
+    ],
+    "inbox": [
+     {
+      "from": "earth",
+      "text": "Earth holds 23 of 33 allowance, 10 spare, so no ask. Trading steady near parity. Will ask if my spare drops below a seventh.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 0.75
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 18 of 33 allowance, 15 spare. Need nothing now. Keeping steady pricing; will ask if my spare runs low.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 36.75
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steady. I will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 44.75
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steadily near parity. I will give spare if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 48.75
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 5 of 33 allowance, 26 spare. Trading steadily now. Ask if you need spare allowance; I can give it.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 54.75
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold -6 with 26 of 32 spare, well above a fifth, and Earth's news is fresh, so I need nothing and will keep steady pricing. Mars is 60 minutes stale, so I'll hold and not move allowance until someone asks.",
+     "minAgo": 2.5
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 21,
+      "ageMin": 1
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 65
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"steady\",\"caution\":\"normal\",\"give\":{\"earth\":0,\"mars\":0},\"ask\":{\"earth\":0,\"mars\":0},\"noteTo\":{\"earth\":\"Moon holds -10 of 32 allowance, 22 spare. Need nothing now. Trading steady; will ask if my spare drops below a fifth.\",\"mars\":\"Moon holds -10 of 32 allowance, 22 spare. Need nothing; no transfers planned. Holding steady until I hear from you.\"},\"thought\":\"My spare is 22 of 32, well above a fifth, and Earth's news is fresh, so I need nothing. I'll keep steady pricing and normal caution, and watch the 59-minute window before playing safe.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Moon holds -10 of 32 allowance, 22 spare. Need nothing now. Trading steady; will ask if my spare drops below a fifth.",
+     "mars": "Moon holds -10 of 32 allowance, 22 spare. Need nothing; no transfers planned. Holding steady until I hear from you."
+    },
+    "thought": "My spare is 22 of 32, well above a fifth, and Earth's news is fresh, so I need nothing. I'll keep steady pricing and normal caution, and watch the 59-minute window before playing safe.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "mars",
+   "simTime": 165.5,
+   "realSeconds": 37.29681625,
+   "briefing": {
+    "body": "mars",
+    "strategy": "leased",
+    "now": 134.75,
+    "mode": "reduce-only",
+    "holds": 0,
+    "allowance": 35,
+    "allowanceSpare": 34,
+    "bid": 0.9967624078907183,
+    "ask": 0.9986042874233556,
+    "localPrice": 0.997683347657037,
+    "remoteNewsAgeMin": 76.75,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 78.5,
+      "lastKnownHolds": 3
+     },
+     {
+      "body": "moon",
+      "heardMinAgo": 78.5,
+      "lastKnownHolds": 0
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 3,
+     "high": 3
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 0,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 0.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 5
+     },
+     {
+      "t": 68,
+      "kind": "visitor-trade",
+      "side": "sell",
+      "units": 5,
+      "filled": 5
+     },
+     {
+      "t": 116.5,
+      "kind": "mode",
+      "from": "normal",
+      "to": "reduce-only"
+     },
+     {
+      "t": 121.25,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 132.5,
+      "kind": "refused",
+      "reason": "playing-safe"
+     }
+    ],
+    "inbox": [],
+    "lastDirective": {
+     "pricing": "cautious",
+     "caution": "play-safe",
+     "gave": {},
+     "asked": false,
+     "thought": "I am in reduce-only mode with news 62 minutes old and the bank's limit unclear, so I will play safe and price cautiously. I hold -4 with 31 spare, so I need nothing and can offer help if either desk asks.",
+     "minAgo": 13.25
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 28,
+      "ageMin": 78.5
+     },
+     {
+      "body": "moon",
+      "spare": 29,
+      "ageMin": 78.5
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"cautious\",\"caution\":\"play-safe\",\"give\":{\"earth\":0,\"moon\":0},\"ask\":{\"earth\":0,\"moon\":0},\"noteTo\":{\"earth\":\"Mars holds 0 with 34 spare allowance of 35. Mode is reduce-only, playing safe. Will give spare if you ask.\",\"moon\":\"Mars holds 0 with 34 spare allowance of 35. Mode is reduce-only, playing safe. Will give spare if you ask.\"},\"thought\":\"I am in reduce-only mode with news 77 minutes old and the bank's limit unclear, so I am playing safe with cautious pricing. I hold nothing and need no allowance, so I will offer spare if either desk asks.\"}",
+   "directive": {
+    "pricing": "cautious",
+    "caution": "play-safe",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Mars holds 0 with 34 spare allowance of 35. Mode is reduce-only, playing safe. Will give spare if you ask.",
+     "moon": "Mars holds 0 with 34 spare allowance of 35. Mode is reduce-only, playing safe. Will give spare if you ask."
+    },
+    "thought": "I am in reduce-only mode with news 77 minutes old and the bank's limit unclear, so I am playing safe with cautious pricing. I hold nothing and need no allowance, so I will offer spare if either desk asks.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "earth",
+   "simTime": 174.25,
+   "realSeconds": 38.206108709,
+   "briefing": {
+    "body": "earth",
+    "strategy": "leased",
+    "now": 123.25,
+    "mode": "degraded",
+    "holds": 14,
+    "allowance": 33,
+    "allowanceSpare": 19,
+    "bid": 0.9986723214294194,
+    "ask": 0.9999984367282485,
+    "localPrice": 0.9994760474691033,
+    "remoteNewsAgeMin": 65.25,
+    "peers": [
+     {
+      "body": "moon",
+      "heardMinAgo": 1,
+      "lastKnownHolds": -10
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 67,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 0,
+     "high": 0
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 92.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 4
+     },
+     {
+      "t": 96.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 100.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 116.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 3
+     },
+     {
+      "t": 116.5,
+      "kind": "mode",
+      "from": "normal",
+      "to": "degraded"
+     },
+     {
+      "t": 120.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 4
+     }
+    ],
+    "inbox": [
+     {
+      "from": "moon",
+      "text": "Moon holds -6 of 32 allowance, 26 spare. Need nothing now. Keeping steady pricing; will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 2.75
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 2 of 32 allowance, 27 spare. Trading steady near parity. Will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 36.75
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 3 of 32 allowance, 26 spare. Trading steady near parity. Ask if you need spare; I can give it.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 44.75
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 3 with 26 spare of 32 allowance. Steady near parity. Ask if you need spare; I can give.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 46.75
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 0 of 32 allowance, 29 spare. Trading steadily near parity. Will ask if my spare runs low.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 52.75
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold 12 of 33 with 21 spare, well above a fifth, so I neither ask nor give. Moon's news is fresh and Mars is an hour old, so I keep steady pricing and normal caution.",
+     "minAgo": 1
+    },
+    "spareByLastWord": [
+     {
+      "body": "moon",
+      "spare": 22,
+      "ageMin": 1
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 67
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"steady\",\"caution\":\"normal\",\"give\":{\"moon\":0,\"mars\":0},\"ask\":{\"moon\":0,\"mars\":0},\"noteTo\":{\"moon\":\"Earth holds 14 of 33 allowance, 19 spare. Need nothing now. Steady pricing. Will ask if my spare drops below a fifth.\",\"mars\":\"Earth holds 14 of 33, 19 spare. Steady pricing. Mars, ask if you need spare; I can give it.\"},\"thought\":\"I hold 14 of 33 with 19 spare, well above a fifth, so I neither ask nor give. Moon's news is fresh and Mars is about an hour old, so steady pricing and normal caution still fit.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "mars": "Earth holds 14 of 33, 19 spare. Steady pricing. Mars, ask if you need spare; I can give it."
+    },
+    "thought": "I hold 14 of 33 with 19 spare, well above a fifth, so I neither ask nor give. Moon's news is fresh and Mars is about an hour old, so steady pricing and normal caution still fit.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [
+     "moon"
+    ],
+    "given": {}
+   }
+  },
+  {
+   "body": "moon",
+   "simTime": 176,
+   "realSeconds": 39.947718834,
+   "briefing": {
+    "body": "moon",
+    "strategy": "leased",
+    "now": 159.75,
+    "mode": "degraded",
+    "holds": 20,
+    "allowance": 32,
+    "allowanceSpare": 9,
+    "bid": 0.9926871641641359,
+    "ask": 0.9941872341383781,
+    "localPrice": 0.993671640397469,
+    "remoteNewsAgeMin": 101.75,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 1.5,
+      "lastKnownHolds": 19
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 103.5,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 35,
+     "high": 35
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 58.5,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 98.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     },
+     {
+      "t": 102.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     },
+     {
+      "t": 116.5,
+      "kind": "mode",
+      "from": "normal",
+      "to": "degraded"
+     },
+     {
+      "t": 118.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 3
+     },
+     {
+      "t": 122.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 4
+     },
+     {
+      "t": 126.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 3
+     }
+    ],
+    "inbox": [
+     {
+      "from": "earth",
+      "text": "Earth holds 12 of 33 allowance, 21 spare. Steady near parity. I can give spare if you ask; no need now.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 35.25
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 23 of 33 allowance, 10 spare, so no ask. Trading steady near parity. Will ask if my spare drops below a seventh.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 39.25
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 18 of 33 allowance, 15 spare. Need nothing now. Keeping steady pricing; will ask if my spare runs low.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 75.25
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steady. I will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 83.25
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steadily near parity. I will give spare if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 87.25
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "My spare is 22 of 32, well above a fifth, and Earth's news is fresh, so I need nothing. I'll keep steady pricing and normal caution, and watch the 59-minute window before playing safe.",
+     "minAgo": 0.75
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 14,
+      "ageMin": 1.5
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 103.5
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"earth\": 0, \"mars\": 0}, \"ask\": {\"earth\": 0, \"mars\": 0}, \"noteTo\": {\"earth\": \"Moon holds 20 of 32 allowance, 9 spare. Trading steady near parity. Need nothing now; will ask if spare drops below a fifth.\", \"mars\": \"Moon holds 20 of 32 allowance, 9 spare, steady pricing. No ask now. Last heard from Earth 1.5 min ago. Tell us if you need allowance.\"}, \"thought\": \"My spare is 9 of 32, above a fifth, and Earth's news is fresh with 14 spare, so I need nothing. I'll keep steady pricing and normal caution, and watch the 58-minute window before playing safe.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Moon holds 20 of 32 allowance, 9 spare. Trading steady near parity. Need nothing now; will ask if spare drops below a fifth."
+    },
+    "thought": "My spare is 9 of 32, above a fifth, and Earth's news is fresh with 14 spare, so I need nothing. I'll keep steady pricing and normal caution, and watch the 58-minute window before playing safe.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [
+     "mars"
+    ],
+    "given": {}
+   }
+  },
+  {
+   "body": "mars",
+   "simTime": 177.5,
+   "realSeconds": 41.381512375,
+   "briefing": {
+    "body": "mars",
+    "strategy": "leased",
+    "now": 175.5,
+    "mode": "reduce-only",
+    "holds": 0,
+    "allowance": 35,
+    "allowanceSpare": 34,
+    "bid": 0.9999191832011495,
+    "ask": 1.0019918538888435,
+    "localPrice": 1.0009555185449965,
+    "remoteNewsAgeMin": 117.5,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 119.25,
+      "lastKnownHolds": 3
+     },
+     {
+      "body": "moon",
+      "heardMinAgo": 119.25,
+      "lastKnownHolds": 0
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 3,
+     "high": 3
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 0,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 116.5,
+      "kind": "mode",
+      "from": "normal",
+      "to": "reduce-only"
+     },
+     {
+      "t": 121.25,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 132.5,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 142.5,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 157,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 173.25,
+      "kind": "refused",
+      "reason": "playing-safe"
+     }
+    ],
+    "inbox": [],
+    "lastDirective": {
+     "pricing": "cautious",
+     "caution": "play-safe",
+     "gave": {},
+     "asked": false,
+     "thought": "I am in reduce-only mode with news 77 minutes old and the bank's limit unclear, so I am playing safe with cautious pricing. I hold nothing and need no allowance, so I will offer spare if either desk asks.",
+     "minAgo": 10
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 28,
+      "ageMin": 119.25
+     },
+     {
+      "body": "moon",
+      "spare": 29,
+      "ageMin": 119.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"cautious\",\"caution\":\"play-safe\",\"give\":{\"earth\":0,\"moon\":0},\"ask\":{\"earth\":0,\"moon\":0},\"noteTo\":{\"earth\":\"Mars holds 0 and has 34 spare allowance. We are playing safe in reduce-only mode. Ask if you need allowance.\",\"moon\":\"Mars holds 0 and has 34 spare allowance. We are playing safe in reduce-only mode. Ask if you need allowance.\"},\"thought\":\"I hold nothing, my news is about two hours old, and the bank's limit is unclear, so I stay playing safe with cautious pricing. I will give spare allowance to Earth or the Moon if either asks.\"}",
+   "directive": {
+    "pricing": "cautious",
+    "caution": "play-safe",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Mars holds 0 and has 34 spare allowance. We are playing safe in reduce-only mode. Ask if you need allowance.",
+     "moon": "Mars holds 0 and has 34 spare allowance. We are playing safe in reduce-only mode. Ask if you need allowance."
+    },
+    "thought": "I hold nothing, my news is about two hours old, and the bank's limit is unclear, so I stay playing safe with cautious pricing. I will give spare allowance to Earth or the Moon if either asks.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "earth",
+   "simTime": 180.5,
+   "realSeconds": 43.164492292,
+   "briefing": {
+    "body": "earth",
+    "strategy": "leased",
+    "now": 174.75,
+    "mode": "degraded",
+    "holds": 26,
+    "allowance": 31,
+    "allowanceSpare": 5,
+    "bid": 0.9904177322621792,
+    "ask": 0.991976348201008,
+    "localPrice": 0.9915239545860118,
+    "remoteNewsAgeMin": 116.75,
+    "peers": [
+     {
+      "body": "moon",
+      "heardMinAgo": 0.5,
+      "lastKnownHolds": 29
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 118.5,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 51,
+     "high": 51
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.5,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 100.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 116.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 3
+     },
+     {
+      "t": 116.5,
+      "kind": "mode",
+      "from": "normal",
+      "to": "degraded"
+     },
+     {
+      "t": 120.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 4
+     },
+     {
+      "t": 124.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 3
+     },
+     {
+      "t": 172.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 2
+     }
+    ],
+    "inbox": [
+     {
+      "from": "moon",
+      "text": "Moon holds -10 of 32 allowance, 22 spare. Need nothing now. Trading steady; will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 14.25
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds -6 of 32 allowance, 26 spare. Need nothing now. Keeping steady pricing; will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 54.25
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 2 of 32 allowance, 27 spare. Trading steady near parity. Will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 88.25
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 3 of 32 allowance, 26 spare. Trading steady near parity. Ask if you need spare; I can give it.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 96.25
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 3 with 26 spare of 32 allowance. Steady near parity. Ask if you need spare; I can give.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 98.25
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold 14 of 33 with 19 spare, well above a fifth, so I neither ask nor give. Moon's news is fresh and Mars is about an hour old, so steady pricing and normal caution still fit.",
+     "minAgo": 0.5
+    },
+    "spareByLastWord": [
+     {
+      "body": "moon",
+      "spare": 2,
+      "ageMin": 0.5
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 118.5
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"steady\",\"caution\":\"normal\",\"give\":{\"moon\":0,\"mars\":0},\"ask\":{\"moon\":3,\"mars\":0},\"noteTo\":{\"moon\":\"Earth holds 26 of 31 allowance, 5 spare. Please send 3 spare so I can keep trading steady. I will give back when I can.\",\"mars\":\"Earth last heard from Mars 2 hours ago. Earth is trading steady near parity and needs no allowance from Mars right now.\"},\"thought\":\"Earth has only 5 of 31 allowance spare, under a fifth, so I'm asking Moon for 3. Moon's news is fresh and it has spare to give. Mars is two hours stale, so I'm keeping steady pricing and normal caution.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {
+     "moon": 3
+    },
+    "noteTo": {
+     "moon": "Earth holds 26 of 31 allowance, 5 spare. Please send 3 spare so I can keep trading steady. I will give back when I can.",
+     "mars": "Earth last heard from Mars 2 hours ago. Earth is trading steady near parity and needs no allowance from Mars right now."
+    },
+    "thought": "Earth has only 5 of 31 allowance spare, under a fifth, so I'm asking Moon for 3. Moon's news is fresh and it has spare to give. Mars is two hours stale, so I'm keeping steady pricing and normal caution.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "moon",
+   "simTime": 190.75,
+   "realSeconds": 45.727426084,
+   "briefing": {
+    "body": "moon",
+    "strategy": "leased",
+    "now": 177,
+    "mode": "degraded",
+    "holds": 31,
+    "allowance": 34,
+    "allowanceSpare": 0,
+    "bid": 0.989843532780631,
+    "ask": 0.9914131047372232,
+    "localPrice": 0.990986218094297,
+    "remoteNewsAgeMin": 119,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 0.75,
+      "lastKnownHolds": 26
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 120.75,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 53,
+     "high": 53
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.25,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 116.5,
+      "kind": "mode",
+      "from": "normal",
+      "to": "degraded"
+     },
+     {
+      "t": 118.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 3
+     },
+     {
+      "t": 122.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 4
+     },
+     {
+      "t": 126.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 3
+     },
+     {
+      "t": 172.5,
+      "kind": "allowance-received",
+      "from": "earth",
+      "units": 2
+     },
+     {
+      "t": 173.25,
+      "kind": "refused",
+      "reason": "allowance"
+     }
+    ],
+    "inbox": [
+     {
+      "from": "earth",
+      "text": "Earth holds 12 of 33 allowance, 21 spare. Steady near parity. I can give spare if you ask; no need now.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 52.5
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 23 of 33 allowance, 10 spare, so no ask. Trading steady near parity. Will ask if my spare drops below a seventh.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 56.5
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 18 of 33 allowance, 15 spare. Need nothing now. Keeping steady pricing; will ask if my spare runs low.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 92.5
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steady. I will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 100.5
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steadily near parity. I will give spare if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 104.5
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "My spare is 9 of 32, above a fifth, and Earth's news is fresh with 14 spare, so I need nothing. I'll keep steady pricing and normal caution, and watch the 58-minute window before playing safe.",
+     "minAgo": 1
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 5,
+      "ageMin": 0.75
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 120.75
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"cautious\", \"caution\": \"normal\", \"give\": {\"earth\": 0, \"mars\": 0}, \"ask\": {\"earth\": 5, \"mars\": 0}, \"noteTo\": {\"earth\": \"Moon holds 31 of 34 allowance, none spare. Please give 5 spare if you can. We plan cautious pricing until we are steady.\", \"mars\": \"Moon holds 31 of 34 allowance, none spare. If you still have spare, please send some to Moon.\"}, \"thought\": \"I have no spare and hold 31 of 34, so I need allowance. Earth's fresh news shows 5 spare, so I ask for 5 and price cautiously while I wait.\"}",
+   "directive": {
+    "pricing": "cautious",
+    "caution": "normal",
+    "give": {},
+    "ask": {
+     "earth": 5
+    },
+    "noteTo": {
+     "earth": "Moon holds 31 of 34 allowance, none spare. Please give 5 spare if you can. We plan cautious pricing until we are steady.",
+     "mars": "Moon holds 31 of 34 allowance, none spare. If you still have spare, please send some to Moon."
+    },
+    "thought": "I have no spare and hold 31 of 34, so I need allowance. Earth's fresh news shows 5 spare, so I ask for 5 and price cautiously while I wait.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "earth",
+   "simTime": 199,
+   "realSeconds": 48.002497625,
+   "briefing": {
+    "body": "earth",
+    "strategy": "leased",
+    "now": 180.75,
+    "mode": "degraded",
+    "holds": 30,
+    "allowance": 31,
+    "allowanceSpare": 1,
+    "bid": 0.9878713201711902,
+    "ask": 0.9894392291679514,
+    "localPrice": 0.9890347530917852,
+    "remoteNewsAgeMin": 122.75,
+    "peers": [
+     {
+      "body": "moon",
+      "heardMinAgo": 2.5,
+      "lastKnownHolds": 31
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 124.5,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 57,
+     "high": 57
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 57.5,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 100.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 1
+     },
+     {
+      "t": 116.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 3
+     },
+     {
+      "t": 116.5,
+      "kind": "mode",
+      "from": "normal",
+      "to": "degraded"
+     },
+     {
+      "t": 120.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 4
+     },
+     {
+      "t": 124.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 3
+     },
+     {
+      "t": 172.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 2
+     }
+    ],
+    "inbox": [
+     {
+      "from": "moon",
+      "text": "Moon holds 20 of 32 allowance, 9 spare. Trading steady near parity. Need nothing now; will ask if spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 4.25
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds -10 of 32 allowance, 22 spare. Need nothing now. Trading steady; will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 20.25
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds -6 of 32 allowance, 26 spare. Need nothing now. Keeping steady pricing; will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 60.25
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 2 of 32 allowance, 27 spare. Trading steady near parity. Will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 94.25
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 3 of 32 allowance, 26 spare. Trading steady near parity. Ask if you need spare; I can give it.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 102.25
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": true,
+     "thought": "Earth has only 5 of 31 allowance spare, under a fifth, so I'm asking Moon for 3. Moon's news is fresh and it has spare to give. Mars is two hours stale, so I'm keeping steady pricing and normal caution.",
+     "minAgo": 0.25
+    },
+    "spareByLastWord": [
+     {
+      "body": "moon",
+      "spare": 0,
+      "ageMin": 2.5
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 124.5
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"steady\",\"caution\":\"normal\",\"give\":{\"moon\":0,\"mars\":0},\"ask\":{\"moon\":3,\"mars\":0},\"noteTo\":{\"moon\":\"Earth holds 30 of 31 allowance, only 1 spare. Asking 3 more from Moon. Playing steady and will hand back any spare once we are settled.\",\"mars\":\"Earth last heard from Mars 124 minutes ago. Holding 30 of 31 allowance and playing steady. Please send your holds and spare when you can.\"},\"thought\":\"I have only 1 spare of 31, under a fifth, so I'm asking Moon for 3. Moon's news is fresh and it has some spare. Mars is two hours stale, so I'm keeping steady pricing and normal caution.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {
+     "moon": 3
+    },
+    "noteTo": {
+     "moon": "Earth holds 30 of 31 allowance, only 1 spare. Asking 3 more from Moon. Playing steady and will hand back any spare once we are settled.",
+     "mars": "Earth last heard from Mars 124 minutes ago. Holding 30 of 31 allowance and playing steady. Please send your holds and spare when you can."
+    },
+    "thought": "I have only 1 spare of 31, under a fifth, so I'm asking Moon for 3. Moon's news is fresh and it has some spare. Mars is two hours stale, so I'm keeping steady pricing and normal caution.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "mars",
+   "simTime": 200,
+   "realSeconds": 49.062691292,
+   "briefing": {
+    "body": "mars",
+    "strategy": "leased",
+    "now": 190.5,
+    "mode": "reduce-only",
+    "holds": 0,
+    "allowance": 35,
+    "allowanceSpare": 34,
+    "bid": 0.9970538791266129,
+    "ask": 0.999132988319363,
+    "localPrice": 0.998093433722988,
+    "remoteNewsAgeMin": 132.5,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 134.25,
+      "lastKnownHolds": 3
+     },
+     {
+      "body": "moon",
+      "heardMinAgo": 134.25,
+      "lastKnownHolds": 0
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 3,
+     "high": 3
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 0,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 116.5,
+      "kind": "mode",
+      "from": "normal",
+      "to": "reduce-only"
+     },
+     {
+      "t": 121.25,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 132.5,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 142.5,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 157,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 173.25,
+      "kind": "refused",
+      "reason": "playing-safe"
+     }
+    ],
+    "inbox": [],
+    "lastDirective": {
+     "pricing": "cautious",
+     "caution": "play-safe",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold nothing, my news is about two hours old, and the bank's limit is unclear, so I stay playing safe with cautious pricing. I will give spare allowance to Earth or the Moon if either asks.",
+     "minAgo": 13
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 28,
+      "ageMin": 134.25
+     },
+     {
+      "body": "moon",
+      "spare": 29,
+      "ageMin": 134.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"cautious\",\"caution\":\"play-safe\",\"give\":{\"earth\":0,\"moon\":0},\"ask\":{\"earth\":0,\"moon\":0},\"noteTo\":{\"earth\":\"Mars holds 0, allowance 35, spare 34. Playing safe on old news. Ask me for spare allowance and I will hand it over.\",\"moon\":\"Mars holds 0, allowance 35, spare 34. Playing safe on old news. Ask me for spare allowance and I will hand it over.\"},\"thought\":\"I hold nothing with 34 spare, and my news is about 132 minutes old, so I stay playing safe with cautious pricing. Nobody has asked for allowance, so I give nothing yet and will respond if Earth or the Moon asks.\"}",
+   "directive": {
+    "pricing": "cautious",
+    "caution": "play-safe",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Mars holds 0, allowance 35, spare 34. Playing safe on old news. Ask me for spare allowance and I will hand it over.",
+     "moon": "Mars holds 0, allowance 35, spare 34. Playing safe on old news. Ask me for spare allowance and I will hand it over."
+    },
+    "thought": "I hold nothing with 34 spare, and my news is about 132 minutes old, so I stay playing safe with cautious pricing. Nobody has asked for allowance, so I give nothing yet and will respond if Earth or the Moon asks.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "moon",
+   "simTime": 201.5,
+   "realSeconds": 50.441476375,
+   "briefing": {
+    "body": "moon",
+    "strategy": "leased",
+    "now": 192,
+    "mode": "degraded",
+    "holds": 26,
+    "allowance": 34,
+    "allowanceSpare": 5,
+    "bid": 0.9882652029670982,
+    "ask": 0.9906726476645957,
+    "localPrice": 0.9899293862774845,
+    "remoteNewsAgeMin": 134,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 13.75,
+      "lastKnownHolds": 26
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 135.75,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 48,
+     "high": 48
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 46.25,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 118.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 3
+     },
+     {
+      "t": 122.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 4
+     },
+     {
+      "t": 126.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 3
+     },
+     {
+      "t": 172.5,
+      "kind": "allowance-received",
+      "from": "earth",
+      "units": 2
+     },
+     {
+      "t": 173.25,
+      "kind": "refused",
+      "reason": "allowance"
+     },
+     {
+      "t": 184.25,
+      "kind": "refused",
+      "reason": "allowance"
+     }
+    ],
+    "inbox": [
+     {
+      "from": "earth",
+      "text": "Earth holds 12 of 33 allowance, 21 spare. Steady near parity. I can give spare if you ask; no need now.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 67.5
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 23 of 33 allowance, 10 spare, so no ask. Trading steady near parity. Will ask if my spare drops below a seventh.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 71.5
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 18 of 33 allowance, 15 spare. Need nothing now. Keeping steady pricing; will ask if my spare runs low.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 107.5
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steady. I will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 115.5
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steadily near parity. I will give spare if you ask.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 119.5
+     }
+    ],
+    "lastDirective": {
+     "pricing": "cautious",
+     "caution": "normal",
+     "gave": {},
+     "asked": true,
+     "thought": "I have no spare and hold 31 of 34, so I need allowance. Earth's fresh news shows 5 spare, so I ask for 5 and price cautiously while I wait.",
+     "minAgo": 1.25
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 5,
+      "ageMin": 13.75
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 135.75
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"cautious\", \"caution\": \"normal\", \"give\": {\"earth\": 0, \"mars\": 0}, \"ask\": {\"earth\": 5, \"mars\": 0}, \"noteTo\": {\"earth\": \"Moon holds 26 of 34 allowance, 5 spare, under a fifth spare. Please send 5 if you still have that spare. We plan to price cautiously meanwhile.\", \"mars\": \"Moon holds 26 of 34 allowance and is short of spare. Your last known spare is old, so if you can, send some when you are back in touch.\"}, \"thought\": \"Earth's fresh news shows 5 spare, so I'm asking for 5 and holding my own spare. Mars news is stale, so I'll price cautiously and not ask it for units yet.\"}",
+   "directive": {
+    "pricing": "cautious",
+    "caution": "normal",
+    "give": {},
+    "ask": {
+     "earth": 5
+    },
+    "noteTo": {
+     "earth": "Moon holds 26 of 34 allowance, 5 spare, under a fifth spare. Please send 5 if you still have that spare. We plan to price cautiously meanwhi",
+     "mars": "Moon holds 26 of 34 allowance and is short of spare. Your last known spare is old, so if you can, send some when you are back in touch."
+    },
+    "thought": "Earth's fresh news shows 5 spare, so I'm asking for 5 and holding my own spare. Mars news is stale, so I'll price cautiously and not ask it for units yet.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "earth",
+   "simTime": 205.25,
+   "realSeconds": 51.693748125,
+   "briefing": {
+    "body": "earth",
+    "strategy": "leased",
+    "now": 199,
+    "mode": "degraded",
+    "holds": 31,
+    "allowance": 31,
+    "allowanceSpare": 0,
+    "bid": 0.9869868104100578,
+    "ask": 0.9885533155490656,
+    "localPrice": 0.9881618445959891,
+    "remoteNewsAgeMin": 141,
+    "peers": [
+     {
+      "body": "moon",
+      "heardMinAgo": 20.75,
+      "lastKnownHolds": 31
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 142.75,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 58,
+     "high": 58
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 39.25,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 116.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 3
+     },
+     {
+      "t": 116.5,
+      "kind": "mode",
+      "from": "normal",
+      "to": "degraded"
+     },
+     {
+      "t": 120.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 4
+     },
+     {
+      "t": 124.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 3
+     },
+     {
+      "t": 172.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 2
+     },
+     {
+      "t": 197.5,
+      "kind": "refused",
+      "reason": "allowance"
+     }
+    ],
+    "inbox": [
+     {
+      "from": "moon",
+      "text": "Moon holds 20 of 32 allowance, 9 spare. Trading steady near parity. Need nothing now; will ask if spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 22.5
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds -10 of 32 allowance, 22 spare. Need nothing now. Trading steady; will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 38.5
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds -6 of 32 allowance, 26 spare. Need nothing now. Keeping steady pricing; will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 78.5
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 2 of 32 allowance, 27 spare. Trading steady near parity. Will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 112.5
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 3 of 32 allowance, 26 spare. Trading steady near parity. Ask if you need spare; I can give it.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 120.5
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": true,
+     "thought": "I have only 1 spare of 31, under a fifth, so I'm asking Moon for 3. Moon's news is fresh and it has some spare. Mars is two hours stale, so I'm keeping steady pricing and normal caution.",
+     "minAgo": 0
+    },
+    "spareByLastWord": [
+     {
+      "body": "moon",
+      "spare": 0,
+      "ageMin": 20.75
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 142.75
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"steady\",\"caution\":\"normal\",\"give\":{\"moon\":0,\"mars\":0},\"ask\":{\"moon\":3,\"mars\":0},\"noteTo\":{\"moon\":\"Earth holds 31 of 31 allowance, none spare. Asking you for 3 units. Pricing steady. Will return spare when we can.\",\"mars\":\"Earth heard nothing from Mars for 140 minutes. No ask for now. Holding steady, will ask if our spare stays low.\"},\"thought\":\"I have no spare allowance and Moon's news is 20 minutes old, so I'm asking Moon for 3 units and keeping steady pricing. Mars is stale, so I'm not asking it for anything yet.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {
+     "moon": 3
+    },
+    "noteTo": {},
+    "thought": "I have no spare allowance and Moon's news is 20 minutes old, so I'm asking Moon for 3 units and keeping steady pricing. Mars is stale, so I'm not asking it for anything yet.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [
+     "moon",
+     "mars"
+    ],
+    "given": {}
+   }
+  },
+  {
+   "body": "mars",
+   "simTime": 213.25,
+   "realSeconds": 53.674728334,
+   "briefing": {
+    "body": "mars",
+    "strategy": "leased",
+    "now": 205.5,
+    "mode": "reduce-only",
+    "holds": 0,
+    "allowance": 35,
+    "allowanceSpare": 34,
+    "bid": 0.9956859344075434,
+    "ask": 0.9977621910900129,
+    "localPrice": 0.9967240627487781,
+    "remoteNewsAgeMin": 147.5,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 149.25,
+      "lastKnownHolds": 3
+     },
+     {
+      "body": "moon",
+      "heardMinAgo": 149.25,
+      "lastKnownHolds": 0
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 3,
+     "high": 3
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 0,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 121.25,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 132.5,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 142.5,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 157,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 173.25,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 193,
+      "kind": "refused",
+      "reason": "playing-safe"
+     }
+    ],
+    "inbox": [],
+    "lastDirective": {
+     "pricing": "cautious",
+     "caution": "play-safe",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold nothing with 34 spare, and my news is about 132 minutes old, so I stay playing safe with cautious pricing. Nobody has asked for allowance, so I give nothing yet and will respond if Earth or the Moon asks.",
+     "minAgo": 5.5
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 28,
+      "ageMin": 149.25
+     },
+     {
+      "body": "moon",
+      "spare": 29,
+      "ageMin": 149.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"cautious\",\"caution\":\"play-safe\",\"give\":{\"earth\":0,\"moon\":0},\"ask\":{\"earth\":0,\"moon\":0},\"noteTo\":{\"earth\":\"Mars holds nothing, 34 allowance spare. Our news is about 150 min old. Playing safe. Ask if you need allowance.\",\"moon\":\"Mars holds nothing, 34 allowance spare. Our news is about 150 min old. Playing safe. Ask if you need allowance.\"},\"thought\":\"I hold nothing with 34 spare, but my news is about 147 minutes old and I am playing safe, so I will price cautiously and give nothing until Earth or the Moon asks.\"}",
+   "directive": {
+    "pricing": "cautious",
+    "caution": "play-safe",
+    "give": {},
+    "ask": {},
+    "noteTo": {},
+    "thought": "I hold nothing with 34 spare, but my news is about 147 minutes old and I am playing safe, so I will price cautiously and give nothing until Earth or the Moon asks.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [
+     "earth",
+     "moon"
+    ],
+    "given": {}
+   }
+  },
+  {
+   "body": "moon",
+   "simTime": 221.25,
+   "realSeconds": 55.674154542,
+   "briefing": {
+    "body": "moon",
+    "strategy": "leased",
+    "now": 206.5,
+    "mode": "degraded",
+    "holds": 20,
+    "allowance": 34,
+    "allowanceSpare": 11,
+    "bid": 0.9862612462531817,
+    "ask": 0.9886121566769409,
+    "localPrice": 0.9877825446731008,
+    "remoteNewsAgeMin": 148.5,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 0.25,
+      "lastKnownHolds": 31
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 150.25,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 47,
+     "high": 47
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.75,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 118.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 3
+     },
+     {
+      "t": 122.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 4
+     },
+     {
+      "t": 126.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 3
+     },
+     {
+      "t": 172.5,
+      "kind": "allowance-received",
+      "from": "earth",
+      "units": 2
+     },
+     {
+      "t": 173.25,
+      "kind": "refused",
+      "reason": "allowance"
+     },
+     {
+      "t": 184.25,
+      "kind": "refused",
+      "reason": "allowance"
+     }
+    ],
+    "inbox": [
+     {
+      "from": "earth",
+      "text": "",
+      "asks": 3,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 0
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 12 of 33 allowance, 21 spare. Steady near parity. I can give spare if you ask; no need now.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 82
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 23 of 33 allowance, 10 spare, so no ask. Trading steady near parity. Will ask if my spare drops below a seventh.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 86
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 18 of 33 allowance, 15 spare. Need nothing now. Keeping steady pricing; will ask if my spare runs low.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 122
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 16 of 33 allowance, 15 spare. Trading steady. I will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 130
+     }
+    ],
+    "lastDirective": {
+     "pricing": "cautious",
+     "caution": "normal",
+     "gave": {},
+     "asked": true,
+     "thought": "Earth's fresh news shows 5 spare, so I'm asking for 5 and holding my own spare. Mars news is stale, so I'll price cautiously and not ask it for units yet.",
+     "minAgo": 5
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 0,
+      "ageMin": 0.25
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 150.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"earth\": 3, \"mars\": 0}, \"ask\": {\"earth\": 0, \"mars\": 0}, \"noteTo\": {\"earth\": \"Moon holds 20 of 34 allowance, 11 spare. Sending you 3 now as you asked. I need nothing and will keep steady pricing.\", \"mars\": \"Moon holds 20 of 34 allowance, 8 spare after giving Earth 3. Your news is old, so I am pricing steady. Tell us if you need allowance.\"}, \"thought\": \"Earth asked for 3 in fresh news and I hold 11 spare, over a fifth of my allowance, so I'll give 3 and keep 8. Mars news is 150 minutes old, so I'll hold steady pricing and send nothing there.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {
+     "earth": 3
+    },
+    "ask": {},
+    "noteTo": {
+     "earth": "Moon holds 20 of 34 allowance, 11 spare. Sending you 3 now as you asked. I need nothing and will keep steady pricing."
+    },
+    "thought": "",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "blanked",
+    "notesDropped": [
+     "mars"
+    ],
+    "given": {
+     "earth": 3
+    }
+   }
+  },
+  {
+   "body": "earth",
+   "simTime": 222,
+   "realSeconds": 55.831985374999995,
+   "briefing": {
+    "body": "earth",
+    "strategy": "leased",
+    "now": 207,
+    "mode": "degraded",
+    "holds": 31,
+    "allowance": 31,
+    "allowanceSpare": 0,
+    "bid": 0.9866557152283066,
+    "ask": 0.98822169486657,
+    "localPrice": 0.9878303552365719,
+    "remoteNewsAgeMin": 149,
+    "peers": [
+     {
+      "body": "moon",
+      "heardMinAgo": 0.75,
+      "lastKnownHolds": 20
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 150.75,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 47,
+     "high": 47
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.25,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 116.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 3
+     },
+     {
+      "t": 116.5,
+      "kind": "mode",
+      "from": "normal",
+      "to": "degraded"
+     },
+     {
+      "t": 120.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 4
+     },
+     {
+      "t": 124.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 3
+     },
+     {
+      "t": 172.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 2
+     },
+     {
+      "t": 197.5,
+      "kind": "refused",
+      "reason": "allowance"
+     }
+    ],
+    "inbox": [
+     {
+      "from": "moon",
+      "text": "Moon holds 26 of 34 allowance, 5 spare, under a fifth spare. Please send 5 if you still have that spare. We plan to price cautiously meanwhi",
+      "asks": 5,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 4.5
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 20 of 32 allowance, 9 spare. Trading steady near parity. Need nothing now; will ask if spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 30.5
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds -10 of 32 allowance, 22 spare. Need nothing now. Trading steady; will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 46.5
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds -6 of 32 allowance, 26 spare. Need nothing now. Keeping steady pricing; will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 86.5
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 2 of 32 allowance, 27 spare. Trading steady near parity. Will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 120.5
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": true,
+     "thought": "I have no spare allowance and Moon's news is 20 minutes old, so I'm asking Moon for 3 units and keeping steady pricing. Mars is stale, so I'm not asking it for anything yet.",
+     "minAgo": 1.75
+    },
+    "spareByLastWord": [
+     {
+      "body": "moon",
+      "spare": 11,
+      "ageMin": 0.75
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 150.75
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"moon\": 0, \"mars\": 0}, \"ask\": {\"moon\": 0, \"mars\": 3}, \"noteTo\": {\"moon\": \"Earth holds 31 of 31 allowance, with none spare, so I cannot send 5. I am asking Mars for 3 and will pass on any spare I get.\", \"mars\": \"Earth holds 31 of 31 allowance and is out of spare. If you still have spare, please send 3 to Earth. Earth is playing steady for now.\"}, \"thought\": \"I have no spare allowance, so I cannot cover Moon's ask of 5. Moon's news is fresh and it is holding up, so I will keep steady pricing. Mars's data is 150 minutes old, so I am asking it for 3 units only.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {
+     "mars": 3
+    },
+    "noteTo": {
+     "moon": "Earth holds 31 of 31 allowance, with none spare, so I cannot send 5. I am asking Mars for 3 and will pass on any spare I get.",
+     "mars": "Earth holds 31 of 31 allowance and is out of spare. If you still have spare, please send 3 to Earth. Earth is playing steady for now."
+    },
+    "thought": "I have no spare allowance, so I cannot cover Moon's ask of 5. Moon's news is fresh and it is holding up, so I will keep steady pricing. Mars's data is 150 minutes old, so I am asking it for 3 units only.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "mars",
+   "simTime": 225.5,
+   "realSeconds": 58.789673875,
+   "briefing": {
+    "body": "mars",
+    "strategy": "leased",
+    "now": 221.5,
+    "mode": "reduce-only",
+    "holds": 0,
+    "allowance": 35,
+    "allowanceSpare": 34,
+    "bid": 0.9960478389260363,
+    "ask": 0.9981248502708435,
+    "localPrice": 0.9970863445984399,
+    "remoteNewsAgeMin": 163.5,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 165.25,
+      "lastKnownHolds": 3
+     },
+     {
+      "body": "moon",
+      "heardMinAgo": 165.25,
+      "lastKnownHolds": 0
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 3,
+     "high": 3
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 0,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 132.5,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 142.5,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 157,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 173.25,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 193,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 211.75,
+      "kind": "refused",
+      "reason": "playing-safe"
+     }
+    ],
+    "inbox": [],
+    "lastDirective": {
+     "pricing": "cautious",
+     "caution": "play-safe",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold nothing with 34 spare, but my news is about 147 minutes old and I am playing safe, so I will price cautiously and give nothing until Earth or the Moon asks.",
+     "minAgo": 8.25
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 28,
+      "ageMin": 165.25
+     },
+     {
+      "body": "moon",
+      "spare": 29,
+      "ageMin": 165.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"cautious\",\"caution\":\"play-safe\",\"give\":{\"earth\":0,\"moon\":0},\"ask\":{\"earth\":0,\"moon\":0},\"noteTo\":{\"earth\":\"Mars holds 0 with 34 spare of 35 allowance. News is 163.5 min old, so we are playing safe and pricing cautiously. Mars needs nothing now.\",\"moon\":\"Mars holds 0 with 34 spare of 35 allowance. News is 163.5 min old, so we are playing safe and pricing cautiously. Ask if you need allowance.\"},\"thought\":\"I hold nothing with 34 spare, and my news is 163.5 minutes old, so I will play safe, price cautiously, and keep my allowance ready for Earth or the Moon if they ask.\"}",
+   "directive": {
+    "pricing": "cautious",
+    "caution": "play-safe",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Mars holds 0 with 34 spare of 35 allowance. News is 163.5 min old, so we are playing safe and pricing cautiously. Mars needs nothing now.",
+     "moon": "Mars holds 0 with 34 spare of 35 allowance. News is 163.5 min old, so we are playing safe and pricing cautiously. Ask if you need allowance."
+    },
+    "thought": "I hold nothing with 34 spare, and my news is 163.5 minutes old, so I will play safe, price cautiously, and keep my allowance ready for Earth or the Moon if they ask.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "earth",
+   "simTime": 225.5,
+   "realSeconds": 60.273032416999996,
+   "briefing": {
+    "body": "earth",
+    "strategy": "leased",
+    "now": 222.75,
+    "mode": "normal",
+    "holds": 22,
+    "allowance": 34,
+    "allowanceSpare": 12,
+    "bid": 0.9828430277901538,
+    "ask": 0.9838361708044635,
+    "localPrice": 0.9835002810366857,
+    "remoteNewsAgeMin": 20.75,
+    "peers": [
+     {
+      "body": "moon",
+      "heardMinAgo": 0.5,
+      "lastKnownHolds": 19
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 20.5,
+      "lastKnownHolds": 0
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 41,
+     "high": 41
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.5,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 120.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 4
+     },
+     {
+      "t": 124.5,
+      "kind": "handed-over",
+      "to": "moon",
+      "units": 3
+     },
+     {
+      "t": 172.25,
+      "kind": "allowance-given",
+      "to": "moon",
+      "units": 2
+     },
+     {
+      "t": 197.5,
+      "kind": "refused",
+      "reason": "allowance"
+     },
+     {
+      "t": 222.5,
+      "kind": "allowance-received",
+      "from": "moon",
+      "units": 3
+     },
+     {
+      "t": 222.75,
+      "kind": "mode",
+      "from": "degraded",
+      "to": "normal"
+     }
+    ],
+    "inbox": [
+     {
+      "from": "moon",
+      "text": "Moon holds 20 of 34 allowance, 11 spare. Sending you 3 now as you asked. I need nothing and will keep steady pricing.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 0.25
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 26 of 34 allowance, 5 spare, under a fifth spare. Please send 5 if you still have that spare. We plan to price cautiously meanwhi",
+      "asks": 5,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 20.25
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds 20 of 32 allowance, 9 spare. Trading steady near parity. Need nothing now; will ask if spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 46.25
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds -10 of 32 allowance, 22 spare. Need nothing now. Trading steady; will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 62.25
+     },
+     {
+      "from": "moon",
+      "text": "Moon holds -6 of 32 allowance, 26 spare. Need nothing now. Keeping steady pricing; will ask if my spare drops below a fifth.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 102.25
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": true,
+     "thought": "I have no spare allowance, so I cannot cover Moon's ask of 5. Moon's news is fresh and it is holding up, so I will keep steady pricing. Mars's data is 150 minutes old, so I am asking it for 3 units only.",
+     "minAgo": 0.75
+    },
+    "spareByLastWord": [
+     {
+      "body": "moon",
+      "spare": 9,
+      "ageMin": 0.5
+     },
+     {
+      "body": "mars",
+      "spare": 34,
+      "ageMin": 20.5
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"steady\",\"caution\":\"normal\",\"give\":{\"moon\":0,\"mars\":0},\"ask\":{\"moon\":0,\"mars\":0},\"noteTo\":{\"moon\":\"Earth holds 22 of 34 allowance, 12 spare. Thanks for the 3. Keeping steady pricing; I will send spare if you ask.\",\"mars\":\"Earth holds 22 of 34 allowance, 12 spare. Need nothing now. Trading steady; tell us if your spare drops below a fifth.\"},\"thought\":\"Moon's newest note is fresh and says it needs nothing, and I have 12 spare, over a fifth of 34. So I keep steady pricing, give and ask nothing, and watch for Moon's spare dropping.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "moon": "Earth holds 22 of 34 allowance, 12 spare. Thanks for the 3. Keeping steady pricing; I will send spare if you ask.",
+     "mars": "Earth holds 22 of 34 allowance, 12 spare. Need nothing now. Trading steady; tell us if your spare drops below a fifth."
+    },
+    "thought": "Moon's newest note is fresh and says it needs nothing, and I have 12 spare, over a fifth of 34. So I keep steady pricing, give and ask nothing, and watch for Moon's spare dropping.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "moon",
+   "simTime": 225.5,
+   "realSeconds": 61.45169537499999,
+   "briefing": {
+    "body": "moon",
+    "strategy": "leased",
+    "now": 222.5,
+    "mode": "degraded",
+    "holds": 19,
+    "allowance": 31,
+    "allowanceSpare": 9,
+    "bid": 0.982957537559933,
+    "ask": 0.9839514761281548,
+    "localPrice": 0.9836068274709828,
+    "remoteNewsAgeMin": 20.5,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 0.25,
+      "lastKnownHolds": 22
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 166.25,
+      "lastKnownHolds": -4
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 37,
+     "high": 37
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 59.75,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 122.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 4
+     },
+     {
+      "t": 126.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 3
+     },
+     {
+      "t": 172.5,
+      "kind": "allowance-received",
+      "from": "earth",
+      "units": 2
+     },
+     {
+      "t": 173.25,
+      "kind": "refused",
+      "reason": "allowance"
+     },
+     {
+      "t": 184.25,
+      "kind": "refused",
+      "reason": "allowance"
+     },
+     {
+      "t": 221.25,
+      "kind": "allowance-given",
+      "to": "earth",
+      "units": 3
+     }
+    ],
+    "inbox": [
+     {
+      "from": "earth",
+      "text": "Earth holds 31 of 31 allowance, with none spare, so I cannot send 5. I am asking Mars for 3 and will pass on any spare I get.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 0
+     },
+     {
+      "from": "earth",
+      "text": "",
+      "asks": 3,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 16
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 12 of 33 allowance, 21 spare. Steady near parity. I can give spare if you ask; no need now.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 98
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 23 of 33 allowance, 10 spare, so no ask. Trading steady near parity. Will ask if my spare drops below a seventh.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 102
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 18 of 33 allowance, 15 spare. Need nothing now. Keeping steady pricing; will ask if my spare runs low.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 138
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {
+      "earth": 3
+     },
+     "asked": false,
+     "thought": "",
+     "minAgo": 1.25
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 9,
+      "ageMin": 0.25
+     },
+     {
+      "body": "mars",
+      "spare": 31,
+      "ageMin": 166.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"steady\",\"caution\":\"normal\",\"give\":{\"earth\":0,\"mars\":0},\"ask\":{\"earth\":0,\"mars\":0},\"noteTo\":{\"earth\":\"Moon holds 19 of 31 allowance, 9 spare, no ask needed. Earth, say if you need spare and I will send it now. Steady pricing.\",\"mars\":\"Moon last heard from Mars 166 minutes ago. Moon holds 19 of 31, 9 spare. Please send your holds and allowance when you can.\"},\"thought\":\"Earth is fresh and at zero spare, but it asked Mars, not me, and I hold 9 spare, above a fifth of allowance. I will keep steady pricing, offer spare to Earth on request, and ask Mars for news.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Moon holds 19 of 31 allowance, 9 spare, no ask needed. Earth, say if you need spare and I will send it now. Steady pricing.",
+     "mars": "Moon last heard from Mars 166 minutes ago. Moon holds 19 of 31, 9 spare. Please send your holds and allowance when you can."
+    },
+    "thought": "Earth is fresh and at zero spare, but it asked Mars, not me, and I hold 9 spare, above a fifth of allowance. I will keep steady pricing, offer spare to Earth on request, and ask Mars for news.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "mars",
+   "simTime": 225.5,
+   "realSeconds": 61.960886292,
+   "briefing": {
+    "body": "mars",
+    "strategy": "leased",
+    "now": 225.5,
+    "mode": "reduce-only",
+    "holds": 1,
+    "allowance": 35,
+    "allowanceSpare": 34,
+    "bid": 0.9844557825126805,
+    "ask": 0.9858241328481082,
+    "localPrice": 0.9851497317083333,
+    "remoteNewsAgeMin": 20.5,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 21.25,
+      "lastKnownHolds": 31
+     },
+     {
+      "body": "moon",
+      "heardMinAgo": 21.25,
+      "lastKnownHolds": 20
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 52,
+     "high": 52
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 38.75,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 142.5,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 157,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 173.25,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 193,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 211.75,
+      "kind": "refused",
+      "reason": "playing-safe"
+     },
+     {
+      "t": 222.75,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 1
+     }
+    ],
+    "inbox": [
+     {
+      "from": "moon",
+      "text": "Moon holds 26 of 34 allowance and is short of spare. Your last known spare is old, so if you can, send some when you are back in touch.",
+      "asks": null,
+      "oldOnArrivalMin": 20.5,
+      "receivedMinAgo": 2.75
+     }
+    ],
+    "lastDirective": {
+     "pricing": "cautious",
+     "caution": "play-safe",
+     "gave": {},
+     "asked": false,
+     "thought": "I hold nothing with 34 spare, and my news is 163.5 minutes old, so I will play safe, price cautiously, and keep my allowance ready for Earth or the Moon if they ask.",
+     "minAgo": 0
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 0,
+      "ageMin": 21.25
+     },
+     {
+      "body": "moon",
+      "spare": 11,
+      "ageMin": 21.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\":\"cautious\",\"caution\":\"play-safe\",\"give\":{\"earth\":0,\"moon\":0},\"ask\":{\"earth\":0,\"moon\":0},\"noteTo\":{\"earth\":\"Mars holds 1 of 35 allowance, 34 spare. Mode reduce-only. Plan to play safe and hold spare for you or Moon.\",\"moon\":\"Mars holds 1 of 35 allowance, 34 spare. Moon asked for spare; I can send some if you confirm your need now.\"},\"thought\":\"I hold 1 of 35 with 34 spare, but my news is about 20 minutes old and the Moon's last-known spare is stale, so I will not give blind. I'll play safe, price cautiously, and offer spare once Moon confirms its need.\"}",
+   "directive": {
+    "pricing": "cautious",
+    "caution": "play-safe",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Mars holds 1 of 35 allowance, 34 spare. Mode reduce-only. Plan to play safe and hold spare for you or Moon.",
+     "moon": "Mars holds 1 of 35 allowance, 34 spare. Moon asked for spare; I can send some if you confirm your need now."
+    },
+    "thought": "I hold 1 of 35 with 34 spare, but my news is about 20 minutes old and the Moon's last-known spare is stale, so I will not give blind. I'll play safe, price cautiously, and offer spare once Moon confirms its need.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  },
+  {
+   "body": "moon",
+   "simTime": 225.5,
+   "realSeconds": 66.264744542,
+   "briefing": {
+    "body": "moon",
+    "strategy": "leased",
+    "now": 225.5,
+    "mode": "normal",
+    "holds": 13,
+    "allowance": 31,
+    "allowanceSpare": 18,
+    "bid": 0.9834731305127961,
+    "ask": 0.9844675904338759,
+    "localPrice": 0.9840746294162431,
+    "remoteNewsAgeMin": 20.5,
+    "peers": [
+     {
+      "body": "earth",
+      "heardMinAgo": 1.25,
+      "lastKnownHolds": 18
+     },
+     {
+      "body": "mars",
+      "heardMinAgo": 21.25,
+      "lastKnownHolds": 0
+     }
+    ],
+    "thinksBankHolds": {
+     "low": 31,
+     "high": 31
+    },
+    "limit": 100,
+    "minutesUntilPlayingSafe": 58.75,
+    "waitingOnEarth": null,
+    "recent": [
+     {
+      "t": 126.5,
+      "kind": "took-on",
+      "from": "earth",
+      "units": 3
+     },
+     {
+      "t": 172.5,
+      "kind": "allowance-received",
+      "from": "earth",
+      "units": 2
+     },
+     {
+      "t": 173.25,
+      "kind": "refused",
+      "reason": "allowance"
+     },
+     {
+      "t": 184.25,
+      "kind": "refused",
+      "reason": "allowance"
+     },
+     {
+      "t": 221.25,
+      "kind": "allowance-given",
+      "to": "earth",
+      "units": 3
+     },
+     {
+      "t": 222.75,
+      "kind": "mode",
+      "from": "degraded",
+      "to": "normal"
+     }
+    ],
+    "inbox": [
+     {
+      "from": "earth",
+      "text": "Earth holds 31 of 31 allowance, with none spare, so I cannot send 5. I am asking Mars for 3 and will pass on any spare I get.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 3
+     },
+     {
+      "from": "earth",
+      "text": "",
+      "asks": 3,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 19
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 12 of 33 allowance, 21 spare. Steady near parity. I can give spare if you ask; no need now.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 101
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 23 of 33 allowance, 10 spare, so no ask. Trading steady near parity. Will ask if my spare drops below a seventh.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 105
+     },
+     {
+      "from": "earth",
+      "text": "Earth holds 18 of 33 allowance, 15 spare. Need nothing now. Keeping steady pricing; will ask if my spare runs low.",
+      "asks": null,
+      "oldOnArrivalMin": 0.25,
+      "receivedMinAgo": 141
+     }
+    ],
+    "lastDirective": {
+     "pricing": "steady",
+     "caution": "normal",
+     "gave": {},
+     "asked": false,
+     "thought": "Earth is fresh and at zero spare, but it asked Mars, not me, and I hold 9 spare, above a fifth of allowance. I will keep steady pricing, offer spare to Earth on request, and ask Mars for news.",
+     "minAgo": 0
+    },
+    "spareByLastWord": [
+     {
+      "body": "earth",
+      "spare": 16,
+      "ageMin": 1.25
+     },
+     {
+      "body": "mars",
+      "spare": 34,
+      "ageMin": 21.25
+     }
+    ]
+   },
+   "raw": "{\"pricing\": \"steady\", \"caution\": \"normal\", \"give\": {\"earth\": 0, \"mars\": 0}, \"ask\": {\"earth\": 0, \"mars\": 0}, \"noteTo\": {\"earth\": \"Moon holds 13 of 31 allowance, 18 spare. Earth, if you run short, ask me and I will send spare. Steady pricing.\", \"mars\": \"Moon holds 13 of 31, 18 spare, and needs nothing. Earth asked you for 3; I can cover you if you need spare.\"}, \"thought\": \"Earth is at zero spare and asked Mars, not me. I hold 18 spare, well above a fifth, so I need nothing. I will keep steady pricing and offer spare if asked.\"}",
+   "directive": {
+    "pricing": "steady",
+    "caution": "normal",
+    "give": {},
+    "ask": {},
+    "noteTo": {
+     "earth": "Moon holds 13 of 31 allowance, 18 spare. Earth, if you run short, ask me and I will send spare. Steady pricing.",
+     "mars": "Moon holds 13 of 31, 18 spare, and needs nothing. Earth asked you for 3; I can cover you if you need spare."
+    },
+    "thought": "Earth is at zero spare and asked Mars, not me. I hold 18 spare, well above a fifth, so I need nothing. I will keep steady pricing and offer spare if asked.",
+    "source": "model"
+   },
+   "checks": {
+    "parsed": true,
+    "thought": "ok",
+    "notesDropped": [],
+    "given": {}
+   }
+  }
+ ]
+}

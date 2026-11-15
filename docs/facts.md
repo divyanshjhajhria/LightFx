@@ -5,8 +5,8 @@ every figure in the write-ups is copied from a line here, exactly as written.
 
 ## Tests
 
-- `tests.total`: 324
-- `tests.passed`: 324
+- `tests.total`: 325
+- `tests.passed`: 325
 - `tests.files`: 37
 
 ## The bank
@@ -286,4 +286,33 @@ Profit at the end of a storm run, in dollars: mean, 5th percentile (worst 1 in 2
 
 ## Agents
 
-- `agents.session.recorded`: no
+- `agents.session.recorded`: yes
+- `agents.session.recordedwith`: live
+- `agents.session.decisions`: 39
+- `agents.session.refused`: 0
+- `agents.session.model`: anthropic claude-haiku-5-5
+- `agents.session.modeldecisions`: 39
+- `agents.session.standindecisions`: 0
+- `live.runs`: Guided demo, Solar storm, Rush on Mars
+- `live.calls`: 123
+- `live.answered`: 122
+- `live.latency.median.seconds`: 3.1
+- `live.latency.p95.seconds`: 4.8
+- `live.latency.over4s`: 26
+- `live.timeouts`: 0
+- `live.httperrors`: 0
+- `live.parsefailures`: 2
+- `live.modeldecisions`: 120
+- `live.standinfallbacks`: 2
+- `live.changed.give-cut-by-the-guard-not-spare`: 1
+- `live.changed.note-cut-to-140-characters`: 4
+- `live.changed.note-dropped-by-the-checker`: 31
+- `live.changed.reply-refused-did-not-parse`: 2
+- `live.changed.thought-blanked-by-the-checker`: 9
+- `live.changed.thought-cut-to-length`: 1
+- `live.notes.sent`: 208
+- `live.tokens.in`: 262535
+- `live.tokens.out`: 60008
+- `live.cost.dollars`: 0.0563
+- `live.breachticks`: 0
+- `live.peak.limit.multiple`: 0.93

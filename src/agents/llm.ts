@@ -45,8 +45,8 @@ type Fetch = (url: string, init: RequestInit) => Promise<Response>;
 
 /** Every model call gives up after this long, and the template stays. */
 export const LLM_TIMEOUT_MS = 4000;
-/** An agent's decision is longer than a sentence: it gets a little more time. */
-export const AGENT_TIMEOUT_MS = 6000;
+/** An agent's decision: 8 seconds (a small model took about 4), then the stand-in decides instead (see AgentRunner). */
+export const AGENT_TIMEOUT_MS = 8000;
 
 /** Small, fast models: a desk's sentence is short and has to arrive within a few seconds. */
 const DEFAULT_MODEL = {

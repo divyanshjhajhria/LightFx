@@ -19,8 +19,23 @@ export type AgentState = 'idle' | 'thinking' | 'decided' | 'silent' | 'rejected'
 
 /** Real seconds between two calls for one desk, at least. */
 export const MIN_REAL_SECONDS = 4;
-/** Real seconds before a call is given up. */
-export const CALL_TIMEOUT_SECONDS = 6;
+/** Real seconds before a call is given up; that decision then falls back to the stand-in. */
+export const CALL_TIMEOUT_SECONDS = 8;
+/** Live calls allowed in one page session; after that every decision comes from the stand-in. */
+export const LIVE_CALL_BUDGET = 400;
+let liveCallsMade = 0;
+/** Live calls made so far in this page session, across every runner. */
+export function liveCallsUsed(): number {
+  return liveCallsMade;
+}
+/** Whether a live runner can still call the model. */
+export function liveBudgetLeft(): boolean {
+  return liveCallsMade < LIVE_CALL_BUDGET;
+}
+/** For tests only. */
+export function resetLiveBudget(n = 0): void {
+  liveCallsMade = n;
+}
 /** Simulated minutes between decisions when nothing has happened. */
 export const THINK_EVERY_MIN = 15;
 /** The session log keeps this many entries, the newest; a very long run cannot grow it without limit. */
@@ -178,8 +193,10 @@ export class AgentRunner {
 
       if (d.out && real - d.out.startedReal > CALL_TIMEOUT_SECONDS) {
         d.out.ctl.abort();
-        this.record(body, d.out.briefing, '', null, { parsed: false, thought: 'none', notesDropped: [], given: {}, error: 'timeout' });
+        const late = d.out.briefing;
+        this.record(body, late, '', null, { parsed: false, thought: 'none', notesDropped: [], given: {}, error: 'timeout' });
         d.out = null;
+        this.fallBack(body, late);
       }
 
       // Triggers since the last decision.
@@ -214,11 +231,12 @@ export class AgentRunner {
     d.lastAttemptSim = sim;
     d.firstAttemptSim ??= sim;
     d.calls++;
-    if (this.mode === 'stand-in') {
+    if (this.mode === 'stand-in' || !liveBudgetLeft()) {
       // The stand-in answers at once, through exactly the same parsing and checks as a model.
-      this.handle(body, b, JSON.stringify(standIn(b)));
+      this.handle(body, b, JSON.stringify(standIn(b)), true);
       return;
     }
+    liveCallsMade++;
     const ctl = new AbortController();
     const out = { ctl, startedReal: real, briefing: b };
     d.out = out;
@@ -239,14 +257,27 @@ export class AgentRunner {
         if (d.out !== out || this.stopped) return;
         d.out = null;
         this.record(body, b, '', null, { parsed: false, thought: 'none', notesDropped: [], given: {}, error: String((err as Error)?.message ?? err) });
-        this.refreshShown(body);
-        this.onChange();
+        this.fallBack(body, b);
       },
     );
   }
 
+  /** A live call that failed, timed out or could not be used: the stand-in decides this one instead. */
+  private fallBack(body: BodyId, b: DeskBriefing): void {
+    this.fallbacks++;
+    this.handle(body, b, JSON.stringify(standIn(b)), true);
+  }
+
+  /** Decisions the stand-in made in live mode because the model failed, was slow, or the budget ran out. */
+  fallbacks = 0;
+
+  /** True when a live runner has used up the page's call budget and only the stand-in decides now. */
+  get budgetSpent(): boolean {
+    return this.mode === 'live' && !liveBudgetLeft();
+  }
+
   /** Parse, sanitise, check and apply one answer. */
-  private handle(body: BodyId, b: DeskBriefing, raw: string): void {
+  private handle(body: BodyId, b: DeskBriefing, raw: string, byStandIn = this.mode === 'stand-in'): void {
     const d = this.desks[body];
     let dir: Directive | null = null;
     let error: string | undefined;
@@ -260,11 +291,15 @@ export class AgentRunner {
       d.rejected++;
       d.outcome = 'rejected';
       this.record(body, b, raw, null, { parsed: false, thought: 'none', notesDropped: [], given: {}, error });
+      if (!byStandIn) {
+        this.fallBack(body, b);
+        return;
+      }
       this.refreshShown(body);
       this.onChange();
       return;
     }
-    dir = { ...dir, source: this.mode === 'stand-in' ? 'stand-in' : 'model' };
+    dir = { ...dir, source: byStandIn ? 'stand-in' : 'model' };
     const { directive, checks } = this.check(dir, b);
     if (checks.thought === 'blanked' || checks.notesDropped.length) d.rejected++;
     checks.given = this.apply(body, directive);
@@ -313,7 +348,7 @@ export class AgentRunner {
       if (!dir) continue;
       // A recorded thought is shown only if it is still true of the desk as it stands now.
       const now = deskBriefing(this.arena.worlds.leased, e.body);
-      const { directive, checks } = this.check({ ...dir, source: 'replay' }, now);
+      const { directive, checks } = this.check({ ...dir, source: dir.source === 'stand-in' ? 'stand-in' : 'replay' }, now);
       checks.given = this.apply(e.body, directive);
       d.lastGoodSim = this.arena.now;
       d.firstAttemptSim ??= this.arena.now;
