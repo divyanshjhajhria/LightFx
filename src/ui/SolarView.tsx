@@ -121,6 +121,31 @@ interface LabelLine {
   colour: string;
 }
 
+/**
+ * A text label on the canvas that may give way: placed after the planets' own labels, in order of priority, at the
+ * first of its positions that touches no label already placed and no planet, or not drawn at all this frame.
+ */
+interface SoftLabel {
+  text: string;
+  font: string;
+  fill: string;
+  alpha: number;
+  align: CanvasTextAlign;
+  /** Lower goes first. */
+  priority: number;
+  /** Where it may go, preferred first: the text's anchor point (x, baseline y). */
+  at: [number, number][];
+}
+
+interface Box {
+  x0: number;
+  x1: number;
+  y0: number;
+  y1: number;
+}
+
+const touches = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+
 /** A small cross, the mark for a message that died on a dead link. */
 function cross(g: CanvasRenderingContext2D, x: number, y: number, alpha: number): void {
   g.strokeStyle = `rgba(${ALERT_RGB},${alpha})`;
@@ -172,6 +197,8 @@ function draw(f: Frame): void {
     if (env.payload.kind === 'gossip' && env.payload.handover) handing.add([env.from, env.to].sort().join('-'));
   }
   const quiet = (a: BodyId, b: BodyId) => handing.has([a, b].sort().join('-'));
+  /** Labels that give way to the planets' labels and to each other; drawn at the end. */
+  const soft: SoftLabel[] = [];
 
   // Links. Drawn before the Sun so a blocked line visibly runs into it.
   for (const l of w.links()) {
@@ -196,11 +223,21 @@ function draw(f: Frame): void {
         nx = -nx;
         ny = -ny;
       }
-      g.font = `500 12.5px ${FONT}`;
-      g.textAlign = 'center';
-      g.fillStyle = l.open ? `rgba(${WARM},0.62)` : `rgba(${ALERT_RGB},0.95)`;
       const text = l.open ? `${l.delayMin.toFixed(1)} min one way` : l.cut ? 'Link cut' : 'No signal';
-      g.fillText(text, (x1 + x2) / 2 + nx * 20, (y1 + y2) / 2 + ny * 20 + 4);
+      const [mx, my] = [(x1 + x2) / 2, (y1 + y2) / 2];
+      soft.push({
+        text,
+        font: `500 12.5px ${FONT}`,
+        fill: l.open ? `rgba(${WARM},0.62)` : `rgba(${ALERT_RGB},0.95)`,
+        alpha: 1,
+        align: 'center',
+        // "No signal" and "Link cut" are the point of a storm: they go first. The open link's delay can give way.
+        priority: l.open ? 2 : 0,
+        at: [
+          [mx + nx * 20, my + ny * 20 + 4],
+          [mx - nx * 20, my - ny * 20 + 4],
+        ],
+      });
     }
   }
 
@@ -287,10 +324,15 @@ function draw(f: Frame): void {
       const note = (env.payload as { note?: string }).note;
       if (noteText && notesInFlight < 4 && note) {
         const words = note.length > 64 ? `${note.slice(0, 63).trimEnd()}…` : note;
-        g.font = `400 12.5px ${FONT}`;
-        g.textAlign = nx * side >= 0 ? 'left' : 'right';
-        g.fillStyle = `rgba(${WARM},0.88)`;
-        g.fillText(`“${words}”`, sx + (nx * side >= 0 ? 8 : -8), sy + 4);
+        soft.push({
+          text: `“${words}”`,
+          font: `400 12.5px ${FONT}`,
+          fill: `rgba(${WARM},0.88)`,
+          alpha: g.globalAlpha,
+          align: nx * side >= 0 ? 'left' : 'right',
+          priority: 3,
+          at: [[sx + (nx * side >= 0 ? 8 : -8), sy + 4]],
+        });
       }
     }
     const handover = p.kind === 'gossip' ? p.handover : undefined;
@@ -304,15 +346,23 @@ function draw(f: Frame): void {
       g.beginPath();
       g.arc(x, y, 5, 0, 2 * Math.PI);
       g.fill();
-      g.font = `500 12.5px ${FONT}`;
-      g.textAlign = 'center';
-      g.fillStyle = `rgba(${WARM},0.92)`;
       // Leave the words off right next to a planet, where they would sit on its name; the large dot still shows.
       if (Math.hypot(x - a[0], y - a[1]) < 36 || Math.hypot(x - b[0], y - b[1]) < 36) continue;
       // On whichever side of the line is further from the Moon, whose name sits close to the Earth to Mars line.
       const [mx, my] = pos.moon;
       const away = Math.hypot(x + nx * 18 - mx, y + ny * 18 - my) >= Math.hypot(x - nx * 18 - mx, y - ny * 18 - my) ? 1 : -1;
-      g.fillText(`${handover} handed to ${BODY_NAME[env.to]}`, x + nx * 22 * away, y + ny * 22 * away + 4);
+      soft.push({
+        text: `${handover} handed to ${BODY_NAME[env.to]}`,
+        font: `500 12.5px ${FONT}`,
+        fill: `rgba(${WARM},0.92)`,
+        alpha: g.globalAlpha,
+        align: 'center',
+        priority: 2,
+        at: [
+          [x + nx * 22 * away, y + ny * 22 * away + 4],
+          [x - nx * 22 * away, y - ny * 22 * away + 4],
+        ],
+      });
       continue;
     }
     if (!tagged && (env.from === 'moon' || env.to === 'moon')) {
@@ -348,10 +398,16 @@ function draw(f: Frame): void {
     if (tagged) {
       if (labelled.some(([lx, ly]) => Math.hypot(lx - x, ly - y) < 18)) continue;
       labelled.push([x, y]);
-      g.font = `500 12.5px ${FONT}`;
-      g.textAlign = 'center';
-      g.fillStyle = `rgba(${WARM},0.95)`;
-      g.fillText(`lands in ${Math.max(0, left).toFixed(1)} min`, x + nx * 20 * side, y + ny * 20 * side + 4);
+      soft.push({
+        text: `lands in ${Math.max(0, left).toFixed(1)} min`,
+        font: `500 12.5px ${FONT}`,
+        fill: `rgba(${WARM},0.95)`,
+        alpha: 1,
+        align: 'center',
+        priority: 1,
+        // Your trade's countdown matters most after the planets: it tries further out before giving way.
+        at: [20, -20, 38, -38, 56, -56].map((d): [number, number] => [x + nx * d * side, y + ny * d * side + 4]),
+      });
       continue;
     }
     const key = `${env.from}>${env.to}`;
@@ -361,12 +417,19 @@ function draw(f: Frame): void {
     }
   }
   // Countdown on the next message to land in each direction.
-  g.globalAlpha = following !== null ? 0.25 : 1;
-  g.font = `500 11.5px ${FONT}`;
-  g.textAlign = 'center';
-  g.fillStyle = `rgba(${WARM},0.6)`;
   for (const p of lead.values()) {
-    g.fillText(`${Math.max(0, p.left).toFixed(1)} min`, p.x + p.nx * 15, p.y + p.ny * 15 + 3);
+    soft.push({
+      text: `${Math.max(0, p.left).toFixed(1)} min`,
+      font: `500 11.5px ${FONT}`,
+      fill: `rgba(${WARM},0.6)`,
+      alpha: following !== null ? 0.25 : 1,
+      align: 'center',
+      priority: 4,
+      at: [
+        [p.x + p.nx * 15, p.y + p.ny * 15 + 3],
+        [p.x - p.nx * 15, p.y - p.ny * 15 + 3],
+      ],
+    });
   }
   g.globalAlpha = 1;
 
@@ -496,6 +559,32 @@ function draw(f: Frame): void {
         g.fill();
       }
     });
+  }
+
+  // The labels that give way: never on a planet, a planet's label or each other.
+  const taken: Box[] = [];
+  for (const l of labels) {
+    const b = box(l);
+    taken.push({ x0: b.x0 - 12, x1: b.x1 + 2, y0: b.y0, y1: b.y1 });
+    taken.push({ x0: l.x - l.r - 2, x1: l.x + l.r + 2, y0: l.y - l.r - 2, y1: l.y + l.r + 2 });
+  }
+  soft.sort((p, q) => p.priority - q.priority);
+  for (const s of soft) {
+    g.font = s.font;
+    const tw = g.measureText(s.text).width;
+    const size = parseFloat(/([\d.]+)px/.exec(s.font)?.[1] ?? '12');
+    for (const [x, y] of s.at) {
+      const x0 = s.align === 'center' ? x - tw / 2 : s.align === 'right' ? x - tw : x;
+      const b = { x0: x0 - 2, x1: x0 + tw + 2, y0: y - size, y1: y + size * 0.3 };
+      if (taken.some((t) => touches(t, b))) continue;
+      taken.push(b);
+      g.globalAlpha = s.alpha;
+      g.textAlign = s.align;
+      g.fillStyle = s.fill;
+      g.fillText(s.text, x, y);
+      g.globalAlpha = 1;
+      break;
+    }
   }
 }
 
