@@ -155,13 +155,13 @@ function draw(f: Frame): void {
 
   // Orbits.
   g.lineWidth = 1;
-  g.strokeStyle = `rgba(${WARM},0.1)`;
+  g.strokeStyle = `rgba(${WARM},0.16)`;
   for (const r of [1, 1.5237]) {
     g.beginPath();
     g.ellipse(sx, sy, r * cam.zoom, r * cam.zoom * TILT, 0, 0, 2 * Math.PI);
     g.stroke();
   }
-  g.strokeStyle = `rgba(${WARM},0.07)`;
+  g.strokeStyle = `rgba(${WARM},0.11)`;
   g.beginPath();
   g.ellipse(pos.earth[0], pos.earth[1], MOON_DISPLAY_AU * cam.zoom, MOON_DISPLAY_AU * cam.zoom * TILT, 0, 0, 2 * Math.PI);
   g.stroke();
@@ -438,12 +438,12 @@ function draw(f: Frame): void {
     const lines: LabelLine[] = [
       { text: BODY_LABEL[b], font: `500 15px ${FONT}`, colour: `rgba(${WARM},${selected === b ? 1 : 0.84})` },
     ];
-    if (mode !== 'normal') lines.push({ text: MODE_LABEL[mode], font: `500 12.5px ${FONT}`, colour: STATE[mode] });
+    if (mode !== 'normal') lines.push({ text: MODE_LABEL[mode], font: `500 14px ${FONT}`, colour: STATE[mode] });
     else if (leaseLeft !== null && leaseLeft < w.cfg.leaseDuration / 2) {
-      lines.push({ text: `Plays safe in ${Math.max(0, leaseLeft).toFixed(0)} min`, font: `500 12.5px ${FONT}`, colour: STATE.degraded });
+      lines.push({ text: `Plays safe in ${Math.max(0, leaseLeft).toFixed(0)} min`, font: `500 14px ${FONT}`, colour: STATE.degraded });
     }
     const belief = believes?.[b];
-    if (belief) lines.push({ text: belief, font: `400 12.5px ${FONT}`, colour: `rgba(${WARM},0.62)` });
+    if (belief) lines.push({ text: belief, font: `400 14px ${FONT}`, colour: `rgba(${WARM},0.62)` });
     let width = 0;
     for (const l of lines) {
       g.font = l.font;
