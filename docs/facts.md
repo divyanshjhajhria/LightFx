@@ -5,9 +5,9 @@ every figure in the write-ups is copied from a line here, exactly as written.
 
 ## Tests
 
-- `tests.total`: 318
-- `tests.passed`: 318
-- `tests.files`: 35
+- `tests.total`: 323
+- `tests.passed`: 323
+- `tests.files`: 36
 
 ## The bank
 
@@ -137,6 +137,45 @@ Where the missed customers went (storm squares; served plus these is 100%):
 - `missed.imbalance.askearth.room.percent`: 3.7%
 - `missed.imbalance.askearth.noanswer.percent`: 37.3%
 - `missed.imbalance.ours.priceofsafety.percent`: 4.5%
+
+Profit at the end of a storm run, in dollars: mean, 5th percentile (worst 1 in 20), worst single run:
+
+- `profit.all.ours.mean`: 0.36
+- `profit.all.ours.p5`: -0.92
+- `profit.all.ours.worst`: -2.73
+- `profit.all.oldnews.mean`: -0.29
+- `profit.all.oldnews.p5`: -4.35
+- `profit.all.oldnews.worst`: -11.27
+- `profit.all.askearth.mean`: -0.01
+- `profit.all.askearth.p5`: -1.59
+- `profit.all.askearth.worst`: -3.92
+- `profit.calm.ours.mean`: 0.63
+- `profit.calm.ours.p5`: 0.39
+- `profit.calm.ours.worst`: 0.14
+- `profit.calm.oldnews.mean`: 0.48
+- `profit.calm.oldnews.p5`: 0.21
+- `profit.calm.oldnews.worst`: -0.17
+- `profit.calm.askearth.mean`: 0.30
+- `profit.calm.askearth.p5`: 0.13
+- `profit.calm.askearth.worst`: -0.00
+- `profit.panic.ours.mean`: -0.20
+- `profit.panic.ours.p5`: -1.47
+- `profit.panic.ours.worst`: -2.73
+- `profit.panic.oldnews.mean`: -1.85
+- `profit.panic.oldnews.p5`: -6.44
+- `profit.panic.oldnews.worst`: -11.27
+- `profit.panic.askearth.mean`: -0.64
+- `profit.panic.askearth.p5`: -2.38
+- `profit.panic.askearth.worst`: -3.92
+- `profit.imbalance.ours.mean`: 0.64
+- `profit.imbalance.ours.p5`: 0.38
+- `profit.imbalance.ours.worst`: 0.20
+- `profit.imbalance.oldnews.mean`: 0.50
+- `profit.imbalance.oldnews.p5`: 0.23
+- `profit.imbalance.oldnews.worst`: -0.08
+- `profit.imbalance.askearth.mean`: 0.31
+- `profit.imbalance.askearth.p5`: -0.04
+- `profit.imbalance.askearth.worst`: -0.27
 
 ## The guided demo (seed 42, scripted: space pressed as soon as each step allows)
 

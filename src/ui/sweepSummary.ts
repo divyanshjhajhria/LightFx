@@ -1,4 +1,5 @@
 // The headline figures from the survival map, computed from sweep.json, never typed in.
+import { percentile5 } from '../sim/sweep';
 import type { CellResult, Market, MissedShares, SweepFile } from '../sim/sweep';
 import { STRATEGIES } from '../sim/types';
 import type { StrategyId } from '../sim/types';
@@ -13,6 +14,8 @@ export interface BankFigures {
   servedPct: number;
   /** Why the rest left with nothing, in percent of customers arrived; absent for files written before step 15. */
   missed?: MissedShares;
+  /** Profit at the end of a storm run: mean, 5th percentile across all runs, worst run. Absent before step 16. */
+  profit?: { mean: number; p5: number; worst: number };
 }
 
 export interface Figures {
@@ -51,6 +54,15 @@ function figures(cells: CellResult[]): Figures {
                   room: weighted((c) => c.banks[b].missedPctMean!.room),
                   safe: weighted((c) => c.banks[b].missedPctMean!.safe),
                   noAnswer: weighted((c) => c.banks[b].missedPctMean!.noAnswer),
+                },
+              }
+            : {}),
+          ...(cells.length && cells.every((c) => c.banks[b].profitRuns)
+            ? {
+                profit: {
+                  mean: weighted((c) => c.banks[b].profitMean!),
+                  p5: percentile5(cells.flatMap((c) => c.banks[b].profitRuns!)),
+                  worst: Math.min(...cells.map((c) => c.banks[b].profitWorst!)),
                 },
               }
             : {}),

@@ -33,6 +33,15 @@ export interface BankResult {
    * Absent in files written before it. Served plus these four is 100.
    */
   missedPctMean?: MissedShares;
+  /**
+   * Profit at the end of the run (the bank's cash plus what it holds at the fair price, from zero at the start), step 16.
+   * Absent in files written before it. Mean over seeds, 5th percentile (nearest rank), worst single run, and every
+   * seed's figure in seed order, so the 5th percentile across many squares can be computed exactly.
+   */
+  profitMean?: number;
+  profitP5?: number;
+  profitWorst?: number;
+  profitRuns?: number[];
 }
 
 export interface MissedShares {
@@ -135,18 +144,25 @@ export function runCell(p: CellParams, seed: number, cfg?: SimConfig) {
           servedPct: (100 * m.served) / Math.max(1, m.arrived),
           marsServedInStorm: p.stormMinutes > 0 ? marsAtEnd[b] - marsAtStart[b] : 0,
           missedPct: missedShares(w),
+          profit: w.pnl(),
         },
       ];
     }),
   ) as Record<
     StrategyId,
-    { breached: boolean; minutesOver: number; peak: number; servedPct: number; marsServedInStorm: number; missedPct: MissedShares }
+    { breached: boolean; minutesOver: number; peak: number; servedPct: number; marsServedInStorm: number; missedPct: MissedShares; profit: number }
   >;
   const steps = Math.round(s.durationMin / run.arena.worlds.leased.cfg.dt);
   return { banks, ticks: steps * STRATEGIES.length, arena: run.arena };
 }
 
 const round = (x: number, d = 4) => Number(x.toFixed(d));
+
+/** The 5th percentile, nearest rank: the value that 5% of runs are at or below. */
+export function percentile5(xs: number[]): number {
+  const s = [...xs].sort((a, b) => a - b);
+  return s[Math.max(0, Math.ceil(0.05 * s.length) - 1)];
+}
 
 /** Why customers left with nothing, as shares of those who arrived, percent, counting anyone still waiting at the end. */
 export function missedShares(w: World): MissedShares {
@@ -180,6 +196,10 @@ export function sweepCell(p: CellParams, seeds: number[], cfg?: SimConfig): Cell
           safe: round(mean((r) => r.banks[b].missedPct.safe)),
           noAnswer: round(mean((r) => r.banks[b].missedPct.noAnswer)),
         },
+        profitMean: round(mean((r) => r.banks[b].profit)),
+        profitP5: round(percentile5(runs.map((r) => r.banks[b].profit))),
+        profitWorst: round(Math.min(...runs.map((r) => r.banks[b].profit))),
+        profitRuns: runs.map((r) => round(r.banks[b].profit)),
       },
     ]),
   ) as Record<StrategyId, BankResult>;

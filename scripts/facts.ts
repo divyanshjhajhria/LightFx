@@ -131,6 +131,21 @@ lines.push('', 'Where the missed customers went (storm squares; served plus thes
 missedBlock('missed.all', summary.overall);
 for (const m of MARKETS) missedBlock(`missed.${m}`, summary.byMarket[m]);
 
+// Profit at the end of a storm run, in dollars (cash plus Mars credits held at the fair price; every bank starts at 0).
+const money = (n: number) => n.toFixed(2);
+const profitBlock = (prefix: string, f: Figures) => {
+  for (const s of STRATEGIES) {
+    const p = f.banks[s].profit;
+    if (!p) continue;
+    fact(`${prefix}.${BANK[s]}.mean`, money(p.mean));
+    fact(`${prefix}.${BANK[s]}.p5`, money(p.p5));
+    fact(`${prefix}.${BANK[s]}.worst`, money(p.worst));
+  }
+};
+lines.push('', 'Profit at the end of a storm run, in dollars: mean, 5th percentile (worst 1 in 20), worst single run:', '');
+profitBlock('profit.all', summary.overall);
+for (const m of MARKETS) profitBlock(`profit.${m}`, summary.byMarket[m]);
+
 section(`The guided demo (seed ${GUIDE_SEED}, scripted: space pressed as soon as each step allows)`);
 // The guide's own clock with space pressed at once: the fast-forwarding alone. With the voice-over each line also
 // takes as long as it takes to say, which this does not measure.

@@ -49,3 +49,14 @@ const row = (label: string, f: (typeof summary)['overall']) => {
 };
 row('All markets', summary.overall);
 for (const m of ['calm', 'panic', 'imbalance'] as const) row(m === 'imbalance' ? 'One-way customers' : m === 'calm' ? 'Calm market' : 'Panic', summary.byMarket[m]);
+
+// Profit at the end of a storm run: mean, 5th percentile (worst 1 in 20) and worst single run.
+const money = (label: string, f: (typeof summary)['overall']) => {
+  console.log(`\n${label}: profit mean, 5th percentile, worst`);
+  for (const b of ['leased', 'naive', 'central'] as const) {
+    const p = f.banks[b].profit!;
+    console.log(`  ${NAME[b].padEnd(16)} ${[p.mean, p.p5, p.worst].map((v) => v.toFixed(2).padStart(9)).join('')}`);
+  }
+};
+money('All markets', summary.overall);
+for (const m of ['calm', 'panic', 'imbalance'] as const) money(m === 'imbalance' ? 'One-way customers' : m === 'calm' ? 'Calm market' : 'Panic', summary.byMarket[m]);
