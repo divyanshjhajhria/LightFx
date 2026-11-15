@@ -2475,7 +2475,8 @@ input[type='range']::-moz-range-thumb {
   font-weight: 500;
 }
 
-.mapReadoutPlay {
+.mapReadoutPlay,
+.mapReadoutMarket {
   margin-top: 4px;
   color: var(--text-2);
 }

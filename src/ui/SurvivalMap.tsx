@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { MARKETS, MARKET_NAME, SEPARATIONS, STORM_MINUTES, stormLabel } from '../sim/sweep';
 import type { CellParams, CellResult, Market, SweepFile } from '../sim/sweep';
@@ -7,7 +7,7 @@ import type { StrategyId } from '../sim/types';
 import { headline, summarise } from './sweepSummary';
 import type { SweepSummary } from './sweepSummary';
 import { PART_LABEL, missedParts } from './missedBreakdown';
-import { ALERT_RGB, SHORT_NAME, STRATEGY, WARM } from './theme';
+import { ALERT_RGB, SHORT_NAME, STRATEGY, WARM, dollars } from './theme';
 
 type Measure = 'minutes' | 'served';
 
@@ -175,6 +175,12 @@ export function SurvivalMap({ onBack, onPlay }: { onBack: () => void; onPlay: (p
   const [data, setData] = useState<SweepFile | null | 'missing'>(null);
   const [market, setMarket] = useState<Market>('panic');
   const [readout, setReadout] = useState<Readout | null>(null);
+  // The read-out's own height, so it is kept on screen however many lines it has.
+  const readoutBox = useRef<HTMLDivElement>(null);
+  const [readoutH, setReadoutH] = useState(162);
+  useLayoutEffect(() => {
+    if (readoutBox.current) setReadoutH(readoutBox.current.offsetHeight);
+  }, [readout]);
 
   useEffect(() => {
     fetch('sweep.json')
@@ -255,10 +261,11 @@ export function SurvivalMap({ onBack, onPlay }: { onBack: () => void; onPlay: (p
 
       {readout && r && (
         <div
+          ref={readoutBox}
           className="mapReadout glass"
           style={{
             left: readout.right + 8 + 290 <= window.innerWidth ? readout.right + 8 : Math.max(8, readout.left - 8 - 290),
-            top: Math.min(readout.y, window.innerHeight - 170),
+            top: Math.max(8, Math.min(readout.y, window.innerHeight - readoutH - 8)),
           }}
         >
           <b>{conditions(readout.cell)}</b>
@@ -270,6 +277,22 @@ export function SurvivalMap({ onBack, onPlay }: { onBack: () => void; onPlay: (p
           <span>{Math.round(r.servedPctMean)}% of customers served</span>
           {readout.cell.stormMinutes > 0 && (
             <span>Mars desk served {Math.round(r.marsServedInStormMean)} customers during the storm</span>
+          )}
+          {r.profitMean !== undefined && r.profitP5 !== undefined && r.profitWorst !== undefined && (
+            <>
+              <span>Profit per storm {dollars(r.profitMean)} on average</span>
+              <span>
+                Worst 1 in 20 {dollars(r.profitP5)}, worst of all {dollars(r.profitWorst)}
+              </span>
+            </>
+          )}
+          {readout.cell.stormMinutes > 0 && STRATEGIES.every((b) => summary.byMarket[readout.cell.market].banks[b].profit) && (
+            <span className="mapReadoutMarket">
+              {MARKET_NAME[readout.cell.market]}, all storms. Typical profit per storm:{' '}
+              {STRATEGIES.map((b) => SHORT_NAME[b] + ' ' + dollars(summary.byMarket[readout.cell.market].banks[b].profit!.mean)).join(', ')}. In a
+              bad storm (worst 1 in 20):{' '}
+              {STRATEGIES.map((b) => dollars(summary.byMarket[readout.cell.market].banks[b].profit!.p5)).join(', ')}.
+            </span>
           )}
           <span className="mapReadoutPlay">Click to play storm 1 of the {readout.cell.runs}.</span>
         </div>

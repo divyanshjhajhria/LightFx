@@ -40,6 +40,12 @@ export const FONT =
 export const clock = (min: number) =>
   `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(Math.floor(min % 60)).padStart(2, '0')}`;
 
+/** Money in dollars to the cent, with a real minus sign: "$0.36", "−$4.35". */
+export function dollars(n: number): string {
+  const s = Math.abs(n).toFixed(2);
+  return (n < 0 && Number(s) !== 0 ? '−' : '') + '$' + s;
+}
+
 /** Signed number with a real minus sign. */
 export function signed(n: number, digits = 0): string {
   const s = Math.abs(n).toFixed(digits);
