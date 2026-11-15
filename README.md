@@ -78,7 +78,7 @@ own.
 
 Start it with `npm run dev` and open http://localhost:5173/?demo, or press **G** in the app, or choose
 "Guided demo" at the top of the Scenario menu. The bank is warmed up for an hour, the Mars desk is open with its
-trade ticket set to sell 5, and the controls are hidden. A caption bar and a voice explain each step.
+trade ticket set to sell 5, and the controls are hidden. A caption bar explains each step; the voice starts off, and M turns it on.
 
 | Key | What it does |
 |---|---|

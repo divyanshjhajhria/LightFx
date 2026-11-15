@@ -5,20 +5,14 @@ import { publicFiles } from './publicFiles';
 
 const MUTE_KEY = 'lightspeed-fx.muted';
 
-let muted = readMuted();
+// Step 17: the presenter narrates, so the voice starts off on every page load, whatever was chosen before. M turns it
+// on for this visit.
+let muted = true;
 /** Line ids with a recorded file, found when the demo starts. Null until checked. */
 let recorded: Set<string> | null = null;
 let audio: HTMLAudioElement | null = null;
 let chosen: SpeechSynthesisVoice | null = null;
 let listening = false;
-
-function readMuted(): boolean {
-  try {
-    return localStorage.getItem(MUTE_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
 
 function synth(): SpeechSynthesis | null {
   try {

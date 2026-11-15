@@ -4,7 +4,7 @@
 
 - [ ] Chrome, up to date, with no other tabs. Window full screen at 1440x900 or larger; 1366x768 also works.
 - [ ] Browser zoom at 100% (Cmd+0 or Ctrl+0).
-- [ ] Sound on, at a level the back of the room can hear. Test it once on the first step of the demo.
+- [ ] The voice-over starts off: you narrate. To use it instead, press M on the first step; sound on, loud enough for the back of the room.
 - [ ] Do not disturb on; notifications, chat and email closed.
 - [ ] Charger plugged in. Screen sleep off.
 - [ ] The demo address open and loaded: the hosted page or `npm run preview`, with `?demo` on the end. It starts the
