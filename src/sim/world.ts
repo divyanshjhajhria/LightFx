@@ -1,6 +1,7 @@
 import { DEFAULT_CONFIG } from './config';
 import type { SimConfig } from './config';
-import { LeasedDesk, makeDesk } from './desks';
+import { CentralDesk, LeasedDesk, makeDesk } from './desks';
+import type { MissReason } from './desks';
 import type { Directive } from './directive';
 import type { Desk, DeskCtx } from './desks';
 import { SeriesFeed, SyntheticFeed } from './market';
@@ -112,6 +113,14 @@ export class World {
 
   /** Customers that have arrived at each desk so far (beside metrics.arrived, the total). */
   readonly arrivedAt: PerBody<number> = perBody(() => 0);
+  /**
+   * Customers who left with nothing, by desk and reason (beside the metrics, for measurement only). Customers who got
+   * part of what they asked for count as served, as in metrics.served; `partFilled` counts those cut short for room.
+   */
+  readonly missed: PerBody<Record<MissReason, number>> = perBody(() => ({ price: 0, room: 0, safe: 0, noAnswer: 0 }));
+  readonly partFilled: PerBody<number> = perBody(() => 0);
+  /** Requests head office turned down, until the customer's desk gives up on them. */
+  private readonly declinedIds = new Set<string>();
 
   now = 0;
   /** Solar storm: every interplanetary link is down. */
@@ -243,7 +252,38 @@ export class World {
       send: (to, p) => this.send(b, to, p),
       report: (trade, e) => this.report(b, trade, e),
       log: (e) => this.logDesk(b, e),
+      miss: (reason, id) => this.countMiss(b, reason, id),
+      declined: (id) => {
+        this.declinedIds.add(id);
+      },
     };
+  }
+
+  /** A customer at `b` left with nothing. Head office declining it means there was no room, whatever the desk saw. */
+  private countMiss(b: BodyId, reason: MissReason, id?: string): void {
+    if (id !== undefined && this.declinedIds.delete(id)) reason = 'room';
+    this.missed[b][reason]++;
+  }
+
+  /**
+   * At the end of a measured run: customers still waiting on head office have had no answer (or no room, if it
+   * declined). Counting only; the desks are not touched.
+   */
+  countStillWaiting(): Record<MissReason, number> {
+    const extra = { price: 0, room: 0, safe: 0, noAnswer: 0 };
+    for (const b of BODIES) {
+      const d = this.desks[b];
+      if (!(d instanceof CentralDesk)) continue;
+      for (const id of d.waitingIds()) extra[this.declinedIds.has(id) ? 'room' : 'noAnswer']++;
+    }
+    return extra;
+  }
+
+  /** Customers missed in total so far, by reason, all desks. */
+  missedTotal(): Record<MissReason, number> {
+    const t = { price: 0, room: 0, safe: 0, noAnswer: 0 };
+    for (const b of BODIES) for (const k of Object.keys(t) as MissReason[]) t[k] += this.missed[b][k];
+    return t;
   }
 
   // ---- Agents (our bank only) ----------------------------------------------
@@ -589,10 +629,15 @@ export class World {
     const selling = cust.side === 'sell';
     const price = selling ? q.bid : q.ask;
     const edge = selling ? (ctx.fair - price) / ctx.fair : (price - ctx.fair) / ctx.fair;
-    if (edge > cust.tol) return;
+    if (edge > cust.tol) {
+      this.countMiss(cust.at, 'price');
+      return;
+    }
     const dir = selling ? 1 : -1;
     const n = desk.maxFill(dir, cust.size, ctx);
     if (n > 0) desk.applyFill(dir * n, price);
+    if (n === 0) this.countMiss(cust.at, desk.refusalReason(dir, ctx) === 'playing-safe' ? 'safe' : 'room');
+    else if (n < cust.size) this.partFilled[cust.at]++;
     if (n === 0 && this.now - this.lastRefusal[cust.at] >= REFUSAL_EVERY) {
       this.lastRefusal[cust.at] = this.now;
       this.logDesk(cust.at, { kind: 'refused', reason: desk.refusalReason(dir, ctx) });

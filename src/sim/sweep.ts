@@ -5,7 +5,7 @@ import { runScenario } from './scenario';
 import type { Director, Scenario, ScenarioEvent } from './scenario';
 import { STRATEGIES } from './types';
 import type { StrategyId } from './types';
-import type { Arena } from './world';
+import type { Arena, World } from './world';
 
 export type Market = 'calm' | 'panic' | 'imbalance';
 
@@ -28,6 +28,22 @@ export interface BankResult {
   servedPctMean: number;
   /** Customers the Mars desk served during the storm, averaged over runs. */
   marsServedInStormMean: number;
+  /**
+   * Customers who left with nothing, by reason, as a share of customers arrived, percent, averaged over runs (step 15).
+   * Absent in files written before it. Served plus these four is 100.
+   */
+  missedPctMean?: MissedShares;
+}
+
+export interface MissedShares {
+  /** The quote was outside what the customer would accept. */
+  price: number;
+  /** No allowance or limit left. */
+  room: number;
+  /** The desk was playing safe (our bank only). */
+  safe: number;
+  /** Left waiting on head office, or the request or answer was lost (the bank that asks Earth only). */
+  noAnswer: number;
 }
 
 export interface CellResult extends CellParams {
@@ -118,15 +134,32 @@ export function runCell(p: CellParams, seed: number, cfg?: SimConfig) {
           peak: m.maxAbsTotal / w.cfg.limit,
           servedPct: (100 * m.served) / Math.max(1, m.arrived),
           marsServedInStorm: p.stormMinutes > 0 ? marsAtEnd[b] - marsAtStart[b] : 0,
+          missedPct: missedShares(w),
         },
       ];
     }),
-  ) as Record<StrategyId, { breached: boolean; minutesOver: number; peak: number; servedPct: number; marsServedInStorm: number }>;
+  ) as Record<
+    StrategyId,
+    { breached: boolean; minutesOver: number; peak: number; servedPct: number; marsServedInStorm: number; missedPct: MissedShares }
+  >;
   const steps = Math.round(s.durationMin / run.arena.worlds.leased.cfg.dt);
   return { banks, ticks: steps * STRATEGIES.length, arena: run.arena };
 }
 
 const round = (x: number, d = 4) => Number(x.toFixed(d));
+
+/** Why customers left with nothing, as shares of those who arrived, percent, counting anyone still waiting at the end. */
+export function missedShares(w: World): MissedShares {
+  const t = w.missedTotal();
+  const still = w.countStillWaiting();
+  const n = Math.max(1, w.metrics.arrived);
+  return {
+    price: (100 * (t.price + still.price)) / n,
+    room: (100 * (t.room + still.room)) / n,
+    safe: (100 * (t.safe + still.safe)) / n,
+    noAnswer: (100 * (t.noAnswer + still.noAnswer)) / n,
+  };
+}
 
 export function sweepCell(p: CellParams, seeds: number[], cfg?: SimConfig): CellResult {
   const runs = seeds.map((seed) => runCell(p, seed, cfg));
@@ -141,6 +174,12 @@ export function sweepCell(p: CellParams, seeds: number[], cfg?: SimConfig): Cell
         peakOverLimitMax: round(Math.max(...runs.map((r) => r.banks[b].peak))),
         servedPctMean: round(mean((r) => r.banks[b].servedPct)),
         marsServedInStormMean: round(mean((r) => r.banks[b].marsServedInStorm)),
+        missedPctMean: {
+          price: round(mean((r) => r.banks[b].missedPct.price)),
+          room: round(mean((r) => r.banks[b].missedPct.room)),
+          safe: round(mean((r) => r.banks[b].missedPct.safe)),
+          noAnswer: round(mean((r) => r.banks[b].missedPct.noAnswer)),
+        },
       },
     ]),
   ) as Record<StrategyId, BankResult>;

@@ -1,5 +1,5 @@
 // The headline figures from the survival map, computed from sweep.json, never typed in.
-import type { CellResult, Market, SweepFile } from '../sim/sweep';
+import type { CellResult, Market, MissedShares, SweepFile } from '../sim/sweep';
 import { STRATEGIES } from '../sim/types';
 import type { StrategyId } from '../sim/types';
 
@@ -11,6 +11,8 @@ export interface BankFigures {
   worstPeak: number;
   /** Mean share of customers served, in percent. */
   servedPct: number;
+  /** Why the rest left with nothing, in percent of customers arrived; absent for files written before step 15. */
+  missed?: MissedShares;
 }
 
 export interface Figures {
@@ -42,6 +44,16 @@ function figures(cells: CellResult[]): Figures {
           breachedPct: runs ? (100 * breachedRuns) / runs : 0,
           worstPeak: Number(Math.max(0, ...cells.map((c) => c.banks[b].peakOverLimitMax)).toFixed(1)),
           servedPct: weighted((c) => c.banks[b].servedPctMean),
+          ...(cells.length && cells.every((c) => c.banks[b].missedPctMean)
+            ? {
+                missed: {
+                  price: weighted((c) => c.banks[b].missedPctMean!.price),
+                  room: weighted((c) => c.banks[b].missedPctMean!.room),
+                  safe: weighted((c) => c.banks[b].missedPctMean!.safe),
+                  noAnswer: weighted((c) => c.banks[b].missedPctMean!.noAnswer),
+                },
+              }
+            : {}),
         },
       ];
     }),

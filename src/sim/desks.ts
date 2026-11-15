@@ -21,7 +21,17 @@ export interface DeskCtx {
   report?(trade: number, e: TraceDetail): void;
   /** Note something this desk did, for its briefing. Returns nothing; a desk must never branch on it. */
   log?(e: DeskEventDetail): void;
+  /**
+   * Count a customer who left with nothing, and why: for measurement only. Returns nothing; a desk must never branch
+   * on it. `id` is the request id, for the bank that asks Earth.
+   */
+  miss?(reason: MissReason, id?: string): void;
+  /** Head office turned a request down for lack of room. For measurement only; returns nothing. */
+  declined?(id: string): void;
 }
+
+/** Why a customer left with nothing. */
+export type MissReason = 'price' | 'room' | 'safe' | 'noAnswer';
 
 export interface Desk {
   readonly id: BodyId;
@@ -639,6 +649,7 @@ export class CentralDesk extends BaseDesk {
       if (c.trade !== trade) continue;
       // Dropping the customer means a later approval is answered "not filled", which releases Earth's bound.
       this.waiting.delete(id);
+      ctx.miss?.('noAnswer', id);
       this.walkedAway.set(id, c);
       // Only the story reads this, and stories keep their last ten trades: older entries can never be told.
       while (this.walkedAway.size > WALKED_AWAY_KEEP) this.walkedAway.delete(this.walkedAway.keys().next().value!);
@@ -652,6 +663,7 @@ export class CentralDesk extends BaseDesk {
       if (!ok) {
         // A refusal sends nothing: the remote desk simply never hears back.
         if (p.trade !== undefined) ctx.report?.(p.trade, { kind: 'earth-declined' });
+        ctx.declined?.(p.id);
         return;
       }
       if (p.delta > 0) this.upper += p.delta;
@@ -668,6 +680,8 @@ export class CentralDesk extends BaseDesk {
       const edge = c?.side === 'sell' ? (ctx.fair - price) / ctx.fair : (price - ctx.fair) / ctx.fair;
       const filled = !!c && ctx.now - c.arrivedAt <= c.patience && edge <= c.tol;
       if (c && filled) this.applyFill(c.side === 'sell' ? c.size : -c.size, price);
+      // A customer still here but not filled: gone by the time the answer came, or the price was too far.
+      if (c && !filled) ctx.miss?.(ctx.now - c.arrivedAt > c.patience ? 'noAnswer' : 'price', p.id);
       const gone = this.walkedAway.get(p.id);
       if (gone?.trade !== undefined) {
         this.walkedAway.delete(p.id);
@@ -699,8 +713,16 @@ export class CentralDesk extends BaseDesk {
 
   tick(ctx: DeskCtx): void {
     for (const [id, c] of this.waiting) {
-      if (ctx.now - c.arrivedAt > c.patience + 2 * 60) this.waiting.delete(id);
+      if (ctx.now - c.arrivedAt > c.patience + 2 * 60) {
+        this.waiting.delete(id);
+        ctx.miss?.('noAnswer', id);
+      }
     }
+  }
+
+  /** Requests still waiting on head office. Read-only, for counting at the end of a run. */
+  waitingIds(): string[] {
+    return [...this.waiting.keys()];
   }
 }
 
