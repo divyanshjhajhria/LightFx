@@ -5,9 +5,9 @@ every figure in the write-ups is copied from a line here, exactly as written.
 
 ## Tests
 
-- `tests.total`: 308
-- `tests.passed`: 308
-- `tests.files`: 33
+- `tests.total`: 318
+- `tests.passed`: 318
+- `tests.files`: 35
 
 ## The bank
 
@@ -98,7 +98,45 @@ One-way customers:
 - `sweep.imbalance.askearth.served.percent`: 45.1%
 - `sweep.imbalance.ours.marsservedinstorm.perstorm`: 20.8
 - `sweep.imbalance.askearth.marsservedinstorm.perstorm`: 0.0
-- `sweep.missedcustomers`: not measured (the sweep records customers served, not why the others were missed)
+
+Where the missed customers went (storm squares; served plus these is 100%):
+
+- `missed.all.ours.price.percent`: 36.3%
+- `missed.all.ours.room.percent`: 1.1%
+- `missed.all.ours.playingsafe.percent`: 4.2%
+- `missed.all.oldnews.price.percent`: 23.1%
+- `missed.all.oldnews.room.percent`: 3.0%
+- `missed.all.askearth.price.percent`: 13.5%
+- `missed.all.askearth.room.percent`: 4.3%
+- `missed.all.askearth.noanswer.percent`: 37.5%
+- `missed.all.ours.priceofsafety.percent`: 5.3%
+- `missed.calm.ours.price.percent`: 35.5%
+- `missed.calm.ours.room.percent`: 0.0%
+- `missed.calm.ours.playingsafe.percent`: 4.4%
+- `missed.calm.oldnews.price.percent`: 22.1%
+- `missed.calm.oldnews.room.percent`: 0.1%
+- `missed.calm.askearth.price.percent`: 13.5%
+- `missed.calm.askearth.room.percent`: 0.7%
+- `missed.calm.askearth.noanswer.percent`: 38.1%
+- `missed.calm.ours.priceofsafety.percent`: 4.5%
+- `missed.panic.ours.price.percent`: 37.0%
+- `missed.panic.ours.room.percent`: 2.7%
+- `missed.panic.ours.playingsafe.percent`: 4.1%
+- `missed.panic.oldnews.price.percent`: 23.5%
+- `missed.panic.oldnews.room.percent`: 8.5%
+- `missed.panic.askearth.price.percent`: 13.0%
+- `missed.panic.askearth.room.percent`: 8.6%
+- `missed.panic.askearth.noanswer.percent`: 36.9%
+- `missed.panic.ours.priceofsafety.percent`: 6.8%
+- `missed.imbalance.ours.price.percent`: 36.2%
+- `missed.imbalance.ours.room.percent`: 0.5%
+- `missed.imbalance.ours.playingsafe.percent`: 4.0%
+- `missed.imbalance.oldnews.price.percent`: 23.6%
+- `missed.imbalance.oldnews.room.percent`: 0.5%
+- `missed.imbalance.askearth.price.percent`: 13.9%
+- `missed.imbalance.askearth.room.percent`: 3.7%
+- `missed.imbalance.askearth.noanswer.percent`: 37.3%
+- `missed.imbalance.ours.priceofsafety.percent`: 4.5%
 
 ## The guided demo (seed 42, scripted: space pressed as soon as each step allows)
 
@@ -192,6 +230,20 @@ One-way customers:
 - `grants.best`: share 0.5, threshold 4, wait 1.2
 - `grants.best.heldout.g`: 7.60
 - `grants.best.heldout.gain`: 1.66
+
+## Pricing study for our bank (docs/tune-study.json; chosen on seeds 1 to 10, judged on 11 to 40)
+
+- `tune.adopted`: no
+- `tune.today.served.percent`: 58.86%
+- `tune.today.profit.mean`: 0.3795
+- `tune.mostserved`: gapK 0, split 34 / 33 / 33
+- `tune.mostserved.served.percent`: 68.51%
+- `tune.mostserved.served.gain.points`: 9.65
+- `tune.mostserved.profit.mean`: 0.1878
+- `tune.mostserved.profit.p5`: -1.1819
+- `tune.today.profit.p5`: -0.9311
+- `tune.mostserved.profit.change.percent`: -50.53%
+- `tune.heldout.today.served.percent`: 58.34%
 
 ## Agents
 

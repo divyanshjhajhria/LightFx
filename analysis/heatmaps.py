@@ -20,6 +20,10 @@ MARKETS = ["calm", "panic", "imbalance"]
 MARKET_NAME = {"calm": "Calm market", "panic": "Panic", "imbalance": "One-way customers"}
 BANKS = ["leased", "naive", "central"]
 BANK_NAME = {"leased": "Our bank", "naive": "The bank that trusts old news", "central": "The bank that asks Earth"}
+# Why the other customers left with nothing (src/sim/world.ts); served plus these is 100%.
+MISSED = ["price", "room", "safe", "noAnswer"]
+MISSED_NAME = {"price": "Price", "room": "No room", "safe": "Playing safe", "noAnswer": "No answer"}
+MISSED_APPLIES = {"leased": ["price", "room", "safe"], "naive": ["price", "room"], "central": ["price", "room", "noAnswer"]}
 SEPARATIONS = [0, 30, 60, 90, 120, 150]
 STORM_MINUTES = [0, 30, 60, 90, 120, 180, 240, 360]
 
@@ -53,6 +57,10 @@ def figures(cells):
             "worstPeak": round(max([0] + [c["banks"][b]["peakOverLimitMax"] for c in cells]), 1),
             "servedPct": weighted(lambda c, b=b: c["banks"][b]["servedPctMean"]),
         }
+        if all("missedPctMean" in c["banks"][b] for c in cells):
+            banks[b]["missed"] = {
+                k: weighted(lambda c, b=b, k=k: c["banks"][b]["missedPctMean"][k]) for k in MISSED
+            }
     return {
         "runs": runs,
         "ticksMillions": round(sum(c["ticks"] for c in cells) / 1e6, 1),
@@ -184,6 +192,21 @@ def table(summary):
     return "\n".join(lines)
 
 
+def missed_table(summary):
+    lines = [
+        "| Market | Bank | Served | Price | No room | Playing safe | No answer |",
+        "|---|---|---:|---:|---:|---:|---:|",
+    ]
+    for key, f in [("All markets", summary["overall"])] + [(MARKET_NAME[m], summary["byMarket"][m]) for m in MARKETS]:
+        for b in BANKS:
+            x = f["banks"][b]
+            if "missed" not in x:
+                return None
+            parts = [f"{x['missed'][k]:.1f}%" if k in MISSED_APPLIES[b] else "does not apply" for k in MISSED]
+            lines.append(f"| {key} | {BANK_NAME[b]} | {x['servedPct']:.1f}% | " + " | ".join(parts) + " |")
+    return "\n".join(lines)
+
+
 def main():
     data = json.loads(SWEEP.read_text())
     summary = summarise(data)
@@ -209,6 +232,22 @@ def main():
         f"our bank {o['marsServedInStorm']['leased']:.1f}, the bank that asks Earth "
         f"{o['marsServedInStorm']['central']:.1f}.",
         "",
+        *(
+            [
+                "## Where the missed customers went",
+                "",
+                "Every customer who arrived during a storm was either served or missed for one reason: the price "
+                "(the customer would not take the quoted price), no room (the desk had no allowance left, or head "
+                "office declined), playing safe (our desk, out of touch too long, took only trades that lower its "
+                "risk) or no answer (head office's reply did not come back before the customer gave up). Each row "
+                "adds up to 100%.",
+                "",
+                missed_table(summary),
+                "",
+            ]
+            if missed_table(summary)
+            else []
+        ),
         "Figures: [calm.png](calm.png), [panic.png](panic.png), [imbalance.png](imbalance.png).",
         "",
     ]

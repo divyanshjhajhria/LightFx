@@ -2207,7 +2207,7 @@ input[type='range']::-moz-range-thumb {
   position: relative;
   min-height: 0;
   overflow: auto;
-  padding: 16px 28px 12px;
+  padding: 8px 28px 8px;
 }
 
 .mapHead button {
@@ -2243,13 +2243,20 @@ input[type='range']::-moz-range-thumb {
 
 .mapMarkets {
   display: inline-flex;
-  margin: 12px 0 8px;
+}
+
+.mapHeadRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: none;
 }
 
 .mapGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 28px;
+  grid-template-columns: 120px 1fr 1fr;
+  column-gap: 24px;
+  margin-top: 8px;
 }
 
 .mapColHead {
@@ -2261,19 +2268,23 @@ input[type='range']::-moz-range-thumb {
 
 .mapRow {
   grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 120px 1fr 1fr;
+  column-gap: 24px;
+  align-items: start;
   padding-top: 4px;
 }
 
 .mapRow h3 {
   margin: 0;
+  /* Level with the first row of squares, below the storm lengths. */
+  padding-top: 16px;
   font-size: var(--t-name);
   font-weight: 600;
 }
 
 .mapPair {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
+  display: contents;
 }
 
 .heatFrame {
@@ -2315,7 +2326,8 @@ input[type='range']::-moz-range-thumb {
 .hcell {
   display: block;
   width: 100%;
-  height: 22px;
+  height: 16px;
+  line-height: 14px;
   border-radius: 10px;
   font-size: var(--t-small);
   font-variant-numeric: tabular-nums;
@@ -2341,8 +2353,108 @@ input[type='range']::-moz-range-thumb {
 
 .mapHint {
   grid-column: 1 / -1;
-  margin: 8px 0 0;
+  margin: 4px 0 0;
   font-size: var(--t-small);
+  color: var(--text-3);
+}
+
+/* "Where the missed customers went": warm white only, strongest for served. */
+.missed {
+  margin-top: 8px;
+}
+
+.missedRows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.missedRow {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.missedName {
+  font-size: var(--t-small);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.missedBar {
+  display: flex;
+  gap: 4px;
+  height: 20px;
+}
+
+.part {
+  display: block;
+  font-style: normal;
+  border-radius: 10px;
+}
+
+.missedBar .part {
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 4px;
+  font-size: var(--t-small);
+  line-height: 20px;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.part.served {
+  background: rgba(var(--warm), 0.72);
+}
+
+.missedBar .part.served {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.part.price {
+  background: rgba(var(--warm), 0.36);
+}
+
+.part.room {
+  background: rgba(var(--warm), 0.22);
+}
+
+.part.safe {
+  background: rgba(var(--warm), 0.14);
+}
+
+.part.noAnswer {
+  background: rgba(var(--warm), 0.08);
+}
+
+.missedKey b {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.missedKey {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 4px 0 0 128px;
+  font-size: var(--t-small);
+  color: var(--text-2);
+}
+
+.missedKey span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.missedKey .part {
+  width: 12px;
+  height: 12px;
+}
+
+.missedKey .missedNote {
   color: var(--text-3);
 }
 
@@ -2413,6 +2525,38 @@ input[type='range']::-moz-range-thumb {
   .mapGrid,
   .mapPair {
     grid-template-columns: 1fr;
+  }
+
+  .mapGrid > span {
+    display: none;
+  }
+
+  .mapRow {
+    display: block;
+  }
+
+  .mapPair {
+    display: grid;
+  }
+
+  .mapRow h3 {
+    padding-top: 0;
+  }
+
+  .mapHead {
+    align-items: flex-start;
+  }
+
+  .mapHeadRight {
+    flex-wrap: wrap;
+  }
+
+  .missedRow {
+    grid-template-columns: 1fr;
+  }
+
+  .missedKey {
+    margin-left: 0;
   }
 
   .overview {

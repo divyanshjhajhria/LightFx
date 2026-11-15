@@ -154,6 +154,9 @@ writeFileSync(
     eligible: eligible.map((s) => s.candidate),
     heldOut: { today: out(heldToday), pick: out(heldPick) },
     mostServed: out(most),
+    // Computed from the unrounded means, as in docs/tuning.md, so npm run facts quotes the same figures.
+    mostServedGainPoints: r4(most.served - today.served),
+    mostServedProfitChangePct: r4((100 * (most.profitMean - today.profitMean)) / Math.abs(today.profitMean)),
     servedGain: r4(servedGain),
   })}\n`,
 );

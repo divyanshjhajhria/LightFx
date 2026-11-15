@@ -11,7 +11,7 @@ import { MARKETS, MARKET_NAME } from '../src/sim/sweep';
 import { pairsFor, rushG, rushMeans } from '../src/sim/together';
 import type { TogetherFile } from '../src/sim/together';
 import { down1 } from '../src/ui/togetherFigure';
-import type { SweepFile } from '../src/sim/sweep';
+import type { MissedShares, SweepFile } from '../src/sim/sweep';
 import { STRATEGIES } from '../src/sim/types';
 import type { StrategyId } from '../src/sim/types';
 import { Arena } from '../src/sim/world';
@@ -114,7 +114,22 @@ for (const m of MARKETS) {
   lines.push('', `${MARKET_NAME[m]}:`, '');
   block(`sweep.${m}`, summary.byMarket[m]);
 }
-fact('sweep.missedcustomers', 'not measured (the sweep records customers served, not why the others were missed)');
+// Why customers left with nothing (storm squares; served plus these four is 100%).
+const missedBlock = (prefix: string, f: Figures) => {
+  // Only the reasons that can happen at each bank: playing safe is ours alone, no answer is the bank that asks Earth's.
+  const applies: Record<StrategyId, (keyof MissedShares)[]> = { leased: ['price', 'room', 'safe'], naive: ['price', 'room'], central: ['price', 'room', 'noAnswer'] };
+  const word: Record<keyof MissedShares, string> = { price: 'price', room: 'room', safe: 'playingsafe', noAnswer: 'noanswer' };
+  for (const s of STRATEGIES) {
+    const m = f.banks[s].missed;
+    if (!m) continue;
+    for (const k of applies[s]) fact(`${prefix}.${BANK[s]}.${word[k]}.percent`, `${one(m[k])}%`);
+  }
+  const ours = f.banks.leased.missed;
+  if (ours) fact(`${prefix}.ours.priceofsafety.percent`, `${one(ours.room + ours.safe)}%`);
+};
+lines.push('', 'Where the missed customers went (storm squares; served plus these is 100%):', '');
+missedBlock('missed.all', summary.overall);
+for (const m of MARKETS) missedBlock(`missed.${m}`, summary.byMarket[m]);
 
 section(`The guided demo (seed ${GUIDE_SEED}, scripted: space pressed as soon as each step allows)`);
 // The guide's own clock with space pressed at once: the fast-forwarding alone. With the voice-over each line also
@@ -204,6 +219,31 @@ section('A rush at one desk (public/together.json and docs/grant-study.json; min
   fact('grants.best', `share ${study.chosen.grantShare}, threshold ${study.chosen.grantThreshold}, wait ${study.chosen.grantWaitFactor}`);
   fact('grants.best.heldout.g', two(study.heldOut.chosen.G));
   fact('grants.best.heldout.gain', two(study.gGain));
+}
+
+section('Pricing study for our bank (docs/tune-study.json; chosen on seeds 1 to 10, judged on 11 to 40)');
+{
+  type Row = { gapK: number; alloc: { earth: number; moon: number; mars: number }; served: number; profitMean: number; profitP5: number };
+  const t = JSON.parse(readFileSync('docs/tune-study.json', 'utf8')) as {
+    adopted: boolean;
+    choosing: Row[];
+    heldOut: { today: Row; pick: Row };
+    mostServed: Row;
+    mostServedGainPoints: number;
+    mostServedProfitChangePct: number;
+  };
+  const today = t.choosing.find((r) => r.gapK === DEFAULT_CONFIG.gapK && r.alloc.earth === DEFAULT_CONFIG.alloc.earth && r.alloc.moon === DEFAULT_CONFIG.alloc.moon)!;
+  fact('tune.adopted', t.adopted ? 'yes' : 'no');
+  fact('tune.today.served.percent', `${two(today.served)}%`);
+  fact('tune.today.profit.mean', today.profitMean.toFixed(4));
+  fact('tune.mostserved', `gapK ${t.mostServed.gapK}, split ${t.mostServed.alloc.earth} / ${t.mostServed.alloc.moon} / ${t.mostServed.alloc.mars}`);
+  fact('tune.mostserved.served.percent', `${two(t.mostServed.served)}%`);
+  fact('tune.mostserved.served.gain.points', two(t.mostServedGainPoints));
+  fact('tune.mostserved.profit.mean', t.mostServed.profitMean.toFixed(4));
+  fact('tune.mostserved.profit.p5', t.mostServed.profitP5.toFixed(4));
+  fact('tune.today.profit.p5', today.profitP5.toFixed(4));
+  fact('tune.mostserved.profit.change.percent', `${two(t.mostServedProfitChangePct)}%`);
+  fact('tune.heldout.today.served.percent', `${two(t.heldOut.today.served)}%`);
 }
 
 section('Agents');

@@ -70,8 +70,12 @@ link: a bank's regional desks, payments that must work offline, fleets of drones
 ## Questions we expect
 
 1. **What do you give up?** Customers: our bank served 58.5% of them across the survival map, against 73.9% for the
-   bank that trusts old news. We refuse the trades that would take the bank past its limit; it accepts them and goes
-   over in 39.1% of storms.
+   bank that trusts old news, which goes over its limit in 39.1% of storms. We measured where the rest went. The
+   price of safety is small: 1.1% of customers turned away because a desk had no room, and 4.2% while a desk out of
+   touch was playing safe, 5.3% in all. Most of the gap is a pricing choice: we lost 36.3% of customers on price,
+   against 23.1% at the bank that trusts old news, because our desks widen their prices as their news gets older.
+   Narrower prices would have kept more (68.51% served against 58.86% in our pricing study) but cost half the
+   profit (-50.53%), so we kept them.
 
 2. **Is this a real multi-agent LLM system?**
    [IF A REAL MODEL SESSION HAS BEEN RECORDED]
@@ -108,7 +112,7 @@ link: a bank's regional desks, payments that must work offline, fleets of drones
    sits idle. Moving spare allowance when desks can talk, and netting opposite positions, lets more customers trade:
    netting alone raised volume by 12.02% with Mars close, in 30/30 runs.
 
-9. **How do you know it holds?** 308 automated tests, including property tests that try random storms, cuts, trades and
+9. **How do you know it holds?** 318 automated tests, including property tests that try random storms, cuts, trades and
    hostile agent answers. And the survival map: 5,040 storms, 23.8 million simulation steps, 0 breaches for our bank.
 
 10. **What happens when the storm ends?** The desks catch up: positions, allowance and notes flow again. Earth finally

@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { MARKETS, MARKET_NAME, SEPARATIONS, STORM_MINUTES, stormLabel } from '../sim/sweep';
 import type { CellParams, CellResult, Market, SweepFile } from '../sim/sweep';
 import { STRATEGIES } from '../sim/types';
 import type { StrategyId } from '../sim/types';
 import { headline, summarise } from './sweepSummary';
-import { ALERT_RGB, STRATEGY, WARM } from './theme';
+import type { SweepSummary } from './sweepSummary';
+import { PART_LABEL, missedParts } from './missedBreakdown';
+import { ALERT_RGB, SHORT_NAME, STRATEGY, WARM } from './theme';
 
 type Measure = 'minutes' | 'served';
 
@@ -115,6 +117,56 @@ function Heatmap({
   );
 }
 
+/** "Where the missed customers went", for the market on show: one 100% bar per bank, storms only. */
+function MissedBars({ figures }: { figures: SweepSummary['overall'] }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setWidth(el.clientWidth));
+    ro.observe(el);
+    setWidth(el.clientWidth);
+    return () => ro.disconnect();
+  }, []);
+  const rows = STRATEGIES.map((b) => ({ b, parts: missedParts(b, figures.banks[b]) }));
+  if (rows.some((r) => !r.parts)) return null;
+  // A percentage is written on a part only when the part is wide enough to hold it.
+  const fits = (pct: number) => (width * pct) / 100 >= 44;
+  return (
+    <section className="missed" aria-label="Where the missed customers went">
+      <div className="missedRows" ref={box}>
+        {rows.map(({ b, parts }) => (
+          <div className="missedRow" key={b}>
+            <span className="missedName">{SHORT_NAME[b]}</span>
+            <span
+              className="missedBar"
+              role="img"
+              aria-label={`${STRATEGY[b].name}: ${parts!.map((p) => `${p.label} ${p.pct.toFixed(1)}%`).join(', ')}`}
+            >
+              {parts!.map((p) => (
+                <i key={p.key} className={`part ${p.key}`} style={{ flexBasis: `${p.pct}%` }}>
+                  {fits(p.pct) ? `${p.pct.toFixed(1)}%` : ''}
+                </i>
+              ))}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="missedKey">
+        <b>Where the missed customers went</b>
+        {(['served', 'price', 'room', 'safe', 'noAnswer'] as const).map((k) => (
+          <span key={k}>
+            <i className={`part ${k}`} />
+            {PART_LABEL[k]}
+          </span>
+        ))}
+        <span className="missedNote">Storms only. Price: the customer would not take the quoted price.</span>
+      </p>
+    </section>
+  );
+}
+
 /**
  * The survival map: thousands of simulated storms across distance, storm length and market, read as heatmaps of how
  * long each bank was over its limit and how many customers it served. Every figure comes from sweep.json.
@@ -159,20 +211,22 @@ export function SurvivalMap({ onBack, onPlay }: { onBack: () => void; onPlay: (p
             different customers in each square.
           </p>
         </div>
-        <button className="quiet" onClick={onBack}>
-          Back to the simulator
-        </button>
+        <div className="mapHeadRight">
+          <div className="seg mapMarkets" role="group" aria-label="Market">
+            {MARKETS.map((m) => (
+              <button key={m} aria-pressed={m === market} onClick={() => setMarket(m)}>
+                {MARKET_NAME[m]}
+              </button>
+            ))}
+          </div>
+          <button className="quiet" onClick={onBack}>
+            Back to the simulator
+          </button>
+        </div>
       </header>
 
-      <div className="seg mapMarkets" role="group" aria-label="Market">
-        {MARKETS.map((m) => (
-          <button key={m} aria-pressed={m === market} onClick={() => setMarket(m)}>
-            {MARKET_NAME[m]}
-          </button>
-        ))}
-      </div>
-
       <div className="mapGrid">
+        <span aria-hidden="true" />
         <p className="mapColHead">Minutes over the limit</p>
         <p className="mapColHead">Customers served</p>
         {STRATEGIES.map((b) => (
@@ -196,6 +250,8 @@ export function SurvivalMap({ onBack, onPlay }: { onBack: () => void; onPlay: (p
         ))}
         <p className="mapHint">Storm length across, how far Mars is up the side. Click a square to play that storm.</p>
       </div>
+
+      <MissedBars figures={summary.byMarket[market]} />
 
       {readout && r && (
         <div
