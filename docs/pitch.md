@@ -32,7 +32,7 @@ in 39.1% of them. Watch it happen."
 
 ## Back on Earth, in every version
 
-Say once, in the close: "The same problem exists wherever parts of one system must share a limit without a reliable
+Say once, after the close: "The same problem exists wherever parts of one system must share a limit without a reliable
 link: a bank's regional desks, payments that must work offline, fleets of drones or satellites."
 
 ## 0:00 to 0:20, before pressing G
@@ -57,15 +57,16 @@ The captions and the voice carry it. Say no more than this, and only once the vo
 
 ## About 1:50 to 2:20, the close
 
-"We ran 5,040 storms like that one. Our bank went over its limit 0 times. The bank that trusts old news went over in
-39.1% of them. That safety has a price, and we will not hide it: we served 58.5% of customers, and the reckless bank
-served 73.9%, because it says yes when it should not. But when the line goes dead, ours keeps trading; the bank that
-asks Earth simply stops. The same problem exists wherever parts of one system must share a limit without a reliable
-link: a bank's regional desks, payments that must work offline, fleets of drones or satellites."
+"We ran 5,040 storms like that one. Our bank went over its limit 0 times; the bank that trusts old news, in 39.1% of
+them. The limit cost us 5.3% of customers; our wider prices on old news cost more: 36.3% walked away at our price,
+23.1% at theirs. Those prices pay. We made $0.36 a storm on average; it lost $0.29, and $4.35 or more in one storm in
+twenty."
 
 ## 2:20, to questions
 
-"That is Lightspeed FX: every desk free to act, and the bank still safe. We would love your questions."
+"That is Lightspeed FX: every desk free to act, and the bank still safe. The same problem exists wherever parts of one
+system must share a limit without a reliable link: a bank's regional desks, payments that must work offline, fleets of
+drones or satellites. We would love your questions."
 
 ## Questions we expect
 
@@ -112,7 +113,7 @@ link: a bank's regional desks, payments that must work offline, fleets of drones
    sits idle. Moving spare allowance when desks can talk, and netting opposite positions, lets more customers trade:
    netting alone raised volume by 12.02% with Mars close, in 30/30 runs.
 
-9. **How do you know it holds?** 318 automated tests, including property tests that try random storms, cuts, trades and
+9. **How do you know it holds?** 324 automated tests, including property tests that try random storms, cuts, trades and
    hostile agent answers. And the survival map: 5,040 storms, 23.8 million simulation steps, 0 breaches for our bank.
 
 10. **What happens when the storm ends?** The desks catch up: positions, allowance and notes flow again. Earth finally
@@ -135,3 +136,8 @@ link: a bank's regional desks, payments that must work offline, fleets of drones
     desk counts as much as one served by you, and allowance sitting idle at one desk can serve a customer at a desk
     that has run out. A desk only ever gives spare allowance, never what its own position needs, so giving can never
     put it, or the bank, at risk.
+
+14. **Does the reckless bank make more money?** No: across all storms the bank that trusts old news lost $0.29 a storm
+    on average while ours made $0.36, and in one storm in twenty it lost $4.35 or more, against $0.92 for us. It comes
+    closest in a calm market ($0.48 against our $0.63) and with one-way customers ($0.50 against our $0.64), and does
+    worst in a panic, where it lost $1.85 a storm on average and we lost $0.20.

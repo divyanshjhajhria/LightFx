@@ -5,9 +5,9 @@ every figure in the write-ups is copied from a line here, exactly as written.
 
 ## Tests
 
-- `tests.total`: 323
-- `tests.passed`: 323
-- `tests.files`: 36
+- `tests.total`: 324
+- `tests.passed`: 324
+- `tests.files`: 37
 
 ## The bank
 

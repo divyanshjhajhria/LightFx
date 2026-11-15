@@ -54,15 +54,19 @@ Prices are simulated.
 - The bank that asks Earth never went over, but its Mars office served 0.0 customers per storm while cut off. Ours
   served 19.7.
 
-**What does not flatter us.** Our bank served 58.5% of customers; the bank that trusts old news served 73.9%, because
-it says yes to trades it should refuse. We beat the bank that asks Earth (44.7%), not the reckless one.
+**What does not flatter us.** Our bank served 58.5% of customers; the bank that trusts old news served 73.9%. Most of
+that gap is our pricing, not our safety: the limit cost us 5.3% of customers, while 36.3% walked away at our price
+against 23.1% at theirs, because our desks widen their prices when their news is old. On customers we beat the bank
+that asks Earth (44.7%), not the reckless one. On money we did better than both: $0.36 a storm on average, against a
+loss of $0.29 for the bank that trusts old news and $0.01 for the bank that asks Earth. In a panic our bank lost money
+too, $0.20 a storm on average.
 
 Netting raised the volume our bank traded under steady opposite flow by 12.02% with Mars close and 8.24% on the far
 side, in 30/30 runs each, never over the limit.
 
 ## How we built it
 
-TypeScript, React and a canvas, on a seeded simulation so every bank faces the same customers, prices and storms. 318
+TypeScript, React and a canvas, on a seeded simulation so every bank faces the same customers, prices and storms. 324
 automated tests, including property tests that fail if any storm, failure or answer pushes our bank past its limit.
 The survival map is a headless sweep of the same simulation.
 
